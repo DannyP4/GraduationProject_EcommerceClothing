@@ -1,0 +1,60 @@
+services:
+  # MySQL 8.0
+  mysql:
+    image: mysql:8.0
+    container_name: uniform_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: uniform_store
+      MYSQL_USER: uniform
+      MYSQL_PASSWORD: uniform_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: uniform_backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/uniform_store?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+      DB_USERNAME: uniform
+      DB_PASSWORD: uniform_pass
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # IDM_VTON_URL: https://yisol-idm-vton.hf.space
+      # HF_TOKEN: your_hf_token_here
+      # JWT secret — change before production!
+      JWT_SECRET: change-me-before-production-minimum-32-chars
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+
+  # React Frontend (Vite build → Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: uniform_frontend
+    depends_on:
+      - backend
+    ports:
+      - "8088:80"
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
