@@ -8,6 +8,10 @@ frontend/dist/
 
 backend/target/
 backend/.idea/
-
+.claude/
 docs/
 .vscode/
+.idea/
+.env
+backend/.env
+frontend/.env

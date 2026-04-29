@@ -8,7 +8,5 @@ public interface AuthService {
     AuthResponse register(RegisterRequest req);
     AuthResponse login(LoginRequest req);
     AuthResponse refreshToken(String refreshToken);
+    AuthResponse.UserInfo getCurrentUser(String email);
 }
-
-先日の面談で、会社の近くで花火が見られる場所の話をされていたと思うんですが、
-その場所ってどこか、もう一度教えていただけますか。

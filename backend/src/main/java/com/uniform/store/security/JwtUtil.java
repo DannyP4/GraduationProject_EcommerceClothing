@@ -36,6 +36,10 @@ public class JwtUtil {
         return buildToken(email, refreshTokenExpiry, "refresh");
     }
 
+    public long getAccessTokenExpirySeconds() {
+        return accessTokenExpiry / 1000;
+    }
+
     private String buildToken(String subject, long expiryMs, String type) {
         Date now = new Date();
         return Jwts.builder()

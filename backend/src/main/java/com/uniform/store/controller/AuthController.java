@@ -4,10 +4,12 @@ import com.uniform.store.dto.request.LoginRequest;
 import com.uniform.store.dto.request.RegisterRequest;
 import com.uniform.store.dto.response.ApiResponse;
 import com.uniform.store.dto.response.AuthResponse;
+import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -34,8 +36,13 @@ public class AuthController {
     public ApiResponse<AuthResponse> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         if (refreshToken == null || refreshToken.isBlank()) {
-            throw new com.uniform.store.exception.BadRequestException("refreshToken is required");
+            throw new BadRequestException("refreshToken is required");
         }
         return ApiResponse.ok(authService.refreshToken(refreshToken));
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<AuthResponse.UserInfo> me(Authentication authentication) {
+        return ApiResponse.ok(authService.getCurrentUser(authentication.getName()));
     }
 }

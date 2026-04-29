@@ -1,9 +1,12 @@
 package com.uniform.store.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uniform.store.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -23,6 +26,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,17 +34,22 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-                .requestMatchers("/cart/**").authenticated()
-                .requestMatchers("/orders/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login", "/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.GET, "/health", "/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req, res, e) -> {
-                    res.setContentType("application/json");
                     res.setStatus(401);
-                    res.getWriter().write("{\"success\":false,\"message\":\"Authentication required\"}");
+                    res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    objectMapper.writeValue(res.getWriter(),
+                            ApiResponse.error("Authentication required"));
+                })
+                .accessDeniedHandler((req, res, e) -> {
+                    res.setStatus(403);
+                    res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    objectMapper.writeValue(res.getWriter(),
+                            ApiResponse.error("Access denied"));
                 })
             )
             .authenticationProvider(authenticationProvider())
