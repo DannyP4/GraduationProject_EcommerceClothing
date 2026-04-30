@@ -1,15 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
+  const auth = useAuth();
   const layer1 = useRef(null);
   const layer2 = useRef(null);
   const layer3 = useRef(null);
   const navigate = useNavigate();
+
+  const switchMode = (m) => {
+    setMode(m);
+    setError('');
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -26,9 +38,36 @@ export default function LoginPage() {
     return () => window.removeEventListener('mousemove', handler);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/shop');
+    setError('');
+
+    if (!EMAIL_REGEX.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (mode === 'signup' && !fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (mode === 'login') {
+        await auth.login(email.trim(), password);
+      } else {
+        await auth.register({ email: email.trim(), password, fullName: fullName.trim() });
+      }
+      navigate('/shop');
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -57,10 +96,10 @@ export default function LoginPage() {
             {['login', 'signup'].map((m) => (
               <button
                 key={m}
-                onClick={() => setMode(m)}
-                className={`pb-3 mr-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-all border-b-2 -mb-[1px] ${
-                  mode === m ? 'border-black text-black' : 'border-transparent text-black/30 hover:text-black/60'
-                }`}
+                type="button"
+                onClick={() => switchMode(m)}
+                className={`pb-3 mr-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-all border-b-2 -mb-[1px] ${mode === m ? 'border-black text-black' : 'border-transparent text-black/30 hover:text-black/60'
+                  }`}
               >
                 {m === 'login' ? 'Sign In' : 'Create Account'}
               </button>
@@ -77,6 +116,11 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="border border-[#E83354]/40 bg-[#E83354]/5 px-4 py-3 text-[12px] text-[#E83354]">
+                {error}
+              </div>
+            )}
             {mode === 'signup' && (
               <div>
                 <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
@@ -84,8 +128,11 @@ export default function LoginPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Alex Chen"
+                  placeholder="Long Pham"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
+                  required
                 />
               </div>
             )}
@@ -126,9 +173,12 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors"
+              disabled={submitting}
+              className="w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
             >
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
+              {submitting
+                ? mode === 'login' ? 'Signing in...' : 'Creating account...'
+                : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 
@@ -152,7 +202,8 @@ export default function LoginPage() {
           <p className="text-center text-[11px] text-black/40 mt-8">
             {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
             <button
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+              type="button"
+              onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
               className="font-bold text-black hover:text-[#E83354] transition-colors"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}

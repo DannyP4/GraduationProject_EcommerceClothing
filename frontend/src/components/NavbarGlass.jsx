@@ -1,9 +1,19 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function NavbarGlass() {
   const { cartCount } = useCart();
+  const { user, status, logout } = useAuth();
   const navigate = useNavigate();
+
+  const displayName = user?.fullName || user?.email || '';
+  const firstName = displayName.split(' ')[0] || displayName;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-black/10">
@@ -38,13 +48,33 @@ export default function NavbarGlass() {
             </svg>
           </button>
 
-          {/* Login */}
-          <Link
-            to="/login"
-            className="text-[11px] font-bold tracking-[0.1em] uppercase text-black/70 hover:text-black transition-colors hidden sm:block"
-          >
-            Login
-          </Link>
+          {/* Auth */}
+          {status === 'authenticated' ? (
+            <div className="hidden sm:flex items-center gap-3">
+              <span
+                className="text-[11px] font-bold tracking-[0.1em] uppercase text-black/70 max-w-[120px] truncate"
+                title={displayName}
+              >
+                {firstName}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-[11px] font-bold tracking-[0.1em] uppercase text-black/50 hover:text-[#E83354] transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          ) : status === 'loading' ? (
+            <span className="hidden sm:block w-12 h-3 bg-black/10 rounded animate-pulse" />
+          ) : (
+            <Link
+              to="/login"
+              className="text-[11px] font-bold tracking-[0.1em] uppercase text-black/70 hover:text-black transition-colors hidden sm:block"
+            >
+              Login
+            </Link>
+          )}
 
           {/* Cart */}
           <Link to="/cart" className="relative text-black/70 hover:text-black transition-colors" aria-label="Cart">
