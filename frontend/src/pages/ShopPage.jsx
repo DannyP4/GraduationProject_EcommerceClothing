@@ -1,45 +1,74 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
-import { products } from '../data/products';
+import { getProducts, getCategories } from '../services/productService';
 import { useCart } from '../context/CartContext';
 
-const COLLECTIONS = ['All', 'Tops', 'Bottoms', 'Outerwear', 'Accessories'];
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const SORTS = ['Featured', 'Price: Low to High', 'Price: High to Low', 'Newest'];
+const SORT_OPTIONS = [
+  { label: 'Newest',             value: 'NEWEST' },
+  { label: 'Price: Low to High', value: 'PRICE_ASC' },
+  { label: 'Price: High to Low', value: 'PRICE_DESC' },
+  { label: 'Popular',            value: 'POPULAR' },
+];
+
+const PAGE_SIZE = 12;
 
 export default function ShopPage() {
-  const [activeCollection, setActiveCollection] = useState('All');
-  const [activeSizes, setActiveSizes] = useState([]);
-  const [sort, setSort] = useState('Featured');
   const navigate = useNavigate();
   const { addItem } = useCart();
 
-  const toggleSize = (s) =>
-    setActiveSizes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  const [categories, setCategories] = useState([]);
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
+  const [sort, setSort] = useState('NEWEST');
+  const [page, setPage] = useState(0);
 
-  let filtered = products.filter(
-    (p) => activeCollection === 'All' || p.category === activeCollection
-  );
+  const [pageData, setPageData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  if (activeSizes.length > 0) {
-    filtered = filtered.filter((p) => p.sizes.some((s) => activeSizes.includes(s)));
-  }
+  useEffect(() => { setPage(0); }, [activeCategoryId, sort]);
 
-  if (sort === 'Price: Low to High') filtered = [...filtered].sort((a, b) => a.price - b.price);
-  if (sort === 'Price: High to Low') filtered = [...filtered].sort((a, b) => b.price - a.price);
+  useEffect(() => {
+    let cancelled = false;
+    getCategories()
+      .then((data) => { if (!cancelled) setCategories(data || []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    getProducts({
+      page,
+      size: PAGE_SIZE,
+      sort,
+      categoryId: activeCategoryId ?? undefined,
+    })
+      .then((data) => { if (!cancelled) setPageData(data); })
+      .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load products'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [page, sort, activeCategoryId]);
+
+  const products = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
+  const totalElements = pageData?.totalElements ?? 0;
+
+  const pageNumbers = useMemo(() => buildPageList(page, totalPages), [page, totalPages]);
 
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price,
-      size: product.sizes[1] || product.sizes[0],
-      color: product.colors[0],
-      image: product.images[0],
+      price: Number(product.basePrice),
+      size: 'M',
+      color: '—',
+      image: product.primaryImageUrl,
     });
   };
 
@@ -52,7 +81,7 @@ export default function ShopPage() {
       <div className="bg-[#0A0A0A] text-white py-12 px-6">
         <div className="max-w-[1440px] mx-auto">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40 mb-2">
-            SS 2024 · {filtered.length} items
+            SS 2024 · {loading ? '…' : `${totalElements} items`}
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
             Shop All
@@ -64,45 +93,37 @@ export default function ShopPage() {
         {/* SIDEBAR */}
         <aside className="w-56 flex-shrink-0">
           <div className="sticky top-20 space-y-8">
-            {/* Collections */}
+            {/* Categories */}
             <div>
               <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-4">Collections</h3>
               <ul className="space-y-1">
-                {COLLECTIONS.map((c) => (
-                  <li key={c}>
+                <li>
+                  <button
+                    onClick={() => setActiveCategoryId(null)}
+                    className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${
+                      activeCategoryId === null
+                        ? 'bg-black text-white'
+                        : 'text-black/60 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    All
+                  </button>
+                </li>
+                {categories.map((c) => (
+                  <li key={c.id}>
                     <button
-                      onClick={() => setActiveCollection(c)}
+                      onClick={() => setActiveCategoryId(c.id)}
                       className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${
-                        activeCollection === c
+                        activeCategoryId === c.id
                           ? 'bg-black text-white'
                           : 'text-black/60 hover:text-black hover:bg-black/5'
                       }`}
                     >
-                      {c}
+                      {c.name}
                     </button>
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Sizes */}
-            <div>
-              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-4">Size</h3>
-              <div className="grid grid-cols-3 gap-1.5">
-                {SIZES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => toggleSize(s)}
-                    className={`text-[11px] font-bold py-2 border transition-all ${
-                      activeSizes.includes(s)
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white text-black border-black/15 hover:border-black'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Sort */}
@@ -113,14 +134,13 @@ export default function ShopPage() {
                 onChange={(e) => setSort(e.target.value)}
                 className="w-full border border-black/15 bg-white text-sm px-3 py-2.5 focus:outline-none focus:border-black appearance-none cursor-pointer"
               >
-                {SORTS.map((s) => <option key={s}>{s}</option>)}
+                {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
 
-            {/* Clear filters */}
-            {(activeCollection !== 'All' || activeSizes.length > 0) && (
+            {activeCategoryId !== null && (
               <button
-                onClick={() => { setActiveCollection('All'); setActiveSizes([]); }}
+                onClick={() => setActiveCategoryId(null)}
                 className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#E83354] hover:underline"
               >
                 Clear Filters
@@ -131,32 +151,44 @@ export default function ShopPage() {
 
         {/* PRODUCT GRID */}
         <main className="flex-1">
-          {filtered.length === 0 ? (
+          {error ? (
+            <div className="bg-white border border-[#E83354]/30 px-6 py-10 text-center">
+              <p className="text-sm font-bold text-[#E83354] mb-1 uppercase tracking-wider">Could not load products</p>
+              <p className="text-xs text-black/60 mb-4">{error}</p>
+              <button
+                onClick={() => setPage((p) => p)}
+                className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          ) : loading ? (
+            <SkeletonGrid count={PAGE_SIZE} />
+          ) : products.length === 0 ? (
             <div className="text-center py-24 text-black/40">
               <p className="text-xl font-bold mb-2">No products found</p>
               <p className="text-sm">Try adjusting your filters</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((product) => (
+              {products.map((product) => (
                 <div
                   key={product.id}
                   className="group bg-white cursor-pointer relative overflow-hidden"
-                  onClick={() => navigate(`/product/${product.id}`)}
+                  onClick={() => navigate(`/product/${product.slug || product.id}`)}
                 >
-                  {/* Image */}
                   <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    {product.badge && (
-                      <span className="absolute top-3 left-3 bg-[#E83354] text-white text-[9px] font-bold tracking-widest uppercase px-2 py-1">
-                        {product.badge}
-                      </span>
+                    {product.primaryImageUrl ? (
+                      <img
+                        src={product.primaryImageUrl}
+                        alt={product.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
+                        No image
+                      </div>
                     )}
-                    {/* Hover: Add to Cart */}
                     <div className="absolute bottom-0 inset-x-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                       <button
                         onClick={(e) => handleAddToCart(e, product)}
@@ -167,17 +199,15 @@ export default function ShopPage() {
                     </div>
                   </div>
 
-                  {/* Info */}
                   <div className="p-4">
                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 mb-1">
-                      {product.category}
+                      {product.categoryName}
                     </p>
                     <h3 className="text-sm font-bold uppercase tracking-wider mb-2">{product.name}</h3>
                     <div className="flex items-center gap-2">
-                      <span className="font-['Anton'] text-xl">${product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-black/35 line-through">${product.originalPrice}</span>
-                      )}
+                      <span className="font-['Anton'] text-xl">
+                        {formatPrice(product.basePrice, product.currency)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -186,24 +216,86 @@ export default function ShopPage() {
           )}
 
           {/* Pagination */}
-          <div className="flex justify-center items-center gap-2 mt-12">
-            {[1, 2, 3, '...', 8].map((p, i) => (
+          {!loading && !error && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-12">
               <button
-                key={i}
-                className={`w-9 h-9 text-sm font-bold transition-all ${
-                  p === 1
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black/60 border border-black/15 hover:border-black hover:text-black'
-                }`}
+                disabled={!pageData?.hasPrevious}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                className="px-3 h-9 text-sm font-bold transition-all bg-white text-black/60 border border-black/15 hover:border-black hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                {p}
+                Prev
               </button>
-            ))}
-          </div>
+              {pageNumbers.map((p, i) =>
+                p === '…' ? (
+                  <span key={`gap-${i}`} className="w-9 h-9 flex items-center justify-center text-black/40">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p - 1)}
+                    className={`w-9 h-9 text-sm font-bold transition-all ${
+                      p - 1 === page
+                        ? 'bg-black text-white'
+                        : 'bg-white text-black/60 border border-black/15 hover:border-black hover:text-black'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+              <button
+                disabled={!pageData?.hasNext}
+                onClick={() => setPage((p) => p + 1)}
+                className="px-3 h-9 text-sm font-bold transition-all bg-white text-black/60 border border-black/15 hover:border-black hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </main>
       </div>
 
       <FooterFull />
     </div>
   );
+}
+
+function SkeletonGrid({ count }) {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="bg-white">
+          <div className="bg-black/5 animate-pulse" style={{ paddingTop: '125%' }} />
+          <div className="p-4 space-y-2">
+            <div className="h-3 w-1/3 bg-black/10 animate-pulse" />
+            <div className="h-4 w-2/3 bg-black/10 animate-pulse" />
+            <div className="h-6 w-1/4 bg-black/10 animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function buildPageList(currentPage, totalPages) {
+  if (totalPages <= 1) return [];
+  const cur = currentPage + 1;
+  const last = totalPages;
+  const range = [];
+  range.push(1);
+  if (cur - 2 > 2) range.push('…');
+  for (let i = Math.max(2, cur - 1); i <= Math.min(last - 1, cur + 1); i++) {
+    range.push(i);
+  }
+  if (cur + 2 < last - 1) range.push('…');
+  if (last > 1) range.push(last);
+  return range;
+}
+
+function formatPrice(value, currency) {
+  if (value == null) return '';
+  const num = Number(value);
+  if (currency === 'VND') {
+    return `${num.toLocaleString('vi-VN')} ₫`;
+  }
+  return `${currency || '$'} ${num.toFixed(2)}`;
 }

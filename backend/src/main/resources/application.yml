@@ -47,6 +47,19 @@ app:
     refresh-token-expiry: ${JWT_REFRESH_TOKEN_EXPIRY:604800000}  # 7 days
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:8088}
+  i18n:
+    supported-locales: en,vi,ja
+    default-locale: en
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  show-actuator: false
 
 logging:
   level:
