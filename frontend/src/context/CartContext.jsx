@@ -1,84 +1,181 @@
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useAuth } from './AuthContext';
+import * as cartService from '../services/cartService';
 
 const CartContext = createContext(null);
 
-function cartReducer(state, action) {
-  switch (action.type) {
-    case 'ADD_ITEM': {
-      const existing = state.find(
-        (i) => i.id === action.item.id && i.size === action.item.size && i.color === action.item.color
-      );
-      if (existing) {
-        return state.map((i) =>
-          i.id === action.item.id && i.size === action.item.size && i.color === action.item.color
-            ? { ...i, qty: i.qty + 1 }
-            : i
-        );
-      }
-      return [...state, { ...action.item, qty: 1 }];
-    }
-    case 'REMOVE_ITEM':
-      return state.filter((i) => i.cartKey !== action.cartKey);
-    case 'UPDATE_QTY':
-      return state
-        .map((i) => (i.cartKey === action.cartKey ? { ...i, qty: action.qty } : i))
-        .filter((i) => i.qty > 0);
-    default:
-      return state;
+const STORAGE_KEY = 'cart.guest';
+const EMPTY_CART = { id: null, items: [], itemCount: 0, subtotal: 0, currency: 'VND' };
+
+// Guest cart is "dumb storage": only the bare-minimum fields are persisted.
+// On hydrate we recompute itemCount/subtotal so a stale storage doc never serves wrong totals.
+function normalizeGuestCart(items) {
+  const list = items.map((i) => ({
+    ...i,
+    lineTotal: Number(i.unitPrice ?? 0) * i.quantity,
+  }));
+  return {
+    id: null,
+    items: list,
+    itemCount: list.reduce((sum, i) => sum + i.quantity, 0),
+    subtotal: list.reduce((sum, i) => sum + i.lineTotal, 0),
+    currency: list[0]?.currency ?? 'VND',
+  };
+}
+
+function readGuestCart() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return EMPTY_CART;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.items)) return EMPTY_CART;
+    return normalizeGuestCart(parsed.items);
+  } catch {
+    return EMPTY_CART;
   }
 }
 
+function writeGuestCart(items) {
+  if (!items || items.length === 0) {
+    localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ items }));
+}
+
 export function CartProvider({ children }) {
-  const [items, dispatch] = useReducer(cartReducer, [
-    // Default cart items for demo
-    {
-      cartKey: 'varsity-bomber-M-Black',
-      id: 'varsity-bomber',
-      name: 'Varsity Bomber',
-      price: 89,
-      size: 'M',
-      color: 'Black',
-      image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80',
-      qty: 1,
-    },
-    {
-      cartKey: 'graphic-tee-L-White',
-      id: 'graphic-tee',
-      name: 'Campus Graphic Tee',
-      price: 35,
-      size: 'L',
-      color: 'White',
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80',
-      qty: 2,
-    },
-    {
-      cartKey: 'wide-cargo-M-Olive',
-      id: 'wide-cargo',
-      name: 'Wide Leg Cargo',
-      price: 65,
-      size: 'M',
-      color: 'Olive',
-      image: 'https://images.unsplash.com/photo-1594938298603-c8148c4b4d7a?w=400&q=80',
-      qty: 1,
-    },
-  ]);
+  const { status } = useAuth();
+  const [cart, setCart] = useState(EMPTY_CART);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  // Track previous auth status to detect the unauth → auth transition (= time to merge guest cart).
+  const prevStatusRef = useRef(status);
 
-  const cartCount = items.reduce((sum, i) => sum + i.qty, 0);
+  useEffect(() => {
+    let cancelled = false;
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
 
-  const addItem = (item) => {
-    const cartKey = `${item.id}-${item.size}-${item.color}`;
-    dispatch({ type: 'ADD_ITEM', item: { ...item, cartKey } });
+    async function hydrate() {
+      if (status === 'authenticated') {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const guest = readGuestCart();
+          const justLoggedIn = prev !== 'authenticated';
+          if (justLoggedIn && guest.items.length > 0) {
+            const merged = await cartService.mergeCart(
+              guest.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
+            );
+            if (cancelled) return;
+            localStorage.removeItem(STORAGE_KEY);
+            setCart(merged);
+          } else {
+            const fresh = await cartService.getCart();
+            if (cancelled) return;
+            setCart(fresh);
+          }
+        } catch (err) {
+          if (!cancelled) setError(err.message || 'Failed to load cart');
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+        return;
+      }
+
+      if (status === 'unauthenticated') {
+        setCart(readGuestCart());
+        return;
+      }
+
+      // status === 'loading' (auth bootstrap in progress) — render guest cart to avoid flicker.
+      setCart(readGuestCart());
+    }
+
+    hydrate();
+    return () => { cancelled = true; };
+  }, [status]);
+
+  const addItem = useCallback(async (payload) => {
+    const { variantId, quantity = 1, ...meta } = payload;
+    if (!variantId) throw new Error('addItem requires variantId');
+
+    if (status === 'authenticated') {
+      const updated = await cartService.addItem({ variantId, quantity });
+      setCart(updated);
+      return updated;
+    }
+
+    setCart((prev) => {
+      const existingIdx = prev.items.findIndex((i) => i.variantId === variantId);
+      const nextItems = existingIdx >= 0
+        ? prev.items.map((i, idx) =>
+            idx === existingIdx ? { ...i, quantity: i.quantity + quantity } : i)
+        : [...prev.items, { variantId, quantity, ...meta }];
+      writeGuestCart(nextItems);
+      return normalizeGuestCart(nextItems);
+    });
+    return null;
+  }, [status]);
+
+  // Auth mode keys items by server itemId; guest mode keys by variantId — pass the whole item to abstract this.
+  const updateQuantity = useCallback(async (item, newQuantity) => {
+    if (status === 'authenticated') {
+      const updated = await cartService.updateItem(item.id, newQuantity);
+      setCart(updated);
+      return updated;
+    }
+    setCart((prev) => {
+      const nextItems = newQuantity <= 0
+        ? prev.items.filter((i) => i.variantId !== item.variantId)
+        : prev.items.map((i) =>
+            i.variantId === item.variantId ? { ...i, quantity: newQuantity } : i);
+      writeGuestCart(nextItems);
+      return normalizeGuestCart(nextItems);
+    });
+    return null;
+  }, [status]);
+
+  const removeItem = useCallback(async (item) => {
+    if (status === 'authenticated') {
+      const updated = await cartService.removeItem(item.id);
+      setCart(updated);
+      return updated;
+    }
+    setCart((prev) => {
+      const nextItems = prev.items.filter((i) => i.variantId !== item.variantId);
+      writeGuestCart(nextItems);
+      return normalizeGuestCart(nextItems);
+    });
+    return null;
+  }, [status]);
+
+  const clearCart = useCallback(async () => {
+    if (status === 'authenticated') {
+      const updated = await cartService.clearCart();
+      setCart(updated);
+      return;
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    setCart(EMPTY_CART);
+  }, [status]);
+
+  const value = {
+    cart,
+    items: cart.items,
+    cartCount: cart.itemCount,
+    subtotal: cart.subtotal,
+    currency: cart.currency,
+    isLoading,
+    error,
+    isAuthenticated: status === 'authenticated',
+    addItem,
+    updateQuantity,
+    removeItem,
+    clearCart,
   };
 
-  const removeItem = (cartKey) => dispatch({ type: 'REMOVE_ITEM', cartKey });
-
-  const updateQty = (cartKey, qty) => dispatch({ type: 'UPDATE_QTY', cartKey, qty });
-
-  return (
-    <CartContext.Provider value={{ items, cartCount, addItem, removeItem, updateQty }}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export const useCart = () => {

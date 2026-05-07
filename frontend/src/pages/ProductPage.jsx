@@ -79,22 +79,38 @@ export default function ProductPage() {
 
   const images = product.images?.length ? product.images : [];
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedSize) {
       setFeedback({ type: 'error', message: 'Please select a size' });
       setTimeout(() => setFeedback(null), 2500);
       return;
     }
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: Number(selectedVariant?.price ?? product.basePrice),
-      size: selectedSize,
-      color: selectedColor || '—',
-      image: images[0]?.url,
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    if (!selectedVariant) {
+      setFeedback({ type: 'error', message: 'This size/color combination is not available' });
+      setTimeout(() => setFeedback(null), 2500);
+      return;
+    }
+    try {
+      await addItem({
+        variantId: selectedVariant.id,
+        quantity: 1,
+        // Meta below is only used by guest cart (FE localStorage); server cart re-enriches from variantId.
+        productId: product.id,
+        productSlug: product.slug,
+        productName: product.name,
+        size: selectedVariant.size,
+        color: selectedVariant.color,
+        colorHex: selectedVariant.colorHex,
+        imageUrl: images[0]?.url,
+        unitPrice: Number(selectedVariant.price ?? product.basePrice),
+        currency: product.currency,
+      });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Could not add to cart' });
+      setTimeout(() => setFeedback(null), 2500);
+    }
   };
 
   return (

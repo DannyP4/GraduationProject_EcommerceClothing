@@ -50,6 +50,9 @@ app:
   i18n:
     supported-locales: en,vi,ja
     default-locale: en
+  cart:
+    low-stock-threshold: 5
+    max-quantity-per-item: 99
 
 springdoc:
   api-docs:
