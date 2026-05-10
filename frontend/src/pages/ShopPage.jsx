@@ -87,8 +87,8 @@ export default function ShopPage() {
                   <button
                     onClick={() => setActiveCategoryId(null)}
                     className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${activeCategoryId === null
-                        ? 'bg-black text-white'
-                        : 'text-black/60 hover:text-black hover:bg-black/5'
+                      ? 'bg-black text-white'
+                      : 'text-black/60 hover:text-black hover:bg-black/5'
                       }`}
                   >
                     All
@@ -99,8 +99,8 @@ export default function ShopPage() {
                     <button
                       onClick={() => setActiveCategoryId(c.id)}
                       className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${activeCategoryId === c.id
-                          ? 'bg-black text-white'
-                          : 'text-black/60 hover:text-black hover:bg-black/5'
+                        ? 'bg-black text-white'
+                        : 'text-black/60 hover:text-black hover:bg-black/5'
                         }`}
                     >
                       {c.name}
@@ -158,7 +158,7 @@ export default function ShopPage() {
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="group bg-white cursor-pointer relative overflow-hidden"
+                  className="group bg-white cursor-pointer relative overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_12px_24px_-12px_rgba(0,0,0,0.25)]"
                   onClick={() => navigate(`/product/${product.slug || product.id}`)}
                 >
                   <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
@@ -173,10 +173,9 @@ export default function ShopPage() {
                         No image
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
-                      <span className="bg-white text-black text-[10px] font-bold tracking-[0.15em] uppercase px-4 py-2">
-                        View Details
-                      </span>
+                    {/* Slide-up overlay — translate-y-full hidden, rises on hover */}
+                    <div className="absolute inset-x-0 bottom-0 bg-black/85 text-white text-center py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+                      <span className="text-[11px] font-bold tracking-[0.2em] uppercase">View Details →</span>
                     </div>
                   </div>
 
@@ -184,7 +183,7 @@ export default function ShopPage() {
                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 mb-1">
                       {product.categoryName}
                     </p>
-                    <h3 className="text-sm font-bold uppercase tracking-wider mb-2">{product.name}</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-[#E83354] transition-colors">{product.name}</h3>
                     <div className="flex items-center gap-2">
                       <span className="font-['Anton'] text-xl">
                         {formatPrice(product.basePrice, product.currency)}
@@ -214,8 +213,8 @@ export default function ShopPage() {
                     key={p}
                     onClick={() => setPage(p - 1)}
                     className={`w-9 h-9 text-sm font-bold transition-all ${p - 1 === page
-                        ? 'bg-black text-white'
-                        : 'bg-white text-black/60 border border-black/15 hover:border-black hover:text-black'
+                      ? 'bg-black text-white'
+                      : 'bg-white text-black/60 border border-black/15 hover:border-black hover:text-black'
                       }`}
                   >
                     {p}
@@ -274,8 +273,6 @@ function buildPageList(currentPage, totalPages) {
 function formatPrice(value, currency) {
   if (value == null) return '';
   const num = Number(value);
-  if (currency === 'VND') {
-    return `${num.toLocaleString('vi-VN')} ₫`;
-  }
-  return `${currency || '$'} ${num.toFixed(2)}`;
+  if (currency === 'USD') return `$${num.toFixed(2)}`;
+  return `${num.toLocaleString('vi-VN')} ₫`;
 }

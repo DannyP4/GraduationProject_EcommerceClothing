@@ -1,7 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { products } from '../data/products';
-import { useAuth } from '../context/AuthContext';
+import NavbarGlass from '../components/NavbarGlass';
+import AnnouncementBar from '../components/AnnouncementBar';
+import FooterFull from '../components/FooterFull';
+import { getProducts } from '../services/productService';
 
 export default function HomePage() {
   const bgTextRef = useRef(null);
@@ -10,8 +12,9 @@ export default function HomePage() {
   const modelRef = useRef(null);
   const heroRef = useRef(null);
   const navigate = useNavigate();
-  const { status, user } = useAuth();
-  const firstName = (user?.fullName || user?.email || '').split(' ')[0];
+
+  const [trending, setTrending] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(true);
 
   useEffect(() => {
     const t = setTimeout(() => heroRef.current?.classList.add('hero-entered'), 100);
@@ -43,42 +46,31 @@ export default function HomePage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const trending = products.slice(0, 4);
+  useEffect(() => {
+    let cancelled = false;
+    setTrendingLoading(true);
+    getProducts({ size: 4, sort: 'POPULAR' })
+      .then((data) => { if (!cancelled) setTrending(data?.content ?? []); })
+      .catch(() => { if (!cancelled) setTrending([]); })
+      .finally(() => { if (!cancelled) setTrendingLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div style={{ background: 'var(--bg-color)', minHeight: '100vh' }}>
-      {/* NAV */}
-      <nav className="home-nav">
-        <Link to="/" className="logo">UNIFORM</Link>
-        <ul className="home-nav-links">
-          <li><Link to="/shop">Shop</Link></li>
-          <li><a href="#">Collections</a></li>
-          <li><a href="#">Lookbook</a></li>
-          <li><a href="#">About</a></li>
-        </ul>
-        <div className="home-nav-actions">
-          {status === 'authenticated' ? (
-            <Link to="/account/profile" title={user?.email}>{firstName || 'Account'}</Link>
-          ) : status === 'loading' ? null : (
-            <Link to="/login">Login</Link>
-          )}
-          <Link to="/cart">Cart</Link>
-        </div>
-      </nav>
+      <AnnouncementBar />
+      <NavbarGlass />
 
       {/* HERO */}
       <section className="hero" ref={heroRef}>
-        {/* Background big text */}
         <div className="hero-bg-text" ref={bgTextRef}>CAMPUS LEGEND</div>
 
-        {/* Floating shapes */}
         <div className="hero-shape hero-shape-1" />
         <div className="hero-shape hero-shape-2" />
         <div className="hero-ribbon hero-ribbon-1" ref={ribbon1Ref} />
         <div className="hero-ribbon hero-ribbon-2" ref={ribbon2Ref} />
         <div className="hero-ribbon hero-ribbon-3" />
 
-        {/* Hero model image */}
         <img
           ref={modelRef}
           className="hero-model"
@@ -86,7 +78,6 @@ export default function HomePage() {
           alt="Model"
         />
 
-        {/* Content */}
         <div className="hero-content">
           <p className="hero-eyebrow">SS 2026 Collection</p>
           <h1 className="hero-title">
@@ -113,13 +104,13 @@ export default function HomePage() {
 
         <div className="lookbooks-grid">
           {[
-            { tag: 'Campus Essentials', title: 'Back to School', h: '600px' },
-            { tag: 'Streetwear', title: 'Urban Uniform', h: '290px' },
-            { tag: 'Seasonal', title: 'Winter Layers', h: '290px' },
-            { tag: 'Minimal', title: 'Clean Cuts', h: '290px' },
-            { tag: 'Retro', title: 'Varsity Club', h: '290px' },
+            { tag: 'Campus Essentials', title: 'Back to School' },
+            { tag: 'Streetwear', title: 'Urban Uniform' },
+            { tag: 'Seasonal', title: 'Winter Layers' },
+            { tag: 'Minimal', title: 'Clean Cuts' },
+            { tag: 'Retro', title: 'Varsity Club' },
           ].map((lb, i) => (
-            <div key={i} className="lookbook-card" style={i === 0 ? { gridRow: 'span 2', height: '600px' } : { height: '290px' }}>
+            <div key={i} className="lookbook-card">
               <div className="lookbook-card-inner" style={{ height: '100%' }}>
                 <img
                   className="lookbook-img"
@@ -170,39 +161,81 @@ export default function HomePage() {
           <Link to="/shop" className="btn-secondary" style={{ fontSize: '11px' }}>View All</Link>
         </div>
 
-        <div className="trending-grid">
-          {trending.map((p) => (
-            <div
-              key={p.id}
-              className="product-card-home"
-              onClick={() => navigate(`/product/${p.id}`)}
-            >
-              <div className="product-img-wrap">
-                <img src={p.images[0]} alt={p.name} />
-                {p.badge && <span className="product-badge">{p.badge}</span>}
-              </div>
-              <div className="product-info-home">
-                <p className="product-cat-home">{p.category}</p>
-                <h3 className="product-name-home">{p.name}</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="product-price-home">${p.price}</span>
-                  {p.originalPrice && (
-                    <span style={{ fontSize: '13px', color: 'rgba(10,10,10,0.4)', textDecoration: 'line-through' }}>
-                      ${p.originalPrice}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TrendingGrid loading={trendingLoading} products={trending} onClick={(p) => navigate(`/product/${p.slug || p.id}`)} />
       </section>
 
-      {/* SIMPLE FOOTER */}
-      <footer className="footer-simple">
-        <span className="logo">UNIFORM</span>
-        <span className="copy">© 2024 UNIFORM. All rights reserved.</span>
-      </footer>
+      <FooterFull />
     </div>
   );
+}
+
+function TrendingGrid({ loading, products, onClick }) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-white">
+            <div className="bg-black/5 animate-pulse" style={{ paddingTop: '125%' }} />
+            <div className="p-4 space-y-2">
+              <div className="h-3 w-1/3 bg-black/10 animate-pulse" />
+              <div className="h-4 w-2/3 bg-black/10 animate-pulse" />
+              <div className="h-6 w-1/4 bg-black/10 animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-16 text-black/40">
+        <p className="text-sm">No products available yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {products.map((product) => (
+        <div
+          key={product.id}
+          className="group bg-white cursor-pointer relative overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_12px_24px_-12px_rgba(0,0,0,0.25)]"
+          onClick={() => onClick(product)}
+        >
+          <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
+            {product.primaryImageUrl ? (
+              <img
+                src={product.primaryImageUrl}
+                alt={product.name}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
+                No image
+              </div>
+            )}
+            <div className="absolute inset-x-0 bottom-0 bg-black/85 text-white text-center py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase">View Details →</span>
+            </div>
+          </div>
+
+          <div className="p-4">
+            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 mb-1">
+              {product.categoryName}
+            </p>
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-[#E83354] transition-colors">{product.name}</h3>
+            <span className="font-['Anton'] text-xl">{formatPrice(product.basePrice, product.currency)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function formatPrice(value, currency) {
+  if (value == null) return '';
+  const num = Number(value);
+  if (currency === 'USD') return `$${num.toFixed(2)}`;
+  return `${num.toLocaleString('vi-VN')} ₫`;
 }

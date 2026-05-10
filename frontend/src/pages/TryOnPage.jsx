@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../components/Toast';
 import { products } from '../data/products';
 
 const GARMENTS = [
@@ -13,6 +14,7 @@ const GARMENTS = [
 export default function TryOnPage() {
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const toast = useToast();
   const flashRef = useRef(null);
 
   const [opacity, setOpacity] = useState(0.85);
@@ -40,7 +42,7 @@ export default function TryOnPage() {
         color: product.colors[0],
         image: product.images[0],
       });
-      alert(`${product.name} (${selectedSize}) added to cart!`);
+      toast.success(`${product.name} (${selectedSize}) added to cart`);
     }
   };
 

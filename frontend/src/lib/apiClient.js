@@ -50,6 +50,12 @@ apiClient.interceptors.request.use((config) => {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Forward UI locale to BE — RequestLocaleResolver picks the right ProductTranslation row.
+  const locale = localStorage.getItem('app.locale');
+  if (locale) {
+    config.headers = config.headers || {};
+    config.headers['Accept-Language'] = locale;
+  }
   return config;
 });
 

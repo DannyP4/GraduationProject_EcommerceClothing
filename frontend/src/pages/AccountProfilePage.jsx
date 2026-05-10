@@ -3,16 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import * as profileService from '../services/profileService';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 
-const LOCALES = [
-  { value: 'en', label: 'English' },
-  { value: 'vi', label: 'Tiếng Việt' },
-  { value: 'ja', label: '日本語' },
-];
-
 export default function AccountProfilePage() {
   const { user, refreshUser } = useAuth();
 
-  const [profileForm, setProfileForm] = useState({ fullName: '', phone: '', preferredLocale: 'en' });
+  // Language is selected in the navbar.
+  const [profileForm, setProfileForm] = useState({ fullName: '', phone: '' });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
 
@@ -25,7 +20,6 @@ export default function AccountProfilePage() {
       setProfileForm({
         fullName: user.fullName ?? '',
         phone: user.phone ?? '',
-        preferredLocale: user.preferredLocale ?? 'en',
       });
     }
   }, [user]);
@@ -38,7 +32,6 @@ export default function AccountProfilePage() {
       await profileService.updateProfile({
         fullName: profileForm.fullName.trim(),
         phone: profileForm.phone.trim(),
-        preferredLocale: profileForm.preferredLocale,
       });
       await refreshUser();
       setProfileMsg({ type: 'success', text: 'Profile updated.' });
@@ -79,7 +72,7 @@ export default function AccountProfilePage() {
     <div className="space-y-12">
       <section>
         <h2 className="font-['Anton'] text-3xl uppercase tracking-tight mb-1">Profile</h2>
-        <p className="text-xs text-black/50 mb-6">Update your name, phone and preferred language.</p>
+        <p className="text-xs text-black/50 mb-6">Update your name and phone. Language is set in the top navigation.</p>
 
         <form onSubmit={handleProfileSubmit} className="space-y-5 max-w-md">
           <Field label="Email">
@@ -112,26 +105,6 @@ export default function AccountProfilePage() {
               onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
               className={inputClass}
             />
-          </Field>
-
-          <Field label="Language">
-            <div className="relative">
-              <select
-                value={profileForm.preferredLocale}
-                onChange={(e) => setProfileForm({ ...profileForm, preferredLocale: e.target.value })}
-                className={`${inputClass} appearance-none pr-10 cursor-pointer`}
-              >
-                {LOCALES.map((l) => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </select>
-              <svg
-                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-black/50"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
           </Field>
 
           {profileMsg && <Banner msg={profileMsg} />}

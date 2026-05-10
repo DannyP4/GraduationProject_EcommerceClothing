@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
+import QuantityStepper from '../components/QuantityStepper';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useCart } from '../context/CartContext';
 import { products } from '../data/products';
 
@@ -22,6 +24,7 @@ export default function CartPage() {
   const navigate = useNavigate();
 
   const [actionError, setActionError] = useState(null);
+  const [confirmClear, setConfirmClear] = useState(false);
 
 
   const hasBlockedItems = items.some(
@@ -49,9 +52,13 @@ export default function CartPage() {
     }
   };
 
-  const handleClearAll = async () => {
+  const askClearAll = () => {
     if (items.length === 0) return;
-    if (!confirm('Remove all items from your cart?')) return;
+    setConfirmClear(true);
+  };
+
+  const doClearAll = async () => {
+    setConfirmClear(false);
     setActionError(null);
     try {
       await clearCart();
@@ -65,7 +72,7 @@ export default function CartPage() {
       navigate('/login', { state: { from: '/cart' } });
       return;
     }
-    setActionError('Checkout is not yet available.');
+    navigate('/checkout');
   };
 
   return (
@@ -91,8 +98,8 @@ export default function CartPage() {
           </div>
           {items.length > 0 && (
             <button
-              onClick={handleClearAll}
-              className="text-[10px] font-bold tracking-[0.15em] uppercase border border-black/20 text-black/60 px-3 py-2 hover:border-[#E83354] hover:text-[#E83354] transition-colors"
+              onClick={askClearAll}
+              className="text-[10px] font-bold tracking-[0.15em] uppercase border border-[#E83354] text-[#E83354] bg-[#E83354]/5 px-3 py-2 hover:bg-[#E83354] hover:text-white transition-colors"
             >
               Clear All
             </button>
@@ -240,6 +247,17 @@ export default function CartPage() {
         </section>
       </div>
 
+      <ConfirmDialog
+        open={confirmClear}
+        title="Clear all items?"
+        message={`This will remove all ${cartCount} ${cartCount === 1 ? 'item' : 'items'} from your cart. This cannot be undone.`}
+        confirmLabel="Clear Cart"
+        cancelLabel="Keep Items"
+        tone="danger"
+        onCancel={() => setConfirmClear(false)}
+        onConfirm={doClearAll}
+      />
+
       <FooterFull />
     </div>
   );
@@ -298,12 +316,12 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
         <div className="mt-auto pt-3 flex items-center justify-between gap-3">
           <QuantityStepper
             value={item.quantity}
-            max={item.stockQuantity}
+            max={item.stockQuantity ?? 99}
             onChange={onQtyChange}
           />
           <button
             onClick={onRemove}
-            className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-black/40 border border-black/15 px-3 py-1.5 hover:border-[#E83354] hover:text-[#E83354] transition-colors"
+            className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#E83354] border border-[#E83354]/40 bg-[#E83354]/5 px-3 py-1.5 hover:bg-[#E83354] hover:text-white hover:border-[#E83354] transition-colors"
             aria-label={`Remove ${item.productName} from cart`}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -315,92 +333,6 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function QuantityStepper({ value, max, onChange }) {
-  const [display, setDisplay] = useState(value);
-  const targetRef = useRef(value);
-  const timerRef = useRef(null);
-
-  // Skip parent-sync mid-hold so we don't clobber the user's in-progress drag.
-  useEffect(() => {
-    if (timerRef.current == null) {
-      targetRef.current = value;
-      setDisplay(value);
-    }
-  }, [value]);
-
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
-
-  const cap = max ?? 99;
-  const clamp = (n) => Math.max(1, Math.min(cap, n));
-
-  const startHold = (delta) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    targetRef.current = clamp(targetRef.current + delta);
-    setDisplay(targetRef.current);
-
-    let i = 0;
-    const tick = () => {
-      i++;
-      const next = clamp(targetRef.current + delta);
-      if (next === targetRef.current) {
-        timerRef.current = null;
-        return;
-      }
-      targetRef.current = next;
-      setDisplay(next);
-      const delay = i < 5 ? 250 : i < 12 ? 100 : 60;
-      timerRef.current = setTimeout(tick, delay);
-    };
-    timerRef.current = setTimeout(tick, 350);
-  };
-
-  const stopHold = () => {
-    if (timerRef.current == null) return;
-    clearTimeout(timerRef.current);
-    timerRef.current = null;
-    if (targetRef.current !== value) {
-      onChange(targetRef.current);
-    }
-  };
-
-  const buttonClass =
-    'w-9 h-9 text-lg font-bold flex items-center justify-center hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black';
-
-  return (
-    <div className="flex items-center border border-black/15 select-none">
-      <button
-        type="button"
-        onMouseDown={() => startHold(-1)}
-        onMouseUp={stopHold}
-        onMouseLeave={stopHold}
-        onTouchStart={(e) => { e.preventDefault(); startHold(-1); }}
-        onTouchEnd={(e) => { e.preventDefault(); stopHold(); }}
-        disabled={display <= 1}
-        className={buttonClass}
-        aria-label="Decrease quantity"
-      >
-        −
-      </button>
-      <span className="w-10 text-center text-sm font-bold tabular-nums">{display}</span>
-      <button
-        type="button"
-        onMouseDown={() => startHold(+1)}
-        onMouseUp={stopHold}
-        onMouseLeave={stopHold}
-        onTouchStart={(e) => { e.preventDefault(); startHold(+1); }}
-        onTouchEnd={(e) => { e.preventDefault(); stopHold(); }}
-        disabled={display >= cap}
-        className={buttonClass}
-        aria-label="Increase quantity"
-      >
-        +
-      </button>
     </div>
   );
 }
@@ -434,6 +366,6 @@ function Banner({ type, children }) {
 function formatPrice(value, currency) {
   if (value == null) return '';
   const num = Number(value);
-  if (currency === 'VND') return `${num.toLocaleString('vi-VN')} ₫`;
-  return `${currency || '$'} ${num.toFixed(2)}`;
+  if (currency === 'USD') return `$${num.toFixed(2)}`;
+  return `${num.toLocaleString('vi-VN')} ₫`;
 }

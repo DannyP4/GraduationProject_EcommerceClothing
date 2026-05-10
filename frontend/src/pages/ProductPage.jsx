@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
+import QuantityStepper from '../components/QuantityStepper';
+import { useToast } from '../components/Toast';
 import { getProductByIdOrSlug } from '../services/productService';
 import { useCart } from '../context/CartContext';
 
@@ -10,6 +12,7 @@ export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const toast = useToast();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,8 +21,8 @@ export default function ProductPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
-  const [added, setAdded] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +32,7 @@ export default function ProductPage() {
     setActiveImg(0);
     setSelectedSize('');
     setSelectedColor('');
+    setQuantity(1);
 
     getProductByIdOrSlug(id)
       .then((data) => {
@@ -51,7 +55,7 @@ export default function ProductPage() {
   }, [id]);
 
   const colors = useMemo(() => uniqueValues(product?.variants, 'color'), [product]);
-  const sizes  = useMemo(() => uniqueValues(product?.variants, 'size'),  [product]);
+  const sizes = useMemo(() => uniqueValues(product?.variants, 'size'), [product]);
   const selectedVariant = useMemo(
     () => product?.variants?.find((v) => v.color === selectedColor && v.size === selectedSize) || null,
     [product, selectedColor, selectedSize]
@@ -86,19 +90,22 @@ export default function ProductPage() {
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
-      setFeedback({ type: 'error', message: 'Please select a size' });
-      setTimeout(() => setFeedback(null), 2500);
+      toast.error('Please select a size');
       return;
     }
     if (!selectedVariant) {
-      setFeedback({ type: 'error', message: 'This size/color combination is not available' });
-      setTimeout(() => setFeedback(null), 2500);
+      toast.error('This size/color combination is not available');
       return;
     }
+    if (selectedVariant.stockQuantity != null && quantity > selectedVariant.stockQuantity) {
+      toast.error(`Only ${selectedVariant.stockQuantity} in stock`);
+      return;
+    }
+    setAdding(true);
     try {
       await addItem({
         variantId: selectedVariant.id,
-        quantity: 1,
+        quantity,
         productId: product.id,
         productSlug: product.slug,
         productName: product.name,
@@ -109,22 +116,22 @@ export default function ProductPage() {
         unitPrice: Number(selectedVariant.price ?? product.basePrice),
         currency: product.currency,
       });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+      toast.success(`Added ${quantity} × ${product.name} to cart`);
     } catch (err) {
-      setFeedback({ type: 'error', message: err.message || 'Could not add to cart' });
-      setTimeout(() => setFeedback(null), 2500);
+      toast.error(err.message || 'Could not add to cart');
+    } finally {
+      setAdding(false);
     }
   };
 
   return (
     <PageShell>
-      <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] uppercase text-black/40 mb-8">
-        <Link to="/" className="hover:text-black transition-colors">Home</Link>
-        <span>/</span>
-        <Link to="/shop" className="hover:text-black transition-colors">Shop</Link>
-        <span>/</span>
-        <span className="text-black">{product.name}</span>
+      <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] uppercase mb-8">
+        <Link to="/" className="text-[#E83354] hover:text-black transition-colors">Home</Link>
+        <span className="text-black/30">›</span>
+        <Link to="/shop" className="text-[#E83354] hover:text-black transition-colors">Shop</Link>
+        <span className="text-black/30">›</span>
+        <span className="text-black/60 normal-case tracking-normal font-normal">{product.name}</span>
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -135,9 +142,8 @@ export default function ProductPage() {
               <button
                 key={img.id ?? i}
                 onClick={() => setActiveImg(i)}
-                className={`w-16 h-20 overflow-hidden border-2 transition-all ${
-                  i === activeImg ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'
-                }`}
+                className={`w-16 h-20 overflow-hidden border-2 transition-all ${i === activeImg ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
               >
                 <img src={img.url} alt={img.altText || product.name} className="w-full h-full object-cover" />
               </button>
@@ -165,9 +171,11 @@ export default function ProductPage() {
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-2">
             {product.categoryName}
           </p>
-          <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight mb-4">
+          <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight mb-3">
             {product.name}
           </h1>
+
+          <ProductStatsPlaceholder />
 
           <div className="flex items-center gap-3 mb-6">
             <span className="font-['Anton'] text-3xl">
@@ -183,19 +191,18 @@ export default function ProductPage() {
           {colors.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold tracking-[0.15em] uppercase">Color</span>
-                <span className="text-[11px] text-black/50">{selectedColor}</span>
+                <span className="text-sm font-bold tracking-[0.12em] uppercase">Color</span>
+                <span className="text-xs text-black/60 normal-case tracking-normal">{selectedColor}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {colors.map((c) => (
                   <button
                     key={c}
                     onClick={() => setSelectedColor((prev) => (prev === c ? '' : c))}
-                    className={`px-3 py-2 text-[11px] font-bold tracking-wider border transition-all ${
-                      selectedColor === c
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white text-black border-black/20 hover:border-black'
-                    }`}
+                    className={`px-3 py-2 text-[11px] font-bold tracking-wider border transition-all ${selectedColor === c
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black border-black/20 hover:border-black'
+                      }`}
                   >
                     {c}
                   </button>
@@ -208,18 +215,17 @@ export default function ProductPage() {
           {sizes.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold tracking-[0.15em] uppercase">Size</span>
+                <span className="text-sm font-bold tracking-[0.12em] uppercase">Size</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {sizes.map((s) => (
                   <button
                     key={s}
                     onClick={() => setSelectedSize((prev) => (prev === s ? '' : s))}
-                    className={`w-12 h-12 text-[12px] font-bold border transition-all ${
-                      selectedSize === s
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white text-black border-black/20 hover:border-black'
-                    }`}
+                    className={`w-12 h-12 text-[12px] font-bold border transition-all ${selectedSize === s
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black border-black/20 hover:border-black'
+                      }`}
                   >
                     {s}
                   </button>
@@ -228,20 +234,32 @@ export default function ProductPage() {
             </div>
           )}
 
-          {feedback && (
-            <div className={`mb-4 text-xs font-bold tracking-wider uppercase ${feedback.type === 'error' ? 'text-[#E83354]' : 'text-green-700'}`}>
-              {feedback.message}
+          {/* Quantity selector */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold tracking-[0.12em] uppercase">Quantity</span>
+              {selectedVariant?.stockQuantity != null && (
+                <span className="text-xs text-black/60">
+                  <span className="font-bold text-black">{selectedVariant.stockQuantity}</span> in stock
+                </span>
+              )}
             </div>
-          )}
+            <QuantityStepper
+              value={quantity}
+              min={1}
+              max={selectedVariant?.stockQuantity ?? 99}
+              onChange={setQuantity}
+              disabled={!selectedVariant}
+            />
+          </div>
 
           <div className="flex flex-col gap-3 mb-8">
             <button
               onClick={handleAddToCart}
-              className={`w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all ${
-                added ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-[#E83354]'
-              }`}
+              disabled={adding}
+              className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-black text-white hover:bg-[#E83354] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {added ? '✓ Added to Cart!' : '+ Add to Cart'}
+              {adding ? 'Adding…' : '+ Add to Cart'}
             </button>
             <button
               onClick={() => navigate('/try-on')}
@@ -266,7 +284,86 @@ export default function ProductPage() {
           )}
         </div>
       </div>
+
+      <ReviewsPlaceholder />
     </PageShell>
+  );
+}
+
+// Stats placeholder — kept until ratings/sales aggregations land. Greyed-out so users don't read it as live data.
+function ProductStatsPlaceholder() {
+  return (
+    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-black/8 text-[11px] text-black/40">
+      <span className="flex items-center gap-1">
+        <StarIcon /> <span className="font-bold">—</span>
+      </span>
+      <span className="text-black/15">|</span>
+      <span><span className="font-bold">—</span> reviews</span>
+      <span className="text-black/15">|</span>
+      <span><span className="font-bold">—</span> sold</span>
+      <span className="ml-auto text-[9px] tracking-[0.15em] uppercase bg-black/5 px-2 py-0.5">Coming soon</span>
+    </div>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="text-amber-500/40">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function ReviewsPlaceholder() {
+  return (
+    <section className="mt-16 pt-10 border-t border-black/10">
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Customer Voices</p>
+          <h2 className="font-['Anton'] text-3xl md:text-4xl uppercase tracking-tight">Reviews</h2>
+        </div>
+        <span className="text-[10px] tracking-[0.15em] uppercase bg-black/5 text-black/40 px-2 py-1">Coming soon</span>
+      </div>
+
+      <div className="bg-white border border-dashed border-black/15 px-6 py-12 text-center">
+        <div className="inline-flex flex-col items-center gap-3">
+          <div className="flex gap-1 text-black/15">
+            {[0, 1, 2, 3, 4].map((i) => <StarIcon key={i} />)}
+          </div>
+          <p className="text-sm font-bold uppercase tracking-wider text-black/60">No reviews yet</p>
+          <p className="text-xs text-black/50 max-w-sm">
+            Be the first to share your thoughts. Lazy-loaded reviews with infinite scroll will land in a later phase.
+          </p>
+          <button
+            disabled
+            title="Available after the reviews phase ships"
+            className="mt-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-black/20 text-black/40 px-4 py-2 cursor-not-allowed"
+          >
+            Write a Review
+          </button>
+        </div>
+      </div>
+
+      {/* Skeleton: shape of the future review card so the layout slot is visible to demo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 opacity-30 pointer-events-none">
+        {[0, 1].map((i) => (
+          <div key={i} className="bg-white border border-black/8 p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-full bg-black/10" />
+              <div className="h-3 w-24 bg-black/10" />
+              <div className="ml-auto flex gap-0.5">
+                {[0, 1, 2, 3, 4].map((s) => <StarIcon key={s} />)}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-2 w-full bg-black/8" />
+              <div className="h-2 w-5/6 bg-black/8" />
+              <div className="h-2 w-2/3 bg-black/8" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -314,8 +411,6 @@ function uniqueValues(items, key) {
 function formatPrice(value, currency) {
   if (value == null) return '';
   const num = Number(value);
-  if (currency === 'VND') {
-    return `${num.toLocaleString('vi-VN')} ₫`;
-  }
-  return `${currency || '$'} ${num.toFixed(2)}`;
+  if (currency === 'USD') return `$${num.toFixed(2)}`;
+  return `${num.toLocaleString('vi-VN')} ₫`;
 }
