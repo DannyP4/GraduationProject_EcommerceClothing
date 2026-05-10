@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Mirrors BE @Pattern in RegisterRequest — at least one letter and one digit.
+const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).+$/;
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -17,10 +21,20 @@ export default function LoginPage() {
   const layer2 = useRef(null);
   const layer3 = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.from || '/';
+
+  // Already signed in
+  useEffect(() => {
+    if (auth.status === 'authenticated') {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [auth.status, navigate, redirectTo]);
 
   const switchMode = (m) => {
     setMode(m);
     setError('');
+    setConfirmPassword('');
   };
 
   useEffect(() => {
@@ -50,9 +64,19 @@ export default function LoginPage() {
       setError('Password must be at least 8 characters.');
       return;
     }
-    if (mode === 'signup' && !fullName.trim()) {
-      setError('Please enter your full name.');
-      return;
+    if (mode === 'signup') {
+      if (!fullName.trim()) {
+        setError('Please enter your full name.');
+        return;
+      }
+      if (!PASSWORD_RULE.test(password)) {
+        setError('Password must contain at least one letter and one digit.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -62,7 +86,7 @@ export default function LoginPage() {
       } else {
         await auth.register({ email: email.trim(), password, fullName: fullName.trim() });
       }
-      navigate('/shop');
+      navigate(redirectTo);
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -129,6 +153,7 @@ export default function LoginPage() {
                 <input
                   type="text"
                   placeholder="Long Pham"
+                  autoComplete="name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
@@ -143,6 +168,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 placeholder="you@university.edu"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
@@ -156,12 +182,37 @@ export default function LoginPage() {
               <input
                 type="password"
                 placeholder="••••••••"
+                // Tells the browser/password manager whether to offer save vs autofill on this field.
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
                 required
+                minLength={8}
               />
+              {mode === 'signup' && <PasswordStrengthMeter value={password} />}
             </div>
+
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
+                  required
+                  minLength={8}
+                />
+                {confirmPassword && confirmPassword !== password && (
+                  <p className="text-[10px] text-[#E83354] mt-1 tracking-wider">Passwords do not match</p>
+                )}
+              </div>
+            )}
 
             {mode === 'login' && (
               <div className="text-right">

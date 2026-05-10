@@ -1,5 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
@@ -9,6 +9,7 @@ import { products } from '../data/products';
 export default function CartPage() {
   const {
     items,
+    cartCount,
     subtotal,
     currency,
     isLoading,
@@ -16,11 +17,12 @@ export default function CartPage() {
     error,
     updateQuantity,
     removeItem,
+    clearCart,
   } = useCart();
   const navigate = useNavigate();
 
-  // Per-item action errors (e.g., "stock exceeded") shown inline without blowing up the page.
   const [actionError, setActionError] = useState(null);
+
 
   const hasBlockedItems = items.some(
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'
@@ -47,17 +49,54 @@ export default function CartPage() {
     }
   };
 
+  const handleClearAll = async () => {
+    if (items.length === 0) return;
+    if (!confirm('Remove all items from your cart?')) return;
+    setActionError(null);
+    try {
+      await clearCart();
+    } catch (err) {
+      setActionError(err.message || 'Could not clear cart');
+    }
+  };
+
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/cart' } });
+      return;
+    }
+    setActionError('Checkout is not yet available.');
+  };
+
   return (
     <div className="min-h-screen bg-[#E8E8E8]">
       <AnnouncementBar />
       <NavbarGlass />
 
       <div className="max-w-[1440px] mx-auto px-6 py-10">
-        <div className="mb-8">
-          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
-          </p>
-          <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">Your Cart</h1>
+        {/* HEADER */}
+        <div className="flex items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="inline-flex items-center gap-2 mb-2">
+              <span className="bg-[#E83354] text-white text-[10px] font-bold tracking-[0.15em] uppercase px-2 py-1">
+                {cartCount} {cartCount === 1 ? 'item' : 'items'}
+              </span>
+              {!isAuthenticated && items.length > 0 && (
+                <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">
+                  · guest cart
+                </span>
+              )}
+            </div>
+            <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">Your Cart</h1>
+          </div>
+          {items.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="text-[10px] font-bold tracking-[0.15em] uppercase border border-black/20 text-black/60 px-3 py-2 hover:border-[#E83354] hover:text-[#E83354] transition-colors"
+            >
+              Clear All
+            </button>
+          )}
         </div>
 
         {!isAuthenticated && items.length > 0 && (
@@ -66,7 +105,7 @@ export default function CartPage() {
               <span className="font-bold uppercase tracking-wider">Sign in</span> to save this cart across devices.
             </p>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login', { state: { from: '/cart' } })}
               className="text-[10px] font-bold tracking-[0.15em] uppercase border border-black px-3 py-1.5 hover:bg-black hover:text-white transition-colors"
             >
               Sign In
@@ -74,21 +113,13 @@ export default function CartPage() {
           </div>
         )}
 
-        {error && (
-          <div className="mb-6 bg-[#E83354]/10 border border-[#E83354]/30 px-4 py-3 text-xs text-[#E83354]">
-            {error}
-          </div>
-        )}
-        {actionError && (
-          <div className="mb-6 bg-[#E83354]/10 border border-[#E83354]/30 px-4 py-3 text-xs text-[#E83354]">
-            {actionError}
-          </div>
-        )}
+        {error && <Banner type="error">{error}</Banner>}
+        {actionError && <Banner type="error">{actionError}</Banner>}
 
         {isLoading && items.length === 0 ? (
           <div className="text-center py-24 text-black/40 text-sm uppercase tracking-wider">Loading cart…</div>
         ) : items.length === 0 ? (
-          <div className="text-center py-24">
+          <div className="text-center py-24 bg-white">
             <p className="font-['Anton'] text-3xl uppercase mb-4">Your cart is empty</p>
             <p className="text-black/50 mb-8">Add some legendary pieces to get started.</p>
             <button
@@ -99,109 +130,31 @@ export default function CartPage() {
             </button>
           </div>
         ) : (
-          <div className="flex gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
             {/* CART ITEMS */}
-            <div className="flex-1 space-y-4">
-              <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto_auto] gap-6 items-center pb-3 border-b border-black/15">
-                {['', 'Product', 'Size / Color', 'Qty', 'Total'].map((h) => (
-                  <span key={h} className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">{h}</span>
-                ))}
-              </div>
-
-              {items.map((item) => {
-                const key = item.id ?? `guest-${item.variantId}`;
-                const navigateToProduct = () => {
-                  if (item.productSlug) navigate(`/product/${item.productSlug}`);
-                };
-                return (
-                  <div
-                    key={key}
-                    className="bg-white p-4 md:p-6 flex flex-col md:grid md:grid-cols-[80px_1fr_auto_auto_auto] gap-4 items-start md:items-center"
-                  >
-                    <div
-                      className="w-20 h-24 overflow-hidden cursor-pointer flex-shrink-0 bg-black/5"
-                      onClick={navigateToProduct}
-                    >
-                      {item.imageUrl && (
-                        <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
-                      )}
-                    </div>
-
-                    <div>
-                      <h3
-                        className="font-bold text-sm uppercase tracking-wider cursor-pointer hover:text-[#E83354] transition-colors mb-1"
-                        onClick={navigateToProduct}
-                      >
-                        {item.productName ?? 'Product'}
-                      </h3>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {item.size && (
-                          <span className="text-[10px] font-bold tracking-wider bg-black/8 px-2 py-0.5 uppercase">
-                            {item.size}
-                          </span>
-                        )}
-                        {item.color && (
-                          <span className="text-[10px] font-bold tracking-wider bg-black/8 px-2 py-0.5 uppercase">
-                            {item.color}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => navigate('/try-on')}
-                          className="text-[9px] font-bold tracking-wider border border-[#E83354] text-[#E83354] px-2 py-0.5 uppercase hover:bg-[#E83354] hover:text-white transition-all"
-                        >
-                          Try On
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-black/50 mt-1">
-                        {formatPrice(item.unitPrice, item.currency ?? currency)} each
-                      </p>
-                      <StockBadge status={item.stockStatus} stock={item.stockQuantity} />
-                    </div>
-
-                    <div className="hidden md:block" />
-
-                    <div className="flex items-center border border-black/15">
-                      <button
-                        onClick={() => handleQty(item, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        className="w-9 h-9 text-lg font-bold flex items-center justify-center hover:bg-black hover:text-white transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black"
-                      >
-                        −
-                      </button>
-                      <span className="w-10 text-center text-sm font-bold">{item.quantity}</span>
-                      <button
-                        onClick={() => handleQty(item, item.quantity + 1)}
-                        className="w-9 h-9 text-lg font-bold flex items-center justify-center hover:bg-black hover:text-white transition-all"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <span className="font-['Anton'] text-xl">
-                        {formatPrice(item.lineTotal, item.currency ?? currency)}
-                      </span>
-                      <button
-                        onClick={() => handleRemove(item)}
-                        className="text-[10px] font-bold tracking-wider uppercase text-black/30 hover:text-[#E83354] transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="space-y-3">
+              {items.map((item) => (
+                <CartItemRow
+                  key={item.id ?? `guest-${item.variantId}`}
+                  item={item}
+                  currency={currency}
+                  onQtyChange={(qty) => handleQty(item, qty)}
+                  onRemove={() => handleRemove(item)}
+                  onProductClick={() => item.productSlug && navigate(`/product/${item.productSlug}`)}
+                  onTryOn={() => navigate('/try-on')}
+                />
+              ))}
             </div>
 
-            {/* CHECKOUT SUMMARY */}
-            <aside className="w-72 flex-shrink-0 sticky top-20">
+            {/* SUMMARY */}
+            <aside className="lg:sticky lg:top-20">
               <div className="bg-[#0A0A0A] text-white p-6">
                 <h2 className="font-['Anton'] text-2xl uppercase tracking-wider mb-6">Order Summary</h2>
 
                 <div className="space-y-3 mb-6 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-white/60">Subtotal</span>
-                    <span>{formatPrice(subtotal, currency)}</span>
+                    <span className="text-white/60">Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'items'})</span>
+                    <span className="font-bold">{formatPrice(subtotal, currency)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/60">Shipping</span>
@@ -214,32 +167,23 @@ export default function CartPage() {
                 </div>
 
                 <div className="border-t border-white/15 pt-4 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">Subtotal</span>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">Total</span>
                     <span className="font-['Anton'] text-3xl">{formatPrice(subtotal, currency)}</span>
                   </div>
-                </div>
-
-                <div className="flex mb-4">
-                  <input
-                    type="text"
-                    placeholder="Promo code"
-                    disabled
-                    className="flex-1 bg-white/10 border border-white/20 text-white text-sm px-3 py-2.5 focus:outline-none focus:border-white/50 placeholder:text-white/30 disabled:opacity-50"
-                  />
-                  <button
-                    disabled
-                    className="bg-white/15 text-white text-[10px] font-bold tracking-wider px-4 hover:bg-white/25 transition-colors disabled:opacity-50"
-                  >
-                    APPLY
-                  </button>
+                  <p className="text-[10px] text-white/30 mt-1">excl. shipping &amp; tax</p>
                 </div>
 
                 <button
+                  onClick={handleCheckout}
                   disabled={checkoutDisabled}
                   className="w-full bg-[#E83354] text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#c82244] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#E83354]"
                 >
-                  {hasBlockedItems ? 'Resolve Stock Issues' : 'Place Order'}
+                  {hasBlockedItems
+                    ? 'Resolve Stock Issues'
+                    : !isAuthenticated
+                      ? 'Sign in to Checkout'
+                      : 'Place Order'}
                 </button>
 
                 <button
@@ -249,7 +193,7 @@ export default function CartPage() {
                   Continue Shopping
                 </button>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-5 space-y-1.5">
                   {['Secure Checkout', 'Free Returns within 30 Days', 'Multiple Payment Options'].map((f) => (
                     <div key={f} className="flex items-center gap-2 text-[10px] text-white/40">
                       <span className="text-green-400">✓</span> {f}
@@ -261,7 +205,6 @@ export default function CartPage() {
           </div>
         )}
 
-        {/* You May Also Like — still using local data; will be wired to /products in a later phase. */}
         <section className="mt-20">
           <div className="mb-8">
             <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Suggested</p>
@@ -302,6 +245,166 @@ export default function CartPage() {
   );
 }
 
+function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, onTryOn }) {
+  return (
+    <div className="bg-white p-4 md:p-5 flex gap-4 md:gap-5">
+      <div
+        className="w-24 h-28 md:w-28 md:h-32 overflow-hidden cursor-pointer flex-shrink-0 bg-black/5"
+        onClick={onProductClick}
+      >
+        {item.imageUrl && (
+          <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3
+              onClick={onProductClick}
+              className="font-bold text-sm uppercase tracking-wider cursor-pointer hover:text-[#E83354] transition-colors truncate"
+            >
+              {item.productName ?? 'Product'}
+            </h3>
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {item.size && (
+                <span className="text-[10px] font-bold tracking-wider bg-black/8 px-2 py-0.5 uppercase">
+                  {item.size}
+                </span>
+              )}
+              {item.color && (
+                <span className="text-[10px] font-bold tracking-wider bg-black/8 px-2 py-0.5 uppercase">
+                  {item.color}
+                </span>
+              )}
+              <button
+                onClick={onTryOn}
+                className="text-[9px] font-bold tracking-wider border border-[#E83354] text-[#E83354] px-2 py-0.5 uppercase hover:bg-[#E83354] hover:text-white transition-all"
+              >
+                Try On
+              </button>
+            </div>
+            <p className="text-[11px] text-black/50 mt-1.5">
+              {formatPrice(item.unitPrice, item.currency ?? currency)} each
+            </p>
+            <StockBadge status={item.stockStatus} stock={item.stockQuantity} />
+          </div>
+
+          <span className="font-['Anton'] text-xl whitespace-nowrap">
+            {formatPrice(item.lineTotal, item.currency ?? currency)}
+          </span>
+        </div>
+
+        <div className="mt-auto pt-3 flex items-center justify-between gap-3">
+          <QuantityStepper
+            value={item.quantity}
+            max={item.stockQuantity}
+            onChange={onQtyChange}
+          />
+          <button
+            onClick={onRemove}
+            className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-black/40 border border-black/15 px-3 py-1.5 hover:border-[#E83354] hover:text-[#E83354] transition-colors"
+            aria-label={`Remove ${item.productName} from cart`}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+            </svg>
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuantityStepper({ value, max, onChange }) {
+  const [display, setDisplay] = useState(value);
+  const targetRef = useRef(value);
+  const timerRef = useRef(null);
+
+  // Skip parent-sync mid-hold so we don't clobber the user's in-progress drag.
+  useEffect(() => {
+    if (timerRef.current == null) {
+      targetRef.current = value;
+      setDisplay(value);
+    }
+  }, [value]);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  const cap = max ?? 99;
+  const clamp = (n) => Math.max(1, Math.min(cap, n));
+
+  const startHold = (delta) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    targetRef.current = clamp(targetRef.current + delta);
+    setDisplay(targetRef.current);
+
+    let i = 0;
+    const tick = () => {
+      i++;
+      const next = clamp(targetRef.current + delta);
+      if (next === targetRef.current) {
+        timerRef.current = null;
+        return;
+      }
+      targetRef.current = next;
+      setDisplay(next);
+      const delay = i < 5 ? 250 : i < 12 ? 100 : 60;
+      timerRef.current = setTimeout(tick, delay);
+    };
+    timerRef.current = setTimeout(tick, 350);
+  };
+
+  const stopHold = () => {
+    if (timerRef.current == null) return;
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    if (targetRef.current !== value) {
+      onChange(targetRef.current);
+    }
+  };
+
+  const buttonClass =
+    'w-9 h-9 text-lg font-bold flex items-center justify-center hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black';
+
+  return (
+    <div className="flex items-center border border-black/15 select-none">
+      <button
+        type="button"
+        onMouseDown={() => startHold(-1)}
+        onMouseUp={stopHold}
+        onMouseLeave={stopHold}
+        onTouchStart={(e) => { e.preventDefault(); startHold(-1); }}
+        onTouchEnd={(e) => { e.preventDefault(); stopHold(); }}
+        disabled={display <= 1}
+        className={buttonClass}
+        aria-label="Decrease quantity"
+      >
+        −
+      </button>
+      <span className="w-10 text-center text-sm font-bold tabular-nums">{display}</span>
+      <button
+        type="button"
+        onMouseDown={() => startHold(+1)}
+        onMouseUp={stopHold}
+        onMouseLeave={stopHold}
+        onTouchStart={(e) => { e.preventDefault(); startHold(+1); }}
+        onTouchEnd={(e) => { e.preventDefault(); stopHold(); }}
+        disabled={display >= cap}
+        className={buttonClass}
+        aria-label="Increase quantity"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 function StockBadge({ status, stock }) {
   if (!status || status === 'IN_STOCK') return null;
   const styles = {
@@ -315,10 +418,17 @@ function StockBadge({ status, stock }) {
     UNAVAILABLE: 'No longer available',
   }[status];
   return (
-    <span className={`inline-block mt-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 ${styles[status]}`}>
+    <span className={`inline-block mt-1.5 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 ${styles[status]}`}>
       {label}
     </span>
   );
+}
+
+function Banner({ type, children }) {
+  const cls = type === 'success'
+    ? 'border-green-600/30 bg-green-600/10 text-green-700'
+    : 'border-[#E83354]/30 bg-[#E83354]/5 text-[#E83354]';
+  return <div className={`border px-4 py-3 text-xs mb-4 ${cls}`}>{children}</div>;
 }
 
 function formatPrice(value, currency) {

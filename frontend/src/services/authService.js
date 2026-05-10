@@ -25,3 +25,11 @@ export async function me() {
   const resp = await apiClient.get('/auth/me');
   return unwrap(resp);
 }
+
+export async function logout() {
+  // FE clears tokens regardless of server response.
+  try {
+    await apiClient.post('/auth/logout', {});
+  } catch {
+  }
+}

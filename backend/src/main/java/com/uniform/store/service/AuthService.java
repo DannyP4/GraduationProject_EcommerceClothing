@@ -9,4 +9,5 @@ public interface AuthService {
     AuthResponse login(LoginRequest req);
     AuthResponse refreshToken(String refreshToken);
     AuthResponse.UserInfo getCurrentUser(String email);
+    void logout(String email);
 }

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateCartItemRequest {
 
-    // quantity == 0 is a valid request — service treats it as a delete (FE convenience).
+    // quantity == 0 deletes the item
     @NotNull(message = "quantity is required")
     @Min(value = 0, message = "quantity must be >= 0")
     private Integer quantity;

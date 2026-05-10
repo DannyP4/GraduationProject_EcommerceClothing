@@ -22,8 +22,7 @@ import lombok.Setter;
 @Builder
 public class Cart extends BaseEntity {
 
-    // Schema allows multiple carts per user (no UNIQUE on user_id) but business rule is one.
-    // Enforced at app level via CartRepository.findByUserId + lazy-create.
+    // Schema lacks UNIQUE on user_id; one-cart-per-user is enforced at app level.
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",
             foreignKey = @ForeignKey(name = "fk_carts_user"))

@@ -7,8 +7,7 @@ const CartContext = createContext(null);
 const STORAGE_KEY = 'cart.guest';
 const EMPTY_CART = { id: null, items: [], itemCount: 0, subtotal: 0, currency: 'VND' };
 
-// Guest cart is "dumb storage": only the bare-minimum fields are persisted.
-// On hydrate we recompute itemCount/subtotal so a stale storage doc never serves wrong totals.
+// Recompute totals on every read so stale localStorage docs never serve wrong values.
 function normalizeGuestCart(items) {
   const list = items.map((i) => ({
     ...i,
@@ -48,7 +47,7 @@ export function CartProvider({ children }) {
   const [cart, setCart] = useState(EMPTY_CART);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  // Track previous auth status to detect the unauth → auth transition (= time to merge guest cart).
+  // Track previous auth status to detect the unauth → auth transition 
   const prevStatusRef = useRef(status);
 
   useEffect(() => {
@@ -83,12 +82,7 @@ export function CartProvider({ children }) {
         return;
       }
 
-      if (status === 'unauthenticated') {
-        setCart(readGuestCart());
-        return;
-      }
-
-      // status === 'loading' (auth bootstrap in progress) — render guest cart to avoid flicker.
+      // unauthenticated or 'loading' — show guest cart, avoid flicker during auth bootstrap.
       setCart(readGuestCart());
     }
 
@@ -110,7 +104,7 @@ export function CartProvider({ children }) {
       const existingIdx = prev.items.findIndex((i) => i.variantId === variantId);
       const nextItems = existingIdx >= 0
         ? prev.items.map((i, idx) =>
-            idx === existingIdx ? { ...i, quantity: i.quantity + quantity } : i)
+          idx === existingIdx ? { ...i, quantity: i.quantity + quantity } : i)
         : [...prev.items, { variantId, quantity, ...meta }];
       writeGuestCart(nextItems);
       return normalizeGuestCart(nextItems);
@@ -118,7 +112,7 @@ export function CartProvider({ children }) {
     return null;
   }, [status]);
 
-  // Auth mode keys items by server itemId; guest mode keys by variantId — pass the whole item to abstract this.
+  // Auth mode keys items by server itemId
   const updateQuantity = useCallback(async (item, newQuantity) => {
     if (status === 'authenticated') {
       const updated = await cartService.updateItem(item.id, newQuantity);
@@ -129,7 +123,7 @@ export function CartProvider({ children }) {
       const nextItems = newQuantity <= 0
         ? prev.items.filter((i) => i.variantId !== item.variantId)
         : prev.items.map((i) =>
-            i.variantId === item.variantId ? { ...i, quantity: newQuantity } : i);
+          i.variantId === item.variantId ? { ...i, quantity: newQuantity } : i);
       writeGuestCart(nextItems);
       return normalizeGuestCart(nextItems);
     });

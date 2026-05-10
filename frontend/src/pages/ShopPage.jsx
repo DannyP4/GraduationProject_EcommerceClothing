@@ -4,20 +4,18 @@ import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
 import { getProducts, getCategories } from '../services/productService';
-import { useCart } from '../context/CartContext';
 
 const SORT_OPTIONS = [
-  { label: 'Newest',             value: 'NEWEST' },
+  { label: 'Newest', value: 'NEWEST' },
   { label: 'Price: Low to High', value: 'PRICE_ASC' },
   { label: 'Price: High to Low', value: 'PRICE_DESC' },
-  { label: 'Popular',            value: 'POPULAR' },
+  { label: 'Popular', value: 'POPULAR' },
 ];
 
 const PAGE_SIZE = 12;
 
 export default function ShopPage() {
   const navigate = useNavigate();
-  const { addItem } = useCart();
 
   const [categories, setCategories] = useState([]);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
@@ -34,7 +32,7 @@ export default function ShopPage() {
     let cancelled = false;
     getCategories()
       .then((data) => { if (!cancelled) setCategories(data || []); })
-      .catch(() => {});
+      .catch(() => { });
     return () => { cancelled = true; };
   }, []);
 
@@ -60,18 +58,6 @@ export default function ShopPage() {
 
   const pageNumbers = useMemo(() => buildPageList(page, totalPages), [page, totalPages]);
 
-  const handleAddToCart = (e, product) => {
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: Number(product.basePrice),
-      size: 'M',
-      color: '—',
-      image: product.primaryImageUrl,
-    });
-  };
-
   return (
     <div className="min-h-screen bg-[#E8E8E8]">
       <AnnouncementBar />
@@ -81,7 +67,7 @@ export default function ShopPage() {
       <div className="bg-[#0A0A0A] text-white py-12 px-6">
         <div className="max-w-[1440px] mx-auto">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40 mb-2">
-            SS 2024 · {loading ? '…' : `${totalElements} items`}
+            SS 2026 · {loading ? '…' : `${totalElements} items`}
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
             Shop All
@@ -100,11 +86,10 @@ export default function ShopPage() {
                 <li>
                   <button
                     onClick={() => setActiveCategoryId(null)}
-                    className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${
-                      activeCategoryId === null
+                    className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${activeCategoryId === null
                         ? 'bg-black text-white'
                         : 'text-black/60 hover:text-black hover:bg-black/5'
-                    }`}
+                      }`}
                   >
                     All
                   </button>
@@ -113,11 +98,10 @@ export default function ShopPage() {
                   <li key={c.id}>
                     <button
                       onClick={() => setActiveCategoryId(c.id)}
-                      className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${
-                        activeCategoryId === c.id
+                      className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${activeCategoryId === c.id
                           ? 'bg-black text-white'
                           : 'text-black/60 hover:text-black hover:bg-black/5'
-                      }`}
+                        }`}
                     >
                       {c.name}
                     </button>
@@ -189,13 +173,10 @@ export default function ShopPage() {
                         No image
                       </div>
                     )}
-                    <div className="absolute bottom-0 inset-x-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <button
-                        onClick={(e) => handleAddToCart(e, product)}
-                        className="w-full bg-black text-white text-[11px] font-bold tracking-[0.15em] uppercase py-3.5 hover:bg-[#E83354] transition-colors"
-                      >
-                        + Add to Cart
-                      </button>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
+                      <span className="bg-white text-black text-[10px] font-bold tracking-[0.15em] uppercase px-4 py-2">
+                        View Details
+                      </span>
                     </div>
                   </div>
 
@@ -232,11 +213,10 @@ export default function ShopPage() {
                   <button
                     key={p}
                     onClick={() => setPage(p - 1)}
-                    className={`w-9 h-9 text-sm font-bold transition-all ${
-                      p - 1 === page
+                    className={`w-9 h-9 text-sm font-bold transition-all ${p - 1 === page
                         ? 'bg-black text-white'
                         : 'bg-white text-black/60 border border-black/15 hover:border-black hover:text-black'
-                    }`}
+                      }`}
                   >
                     {p}
                   </button>

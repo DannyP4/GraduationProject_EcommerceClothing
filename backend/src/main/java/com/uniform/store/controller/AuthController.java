@@ -54,4 +54,12 @@ public class AuthController {
     public ApiResponse<AuthResponse.UserInfo> me(Authentication authentication) {
         return ApiResponse.ok(authService.getCurrentUser(authentication.getName()));
     }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout (no-op for stateless JWT — FE clears tokens; placeholder for future revocation)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<Void> logout(Authentication authentication) {
+        authService.logout(authentication.getName());
+        return ApiResponse.ok("Logged out", null);
+    }
 }

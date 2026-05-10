@@ -34,8 +34,13 @@ export default function ProductPage() {
       .then((data) => {
         if (cancelled) return;
         setProduct(data);
-        const firstColor = uniqueValues(data?.variants, 'color')[0];
-        if (firstColor) setSelectedColor(firstColor);
+        const firstAvailable = (data?.variants ?? []).find(
+          (v) => v.isActive !== false && (v.stockQuantity ?? 0) > 0
+        ) ?? data?.variants?.[0];
+        if (firstAvailable) {
+          setSelectedColor(firstAvailable.color ?? '');
+          setSelectedSize(firstAvailable.size ?? '');
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load product');
@@ -94,7 +99,6 @@ export default function ProductPage() {
       await addItem({
         variantId: selectedVariant.id,
         quantity: 1,
-        // Meta below is only used by guest cart (FE localStorage); server cart re-enriches from variantId.
         productId: product.id,
         productSlug: product.slug,
         productName: product.name,
@@ -186,7 +190,7 @@ export default function ProductPage() {
                 {colors.map((c) => (
                   <button
                     key={c}
-                    onClick={() => setSelectedColor(c)}
+                    onClick={() => setSelectedColor((prev) => (prev === c ? '' : c))}
                     className={`px-3 py-2 text-[11px] font-bold tracking-wider border transition-all ${
                       selectedColor === c
                         ? 'bg-black text-white border-black'
@@ -210,7 +214,7 @@ export default function ProductPage() {
                 {sizes.map((s) => (
                   <button
                     key={s}
-                    onClick={() => setSelectedSize(s)}
+                    onClick={() => setSelectedSize((prev) => (prev === s ? '' : s))}
                     className={`w-12 h-12 text-[12px] font-bold border transition-all ${
                       selectedSize === s
                         ? 'bg-black text-white border-black'
@@ -247,15 +251,17 @@ export default function ProductPage() {
             </button>
           </div>
 
-          {/* Attributes */}
           {product.attributes && Object.keys(product.attributes).length > 0 && (
-            <div className="border-t border-black/10 pt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-black/70">
-              {Object.entries(product.attributes).map(([k, v]) => (
-                <div key={k} className="flex justify-between border-b border-black/5 pb-1">
-                  <span className="text-black/50 uppercase tracking-wider text-[10px] font-bold">{k}</span>
-                  <span>{v}</span>
-                </div>
-              ))}
+            <div className="border-t border-black/10 pt-5">
+              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-3">Details</h3>
+              <dl className="divide-y divide-black/5">
+                {Object.entries(product.attributes).map(([k, v]) => (
+                  <div key={k} className="grid grid-cols-[140px_1fr] gap-4 py-2.5 items-center">
+                    <dt className="text-black/50 uppercase tracking-wider text-[10px] font-bold leading-none">{k}</dt>
+                    <dd className="text-sm text-black/80 break-words leading-none">{v}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           )}
         </div>

@@ -9,7 +9,7 @@ import jakarta.persistence.Converter;
 import java.util.Map;
 
 /**
- * Converts Map<String, Object> ↔ JSON string for the payments.gateway_response column.
+ * Converts Map<String, Object> to JSON string for the payments.gateway_response.
  */
 @Converter
 public class JsonMapConverter implements AttributeConverter<Map<String, Object>, String> {

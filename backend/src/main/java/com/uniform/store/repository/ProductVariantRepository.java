@@ -14,7 +14,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     List<ProductVariant> findByProductIdAndIsActiveTrueOrderBySizeAscColorAsc(Long productId);
 
-    // Bulk fetch with product joined, used by cart enrichment to avoid N+1 over LAZY variant.product.
+    // Bulk fetch with product joined
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product WHERE v.id IN :ids")
     List<ProductVariant> findAllByIdInWithProduct(@Param("ids") Collection<Long> ids);
 }

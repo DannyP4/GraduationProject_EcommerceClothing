@@ -69,14 +69,23 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await authService.logout();
     clearStoredAuth();
     setUser(null);
     setStatus('unauthenticated');
   }, []);
 
+  // Re-fetch /auth/me
+  const refreshUser = useCallback(async () => {
+    const fresh = await authService.me();
+    setUser(fresh);
+    setStoredUser(fresh);
+    return fresh;
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, status, login, register, logout }}>
+    <AuthContext.Provider value={{ user, status, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

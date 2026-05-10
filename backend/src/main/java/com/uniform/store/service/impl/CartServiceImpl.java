@@ -51,7 +51,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartDto getCart(String email) {
         User user = loadUser(email);
-        // Lazy: cart row is created only on first POST /cart/items, not on read.
+        // Cart row is lazily created on first add - read returns an empty DTO
         return cartRepository.findByUserId(user.getId())
                 .map(this::buildCartDto)
                 .orElseGet(this::emptyCartDto);
@@ -87,7 +87,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", itemId));
 
-        // findByIdAndCartId is the auth check — ensures the item belongs to this user's cart.
+        // The (id, cartId) lookup doubles as the ownership check.
         CartItem item = cartItemRepository.findByIdAndCartId(itemId, cart.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", itemId));
 
@@ -96,7 +96,7 @@ public class CartServiceImpl implements CartService {
             return buildCartDto(cart);
         }
 
-        // Re-validate against current stock — variant stock may have dropped since the item was added.
+        // Re-check against current stock may have dropped since the item was added.
         validateQuantity(req.getQuantity(), item.getVariant());
         item.setQuantity(req.getQuantity());
         cartItemRepository.save(item);
@@ -127,7 +127,7 @@ public class CartServiceImpl implements CartService {
             return emptyCartDto();
         }
         Cart cart = cartOpt.get();
-        // Keep the cart row, delete only items — avoids row create/delete churn on every clear.
+        // Keep the cart row to avoid row create/delete churn on every clear.
         cartItemRepository.deleteAllByCartId(cart.getId());
         return buildCartDto(cart);
     }
@@ -138,7 +138,7 @@ public class CartServiceImpl implements CartService {
         User user = loadUser(email);
         Cart cart = getOrCreateCart(user);
 
-        // De-dup incoming list — if FE sends the same variantId twice, sum the quantities once.
+        // De-dup: same variantId sent twice → sum quantities once.
         Map<Long, Integer> incoming = new LinkedHashMap<>();
         for (MergeCartRequest.MergeItem in : req.getItems()) {
             incoming.merge(in.getVariantId(), in.getQuantity(), Integer::sum);
@@ -152,7 +152,7 @@ public class CartServiceImpl implements CartService {
 
         for (Map.Entry<Long, Integer> entry : incoming.entrySet()) {
             ProductVariant variant = available.get(entry.getKey());
-            // Skip unknown/inactive variants silently — losing one stale guest item is better than rejecting the whole merge.
+            // Skip unknown/inactive variants silently
             if (variant == null) continue;
 
             Optional<CartItem> existingOpt = cartItemRepository
@@ -175,7 +175,7 @@ public class CartServiceImpl implements CartService {
         return buildCartDto(cart);
     }
 
-    // ----- helpers -----
+    // helpers
 
     private User loadUser(String email) {
         return userRepository.findByEmail(email)

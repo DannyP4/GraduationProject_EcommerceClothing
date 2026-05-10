@@ -68,7 +68,7 @@ export default function FooterFull() {
         {/* Bottom row */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-[11px] text-white/30 tracking-wider">
-            © 2024 UNIFORM. All rights reserved.
+            © 2026 UNIFORM. All rights reserved.
           </p>
           <div className="flex gap-6">
             {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((l) => (

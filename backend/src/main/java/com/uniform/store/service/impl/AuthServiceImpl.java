@@ -94,6 +94,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public void logout(String email) {
+        // Stateless JWT: no server-side state.
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public AuthResponse refreshToken(String refreshToken) {
         if (!jwtUtil.validateRefreshToken(refreshToken)) {

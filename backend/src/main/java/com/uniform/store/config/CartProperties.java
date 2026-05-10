@@ -14,6 +14,6 @@ public class CartProperties {
     // Stock at-or-below this value (and > 0) is shown as LOW_STOCK on GET /cart.
     private int lowStockThreshold = 5;
 
-    // Hard cap on per-line quantity to defend against absurd input (e.g. qty=999999).
+    // Hard cap on per-line quantity.
     private int maxQuantityPerItem = 99;
 }

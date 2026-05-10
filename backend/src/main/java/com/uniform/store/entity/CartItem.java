@@ -30,7 +30,7 @@ public class CartItem extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_cart_items_cart"))
     private Cart cart;
 
-    // No price snapshot — price is read from variant on every cart fetch (avoids "ghost price" when prices change).
+    // price is recomputed from variant on every read.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "variant_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_cart_items_variant"))

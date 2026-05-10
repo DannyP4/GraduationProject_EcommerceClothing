@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { products } from '../data/products';
+import { useAuth } from '../context/AuthContext';
 
 export default function HomePage() {
   const bgTextRef = useRef(null);
@@ -9,6 +10,8 @@ export default function HomePage() {
   const modelRef = useRef(null);
   const heroRef = useRef(null);
   const navigate = useNavigate();
+  const { status, user } = useAuth();
+  const firstName = (user?.fullName || user?.email || '').split(' ')[0];
 
   useEffect(() => {
     const t = setTimeout(() => heroRef.current?.classList.add('hero-entered'), 100);
@@ -54,7 +57,11 @@ export default function HomePage() {
           <li><a href="#">About</a></li>
         </ul>
         <div className="home-nav-actions">
-          <Link to="/login">Login</Link>
+          {status === 'authenticated' ? (
+            <Link to="/account/profile" title={user?.email}>{firstName || 'Account'}</Link>
+          ) : status === 'loading' ? null : (
+            <Link to="/login">Login</Link>
+          )}
           <Link to="/cart">Cart</Link>
         </div>
       </nav>
@@ -81,7 +88,7 @@ export default function HomePage() {
 
         {/* Content */}
         <div className="hero-content">
-          <p className="hero-eyebrow">SS 2024 Collection</p>
+          <p className="hero-eyebrow">SS 2026 Collection</p>
           <h1 className="hero-title">
             DRESS<br />
             LIKE A<br />
