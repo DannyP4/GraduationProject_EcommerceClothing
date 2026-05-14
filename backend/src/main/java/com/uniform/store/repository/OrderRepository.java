@@ -16,5 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Lookup by orderNumber + userId.
     Optional<Order> findByOrderNumberAndUserId(String orderNumber, Long userId);
 
+    Optional<Order> findByOrderNumber(String orderNumber);
+
     boolean existsByOrderNumber(String orderNumber);
 }

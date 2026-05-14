@@ -4,11 +4,12 @@ import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.dto.response.OrderDetailDto;
 import com.uniform.store.dto.response.OrderSummaryDto;
 import com.uniform.store.dto.response.PageResponse;
+import com.uniform.store.dto.response.PlaceOrderResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
 
-    OrderDetailDto placeOrder(String email, PlaceOrderRequest req);
+    PlaceOrderResponse placeOrder(String email, PlaceOrderRequest req, String clientIp);
 
     PageResponse<OrderSummaryDto> listOrders(String email, Pageable pageable);
 

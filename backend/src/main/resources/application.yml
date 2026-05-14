@@ -53,6 +53,37 @@ app:
   cart:
     low-stock-threshold: 5
     max-quantity-per-item: 99
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  fx:
+    vnd-usd-rate: 0.0000385
+    provider: HARDCODED
+    cache-ttl-seconds: 60
+  payments:
+    vnpay:
+      tmn-code: ${VNPAY_TMN_CODE:}
+      hash-secret: ${VNPAY_HASH_SECRET:}
+      payment-url: ${VNPAY_PAYMENT_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      return-url: ${VNPAY_RETURN_URL:http://localhost:5173/payment/vnpay/return}
+      version: '2.1.0'
+      currency-code: VND
+      locale: vn
+      command: pay
+      expire-minutes: 15
+    stripe:
+      publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
+      secret-key: ${STRIPE_SECRET_KEY:}
+      webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+      success-url: ${FRONTEND_BASE_URL:http://localhost:5173}/payment/stripe/success?session_id={CHECKOUT_SESSION_ID}&order={ORDER_NUMBER}
+      cancel-url: ${FRONTEND_BASE_URL:http://localhost:5173}/payment/stripe/cancel?order={ORDER_NUMBER}
+      checkout-currency: usd
+
+sentry:
+  dsn: ${SENTRY_DSN_BACKEND:}
+  environment: ${SPRING_PROFILES_ACTIVE:dev}
+  traces-sample-rate: 0.0
+  send-default-pii: false
+  enabled: true
 
 springdoc:
   api-docs:

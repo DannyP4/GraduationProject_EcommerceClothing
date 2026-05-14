@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.dto.fx.FxQuote;
 import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.dto.response.OrderDetailDto;
 import com.uniform.store.dto.response.OrderItemDto;
@@ -7,6 +8,7 @@ import com.uniform.store.dto.response.OrderStatusHistoryDto;
 import com.uniform.store.dto.response.OrderSummaryDto;
 import com.uniform.store.dto.response.PageResponse;
 import com.uniform.store.dto.response.PaymentDto;
+import com.uniform.store.dto.response.PlaceOrderResponse;
 import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Cart;
 import com.uniform.store.entity.CartItem;
@@ -33,7 +35,10 @@ import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
+import com.uniform.store.service.FxService;
 import com.uniform.store.service.OrderService;
+import com.uniform.store.service.StripeService;
+import com.uniform.store.service.VnpayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -71,15 +76,16 @@ public class OrderServiceImpl implements OrderService {
     private final OrderStatusHistoryRepository statusHistoryRepository;
     private final PaymentRepository paymentRepository;
     private final OrderNumberGenerator orderNumberGenerator;
+    private final FxService fxService;
+    private final VnpayService vnpayService;
+    private final StripeService stripeService;
 
     @Override
     @Transactional
-    public OrderDetailDto placeOrder(String email, PlaceOrderRequest req) {
+    public PlaceOrderResponse placeOrder(String email, PlaceOrderRequest req, String clientIp) {
         PaymentProvider provider = parseProvider(req.getPaymentMethod());
-        // Phase 3b is COD-only. VNPAY/STRIPE wired up in 3c with webhook + payment-then-stock flow.
-        if (provider != PaymentProvider.COD) {
-            throw new BadRequestException(
-                    provider + " is not supported yet. Use COD.");
+        if (provider == PaymentProvider.BANK_TRANSFER) {
+            throw new BadRequestException("BANK_TRANSFER is not supported yet.");
         }
 
         User user = loadUser(email);
@@ -95,13 +101,11 @@ public class OrderServiceImpl implements OrderService {
         }
 
         List<Long> variantIds = items.stream().map(ci -> ci.getVariant().getId()).toList();
-        // SELECT ... FOR UPDATE: serializes concurrent placeOrder/cancelOrder on overlapping variants.
-        // Trade-off: holds row locks until commit; OK because tx is short and store concurrency is low.
+        // pessimistic lock against concurrent placeOrder/cancelOrder on the same variant.
         Map<Long, ProductVariant> variants = variantRepository
                 .findAllByIdInWithProductForUpdate(variantIds).stream()
                 .collect(Collectors.toMap(ProductVariant::getId, Function.identity()));
 
-        // Fail fast if any cart line is no longer fulfillable
         List<String> blocked = new ArrayList<>();
         for (CartItem ci : items) {
             ProductVariant v = variants.get(ci.getVariant().getId());
@@ -119,7 +123,6 @@ public class OrderServiceImpl implements OrderService {
                     "Items unavailable: " + String.join(", ", blocked) + ". Please update your cart.");
         }
 
-        // Compute totals + decrement stock + build snapshot items in one pass
         BigDecimal subtotal = BigDecimal.ZERO;
         String currency = DEFAULT_CURRENCY;
         List<OrderItem> orderItems = new ArrayList<>(items.size());
@@ -127,7 +130,6 @@ public class OrderServiceImpl implements OrderService {
         for (CartItem ci : items) {
             ProductVariant v = variants.get(ci.getVariant().getId());
             Product p = v.getProduct();
-            // Same dynamic-pricing rule as cart: variant override wins over product base.
             BigDecimal unitPrice = v.getPriceOverride() != null ? v.getPriceOverride() : p.getBasePrice();
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(ci.getQuantity()));
             currency = p.getCurrency();
@@ -146,7 +148,6 @@ public class OrderServiceImpl implements OrderService {
             subtotal = subtotal.add(lineTotal);
         }
 
-        // Phase 3b: free shipping placeholder + zero tax (logistics & VAT handled later).
         BigDecimal shippingCost = BigDecimal.ZERO;
         BigDecimal taxTotal = BigDecimal.ZERO;
         BigDecimal discountTotal = BigDecimal.ZERO;
@@ -162,7 +163,6 @@ public class OrderServiceImpl implements OrderService {
                 .taxTotal(taxTotal)
                 .grandTotal(grandTotal)
                 .currency(currency)
-                // Address snapshot — denormalized to survive future address edits/deletes.
                 .shippingRecipient(address.getRecipient())
                 .shippingPhone(address.getPhone())
                 .shippingLine1(address.getLine1())
@@ -184,11 +184,22 @@ public class OrderServiceImpl implements OrderService {
         statusHistoryRepository.save(OrderStatusHistory.builder()
                 .order(order)
                 .status(OrderStatus.PENDING)
-                .note("Order placed")
+                .note("Order placed (" + provider + ")")
                 .changedByUserId(user.getId())
                 .build());
 
-        // COD payment: PENDING until courier confirms cash collected on delivery (Phase 3c admin flow).
+        cartItemRepository.deleteAllByCartId(cart.getId());
+
+        return switch (provider) {
+            case COD -> finalizeCodPlacement(order, grandTotal, currency, orderItems);
+            case VNPAY -> finalizeVnpayPlacement(order, grandTotal, currency, orderItems, clientIp);
+            case STRIPE -> finalizeStripePlacement(order, grandTotal, currency, orderItems);
+            default -> throw new IllegalStateException("Unhandled provider: " + provider);
+        };
+    }
+
+    private PlaceOrderResponse finalizeCodPlacement(Order order, BigDecimal grandTotal,
+                                                    String currency, List<OrderItem> orderItems) {
         paymentRepository.save(Payment.builder()
                 .order(order)
                 .provider(PaymentProvider.COD)
@@ -196,18 +207,61 @@ public class OrderServiceImpl implements OrderService {
                 .currency(currency)
                 .status(PaymentStatus.PENDING)
                 .build());
+        return PlaceOrderResponse.builder()
+                .order(buildDetailDto(order, orderItems))
+                .build();
+    }
 
-        // Clear cart immediately — match Shopee/Tiki UX, prevent duplicate-order on reload.
-        cartItemRepository.deleteAllByCartId(cart.getId());
+    private PlaceOrderResponse finalizeVnpayPlacement(Order order, BigDecimal grandTotal, String currency,
+                                                      List<OrderItem> orderItems, String clientIp) {
+        Payment payment = paymentRepository.save(Payment.builder()
+                .order(order)
+                .provider(PaymentProvider.VNPAY)
+                .providerTxnId(order.getOrderNumber())
+                .amount(grandTotal)
+                .currency(currency)
+                .status(PaymentStatus.PENDING)
+                .build());
+        String redirectUrl = vnpayService.buildPaymentUrl(order.getOrderNumber(), grandTotal, clientIp);
+        return PlaceOrderResponse.builder()
+                .order(buildDetailDto(order, orderItems))
+                .redirectUrl(redirectUrl)
+                .paymentRef(payment.getProviderTxnId())
+                .build();
+    }
 
-        return buildDetailDto(order, orderItems);
+    private PlaceOrderResponse finalizeStripePlacement(Order order, BigDecimal grandTotal,
+                                                       String currency, List<OrderItem> orderItems) {
+        FxQuote quote = fxService.quoteVndToUsd(grandTotal);
+        long usdMinor = quote.convertedAmountInMinorUnits();
+
+        StripeService.StripeSession session = stripeService.createCheckoutSession(
+                order.getOrderNumber(), usdMinor, quote.convertedCurrency());
+
+        Map<String, Object> snapshot = quote.toSnapshot();
+        snapshot.put("checkoutSessionId", session.sessionId());
+
+        Payment payment = paymentRepository.save(Payment.builder()
+                .order(order)
+                .provider(PaymentProvider.STRIPE)
+                .providerTxnId(session.sessionId())
+                .amount(quote.convertedAmount())
+                .currency(quote.convertedCurrency())
+                .status(PaymentStatus.PENDING)
+                .rawRequest(snapshot)
+                .build());
+
+        return PlaceOrderResponse.builder()
+                .order(buildDetailDto(order, orderItems))
+                .redirectUrl(session.checkoutUrl())
+                .paymentRef(payment.getProviderTxnId())
+                .build();
     }
 
     @Override
     public PageResponse<OrderSummaryDto> listOrders(String email, Pageable pageable) {
         User user = loadUser(email);
 
-        // Cap page size — defense against unbounded scans.
         int safeSize = Math.min(Math.max(pageable.getPageSize(), 1), MAX_PAGE_SIZE);
         Pageable safe = PageRequest.of(Math.max(pageable.getPageNumber(), 0), safeSize);
 
@@ -220,14 +274,12 @@ public class OrderServiceImpl implements OrderService {
         List<Long> orderIds = orders.stream().map(Order::getId).toList();
         List<OrderItem> allItems = orderItemRepository.findByOrderIdInOrderByOrderIdAscIdAsc(orderIds);
 
-        // Group items per order (preserves insertion order for "first item" picks)
         Map<Long, List<OrderItem>> itemsByOrder = allItems.stream()
                 .collect(Collectors.groupingBy(
                         oi -> oi.getOrder().getId(),
                         LinkedHashMap::new,
                         Collectors.toList()));
 
-        // Resolve thumbnails for the first item of each order
         List<Long> firstVariantIds = itemsByOrder.values().stream()
                 .filter(list -> !list.isEmpty())
                 .map(list -> list.get(0).getVariant().getId())
@@ -304,7 +356,6 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId());
 
-        // Reacquire pessimistic lock on the same variants so concurrent placeOrder cannot interleave with restore.
         List<Long> variantIds = items.stream().map(oi -> oi.getVariant().getId()).distinct().toList();
         Map<Long, ProductVariant> variants = variantRepository
                 .findAllByIdInWithProductForUpdate(variantIds).stream()
@@ -312,9 +363,6 @@ public class OrderServiceImpl implements OrderService {
 
         for (OrderItem oi : items) {
             ProductVariant v = variants.get(oi.getVariant().getId());
-            // Defensive null check: variant should always exist (FK ON DELETE RESTRICT) — but a hard NPE
-            // here would leave the order partially restored, so log-and-skip would be wrong too.
-            // Safer to fail loud and let the tx roll back if invariants are violated.
             if (v == null) {
                 throw new IllegalStateException(
                         "Variant " + oi.getVariant().getId() + " not found while cancelling order " + orderNumber);
@@ -332,7 +380,7 @@ public class OrderServiceImpl implements OrderService {
                 .changedByUserId(user.getId())
                 .build());
 
-        // Schema's payment.status enum has no CANCELLED — FAILED is the closest "did not capture" terminal state.
+        // payment enum has no CANCELLED; FAILED is the closest terminal state.
         paymentRepository.findFirstByOrderIdOrderByIdDesc(order.getId()).ifPresent(p -> {
             p.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(p);
@@ -351,7 +399,7 @@ public class OrderServiceImpl implements OrderService {
             return PaymentProvider.valueOf(raw.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             throw new BadRequestException(
-                    "Invalid paymentMethod '" + raw + "'. Allowed: COD");
+                    "Invalid paymentMethod '" + raw + "'. Allowed: COD, VNPAY, STRIPE");
         }
     }
 
@@ -375,7 +423,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderDetailDto buildDetailDto(Order order, List<OrderItem> items) {
-        // Resolve productSlug + thumbnail from the live variants/products (best-effort — items also carry snapshots).
         Map<Long, ProductVariant> variantMap = Map.of();
         Map<Long, String> primaryImages = Map.of();
 

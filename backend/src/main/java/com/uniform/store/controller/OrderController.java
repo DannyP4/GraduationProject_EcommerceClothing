@@ -5,10 +5,12 @@ import com.uniform.store.dto.response.ApiResponse;
 import com.uniform.store.dto.response.OrderDetailDto;
 import com.uniform.store.dto.response.OrderSummaryDto;
 import com.uniform.store.dto.response.PageResponse;
+import com.uniform.store.dto.response.PlaceOrderResponse;
 import com.uniform.store.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -35,11 +37,12 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Place an order from the current cart (COD only in Phase 3b)")
-    public ApiResponse<OrderDetailDto> placeOrder(Authentication authentication,
-                                                  @Valid @RequestBody PlaceOrderRequest req) {
+    @Operation(summary = "Place an order from the current cart (COD, VNPAY, or STRIPE)")
+    public ApiResponse<PlaceOrderResponse> placeOrder(Authentication authentication,
+                                                      @Valid @RequestBody PlaceOrderRequest req,
+                                                      HttpServletRequest http) {
         return ApiResponse.ok("Order placed",
-                orderService.placeOrder(authentication.getName(), req));
+                orderService.placeOrder(authentication.getName(), req, resolveClientIp(http)));
     }
 
     @GetMapping
@@ -64,5 +67,11 @@ public class OrderController {
                                                    @PathVariable String orderNumber) {
         return ApiResponse.ok("Order cancelled",
                 orderService.cancelOrder(authentication.getName(), orderNumber));
+    }
+
+    private static String resolveClientIp(HttpServletRequest http) {
+        String forwarded = http.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) return forwarded.split(",")[0].trim();
+        return http.getRemoteAddr();
     }
 }

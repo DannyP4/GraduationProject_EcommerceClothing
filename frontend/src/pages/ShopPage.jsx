@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
@@ -16,6 +16,8 @@ const PAGE_SIZE = 12;
 
 export default function ShopPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get('q')?.trim() ?? '';
 
   const [categories, setCategories] = useState([]);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
@@ -26,7 +28,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => { setPage(0); }, [activeCategoryId, sort]);
+  useEffect(() => { setPage(0); }, [activeCategoryId, sort, query]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,12 +47,19 @@ export default function ShopPage() {
       size: PAGE_SIZE,
       sort,
       categoryId: activeCategoryId ?? undefined,
+      search: query || undefined,
     })
       .then((data) => { if (!cancelled) setPageData(data); })
       .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load products'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [page, sort, activeCategoryId]);
+  }, [page, sort, activeCategoryId, query]);
+
+  const clearQuery = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('q');
+    setSearchParams(next, { replace: true });
+  };
 
   const products = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
@@ -67,11 +76,22 @@ export default function ShopPage() {
       <div className="bg-[#0A0A0A] text-white py-12 px-6">
         <div className="max-w-[1440px] mx-auto">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40 mb-2">
-            SS 2026 · {loading ? '…' : `${totalElements} items`}
+            {query
+              ? `Search · ${loading ? '…' : `${totalElements} result${totalElements === 1 ? '' : 's'}`}`
+              : `SS 2026 · ${loading ? '…' : `${totalElements} items`}`}
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
-            Shop All
+            {query ? <>Results for &ldquo;{query}&rdquo;</> : 'Shop All'}
           </h1>
+          {query && (
+            <button
+              onClick={clearQuery}
+              className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/60 hover:text-[#E83354] transition-colors"
+            >
+              <span>Clear search</span>
+              <span aria-hidden>×</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -149,10 +169,27 @@ export default function ShopPage() {
           ) : loading ? (
             <SkeletonGrid count={PAGE_SIZE} />
           ) : products.length === 0 ? (
-            <div className="text-center py-24 text-black/40">
-              <p className="text-xl font-bold mb-2">No products found</p>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
+            query ? (
+              <div className="bg-white border border-black/10 py-20 px-6 text-center">
+                <p className="font-['Anton'] text-4xl uppercase tracking-tight mb-3">
+                  No matches for &ldquo;{query}&rdquo;
+                </p>
+                <p className="text-sm text-black/60 mb-8">
+                  We couldn&rsquo;t find anything matching that search. Try a different keyword or browse the full catalog.
+                </p>
+                <button
+                  onClick={clearQuery}
+                  className="inline-block bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase px-12 py-4 hover:bg-[#E83354] transition-colors"
+                >
+                  Back to Shop
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-24 text-black/40">
+                <p className="text-xl font-bold mb-2">No products found</p>
+                <p className="text-sm">Try adjusting your filters</p>
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {products.map((product) => (

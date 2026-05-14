@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import * as orderService from '../services/orderService';
+import * as paymentService from '../services/paymentService';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function AccountOrderDetailPage() {
@@ -12,6 +13,7 @@ export default function AccountOrderDetailPage() {
 
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [actionMsg, setActionMsg] = useState(null);
 
   const refresh = useCallback(async () => {
@@ -43,6 +45,29 @@ export default function AccountOrderDetailPage() {
       setCancelling(false);
     }
   };
+
+  const doContinuePay = async () => {
+    setRetrying(true);
+    setActionMsg(null);
+    try {
+      const result = await paymentService.retryPayment(orderNumber);
+      if (result?.redirectUrl) {
+        window.location.assign(result.redirectUrl);
+        return;
+      }
+      setActionMsg({ type: 'error', text: 'Could not obtain a payment URL. Try again.' });
+    } catch (err) {
+      setActionMsg({ type: 'error', text: err.message || 'Could not initiate payment.' });
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const canContinuePay =
+    order?.status === 'PENDING'
+    && order?.payment
+    && order.payment.provider !== 'COD'
+    && order.payment.status !== 'CAPTURED';
 
   if (loading && !order) return <p className="text-sm text-black/40">Loading…</p>;
   if (error) {
@@ -143,6 +168,16 @@ export default function AccountOrderDetailPage() {
               </div>
             )}
           </div>
+
+          {canContinuePay && (
+            <button
+              onClick={doContinuePay}
+              disabled={retrying}
+              className="w-full bg-[#E83354] text-white text-[12px] font-bold tracking-[0.15em] uppercase py-3 hover:bg-[#c82244] transition-colors disabled:opacity-50"
+            >
+              {retrying ? 'Redirecting…' : `Continue Paying (${order.payment.provider})`}
+            </button>
+          )}
 
           {order.cancellable && (
             <button

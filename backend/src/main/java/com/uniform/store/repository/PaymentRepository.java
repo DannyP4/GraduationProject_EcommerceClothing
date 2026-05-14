@@ -10,8 +10,9 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    // Latest first — Phase 3c (VNPAY/Stripe) may produce multiple attempts per order.
     List<Payment> findByOrderIdOrderByIdDesc(Long orderId);
 
     Optional<Payment> findFirstByOrderIdOrderByIdDesc(Long orderId);
+
+    Optional<Payment> findFirstByProviderTxnIdOrderByIdDesc(String providerTxnId);
 }

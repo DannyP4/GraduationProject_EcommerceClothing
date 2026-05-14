@@ -16,6 +16,9 @@ import AccountProfilePage from './pages/AccountProfilePage';
 import AccountAddressesPage from './pages/AccountAddressesPage';
 import AccountOrdersPage from './pages/AccountOrdersPage';
 import AccountOrderDetailPage from './pages/AccountOrderDetailPage';
+import VnpayReturnPage from './pages/VnpayReturnPage';
+import StripeSuccessPage from './pages/StripeSuccessPage';
+import StripeCancelPage from './pages/StripeCancelPage';
 
 export default function App() {
   return (
@@ -38,6 +41,16 @@ export default function App() {
               }
             />
             <Route path="/try-on" element={<TryOnPage />} />
+            <Route path="/payment/vnpay/return" element={<VnpayReturnPage />} />
+            <Route
+              path="/payment/stripe/success"
+              element={
+                <ProtectedRoute>
+                  <StripeSuccessPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/payment/stripe/cancel" element={<StripeCancelPage />} />
             <Route
               path="/account"
               element={

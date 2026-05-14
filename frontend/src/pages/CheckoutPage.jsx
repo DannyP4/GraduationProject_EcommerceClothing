@@ -26,7 +26,6 @@ export default function CheckoutPage() {
   const [submitError, setSubmitError] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // Hardcoded for Phase 3b — wire from logistics service in a later phase.
   const shippingCost = 0;
   const taxTotal = 0;
   const grandTotal = useMemo(
@@ -56,7 +55,8 @@ export default function CheckoutPage() {
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'
   );
   const cartReady = items.length > 0 && blockedItems.length === 0;
-  const canPlaceOrder = !submitting && cartReady && !!selectedAddressId && paymentMethod === 'COD';
+  const validMethod = ['COD', 'VNPAY', 'STRIPE'].includes(paymentMethod);
+  const canPlaceOrder = !submitting && cartReady && !!selectedAddressId && validMethod;
 
   const askConfirm = () => {
     if (!canPlaceOrder) return;
@@ -69,11 +69,20 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const order = await orderService.placeOrder({
+      const result = await orderService.placeOrder({
         addressId: selectedAddressId,
         paymentMethod,
         notes: notes.trim() || undefined,
       });
+      const order = result?.order ?? result;
+      const redirectUrl = result?.redirectUrl;
+
+      if (redirectUrl) {
+        toast.success(`Order ${order.orderNumber} placed — redirecting to payment…`);
+        window.location.assign(redirectUrl);
+        return;
+      }
+
       await clearCart();
       toast.success(`Order ${order.orderNumber} placed successfully`);
       navigate(`/account/orders/${order.orderNumber}`, { replace: true });
@@ -186,7 +195,9 @@ export default function CheckoutPage() {
                 </Link>
 
                 <p className="mt-5 text-[10px] text-white/30 text-center leading-relaxed">
-                  COD orders are confirmed at delivery. You can cancel any time before we mark the order as processing.
+                  {paymentMethod === 'COD' && 'COD orders are confirmed at delivery. You can cancel any time before we mark the order as processing.'}
+                  {paymentMethod === 'VNPAY' && 'You will be redirected to VNPAY sandbox to complete payment. Stock is reserved for 15 minutes.'}
+                  {paymentMethod === 'STRIPE' && 'You will be redirected to Stripe Checkout. Amount will be charged in USD using a locked exchange rate.'}
                 </p>
               </div>
             </aside>
@@ -197,12 +208,8 @@ export default function CheckoutPage() {
       <ConfirmDialog
         open={confirmOpen}
         title="Confirm your order?"
-        message={
-          selectedAddress
-            ? `${cartCount} ${cartCount === 1 ? 'item' : 'items'} · ${formatPrice(grandTotal, currency)} — shipping to ${selectedAddress.recipient}, ${selectedAddress.district}, ${selectedAddress.city}. Pay COD on delivery.`
-            : `${cartCount} ${cartCount === 1 ? 'item' : 'items'} · ${formatPrice(grandTotal, currency)}. Pay COD on delivery.`
-        }
-        confirmLabel="Place Order"
+        message={buildConfirmMessage({ cartCount, grandTotal, currency, selectedAddress, paymentMethod })}
+        confirmLabel={paymentMethod === 'COD' ? 'Place Order' : 'Place Order & Pay'}
         cancelLabel="Review Again"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={doPlaceOrder}
@@ -318,33 +325,31 @@ function CartReview({ items, currency }) {
 }
 
 function PaymentPicker({ value, onChange }) {
-  return (
-    <div className="space-y-2">
+  const Option = ({ id, title, subtitle }) => {
+    const isSel = value === id;
+    return (
       <label className={`flex items-start gap-3 border p-4 cursor-pointer transition-colors ${
-        value === 'COD' ? 'border-[#E83354] bg-[#E83354]/5' : 'border-black/15 hover:border-black/40'
+        isSel ? 'border-[#E83354] bg-[#E83354]/5' : 'border-black/15 hover:border-black/40'
       }`}>
         <input
           type="radio"
           name="payment"
-          checked={value === 'COD'}
-          onChange={() => onChange('COD')}
+          checked={isSel}
+          onChange={() => onChange(id)}
           className="mt-1 accent-[#E83354]"
         />
         <div>
-          <p className="font-bold text-sm uppercase tracking-wider">Cash on Delivery</p>
-          <p className="text-[11px] text-black/60 mt-0.5">Pay with cash when your order is delivered.</p>
+          <p className="font-bold text-sm uppercase tracking-wider">{title}</p>
+          <p className="text-[11px] text-black/60 mt-0.5">{subtitle}</p>
         </div>
       </label>
-
-      <div className="border border-dashed border-black/15 p-4 opacity-50 cursor-not-allowed">
-        <div className="flex items-start gap-3">
-          <input type="radio" disabled className="mt-1" />
-          <div>
-            <p className="font-bold text-sm uppercase tracking-wider">VNPAY · Credit Card</p>
-            <p className="text-[11px] text-black/40 mt-0.5">Coming in Phase 3c.</p>
-          </div>
-        </div>
-      </div>
+    );
+  };
+  return (
+    <div className="space-y-2">
+      <Option id="COD" title="Cash on Delivery" subtitle="Pay with cash when your order is delivered." />
+      <Option id="VNPAY" title="VNPAY · ATM / QR / Wallet" subtitle="Pay in VND via VNPAY sandbox gateway." />
+      <Option id="STRIPE" title="Stripe · International Card" subtitle="Pay in USD via Stripe Checkout. FX locked at order time." />
     </div>
   );
 }
@@ -381,4 +386,18 @@ function formatPrice(value, currency) {
   const num = Number(value);
   if (currency === 'USD') return `$${num.toFixed(2)}`;
   return `${num.toLocaleString('vi-VN')} ₫`;
+}
+
+function buildConfirmMessage({ cartCount, grandTotal, currency, selectedAddress, paymentMethod }) {
+  const head = `${cartCount} ${cartCount === 1 ? 'item' : 'items'} · ${formatPrice(grandTotal, currency)}`;
+  const ship = selectedAddress
+    ? ` — shipping to ${selectedAddress.recipient}, ${selectedAddress.district}, ${selectedAddress.city}.`
+    : '.';
+  const tail =
+    paymentMethod === 'VNPAY'
+      ? ' You will be redirected to VNPAY sandbox to complete payment.'
+      : paymentMethod === 'STRIPE'
+        ? ' You will be redirected to Stripe Checkout (USD).'
+        : ' Pay COD on delivery.';
+  return head + ship + tail;
 }

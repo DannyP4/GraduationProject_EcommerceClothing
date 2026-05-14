@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { getProducts } from '../services/productService';
 import ConfirmDialog from './ConfirmDialog';
 
 const NAV_LINKS = [
@@ -58,7 +59,7 @@ export default function NavbarGlass() {
 
           <LanguageSwitcher />
 
-          <NotificationBell />
+          {status === 'authenticated' && <NotificationBell />}
 
           {status === 'authenticated' ? (
             <UserMenu user={user} onLogout={async () => { await logout(); navigate('/'); }} />
@@ -83,6 +84,8 @@ export default function NavbarGlass() {
 function NavbarSearch() {
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
@@ -95,7 +98,7 @@ function NavbarSearch() {
         setExpanded(false);
       }
     };
-    const onKey = (e) => { if (e.key === 'Escape') { setExpanded(false); setQuery(''); } };
+    const onKey = (e) => { if (e.key === 'Escape') { setExpanded(false); setQuery(''); setResults([]); } };
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -104,6 +107,29 @@ function NavbarSearch() {
       document.removeEventListener('keydown', onKey);
     };
   }, [expanded]);
+
+  // 250ms delay
+  useEffect(() => {
+    const q = query.trim();
+    if (!expanded || q.length < 2) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      try {
+        const data = await getProducts({ search: q, size: 8, page: 0 });
+        if (!cancelled) setResults(data?.content ?? []);
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 250);
+    return () => { cancelled = true; clearTimeout(id); };
+  }, [query, expanded]);
 
   const submit = (e) => {
     e?.preventDefault?.();
@@ -115,16 +141,27 @@ function NavbarSearch() {
     navigate(`/shop?q=${encodeURIComponent(q)}`);
     setExpanded(false);
     setQuery('');
+    setResults([]);
   };
+
+  const pickProduct = (p) => {
+    navigate(`/product/${p.slug || p.id}`);
+    setExpanded(false);
+    setQuery('');
+    setResults([]);
+  };
+
+  const trimmed = query.trim();
+  const showDropdown = expanded && trimmed.length >= 2;
 
   return (
     <form
       ref={wrapRef}
       onSubmit={submit}
-      className="hidden sm:flex items-center"
+      className="hidden sm:flex items-center relative"
     >
       <div
-        className={`flex items-center bg-white/60 border border-black/15 transition-all duration-300 overflow-hidden ${expanded ? 'w-56 px-3' : 'w-9 px-0 border-transparent bg-transparent'
+        className={`flex items-center transition-all duration-300 overflow-hidden ${expanded ? 'w-56 px-3 bg-white/60 border border-black/15' : 'w-9 px-0'
           }`}
       >
         <button
@@ -149,7 +186,7 @@ function NavbarSearch() {
         {expanded && query && (
           <button
             type="button"
-            onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+            onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
             className="text-black/30 hover:text-black flex-shrink-0"
             aria-label="Clear"
           >
@@ -159,6 +196,57 @@ function NavbarSearch() {
           </button>
         )}
       </div>
+
+      {showDropdown && (
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-black/10 shadow-xl z-50 max-h-[480px] overflow-y-auto">
+          {loading ? (
+            <div className="px-4 py-6 text-center text-[11px] tracking-wider uppercase text-black/40">Searching…</div>
+          ) : results.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-black/50 mb-1">No matches for &ldquo;{trimmed}&rdquo;</p>
+              <p className="text-[11px] text-black/40">Try a different keyword</p>
+            </div>
+          ) : (
+            <>
+              <p className="px-4 py-2 text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 border-b border-black/5">
+                {results.length} {results.length === 1 ? 'match' : 'matches'}
+              </p>
+              <ul className="divide-y divide-black/5">
+                {results.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickProduct(p)}
+                      className="w-full flex gap-3 px-4 py-2.5 hover:bg-black/5 transition-colors text-left"
+                    >
+                      <div className="w-10 h-12 flex-shrink-0 bg-black/5 overflow-hidden">
+                        {p.primaryImageUrl && (
+                          <img src={p.primaryImageUrl} alt={p.name} className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-wider truncate">{p.name}</p>
+                        {p.categoryName && (
+                          <p className="text-[10px] text-black/40 mt-0.5 truncate">{p.categoryName}</p>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold whitespace-nowrap text-[#E83354] self-center">
+                        {formatPrice(p.basePrice, p.currency)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="submit"
+                className="w-full px-4 py-3 text-[11px] font-bold tracking-[0.15em] uppercase text-center bg-black text-white hover:bg-[#E83354] transition-colors"
+              >
+                View all results →
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </form>
   );
 }
