@@ -1,0 +1,136 @@
+package com.uniform.store.integration;
+
+import com.uniform.store.dto.request.AddCartItemRequest;
+import com.uniform.store.dto.request.PlaceOrderRequest;
+import com.uniform.store.entity.Address;
+import com.uniform.store.entity.Brand;
+import com.uniform.store.entity.Category;
+import com.uniform.store.entity.Product;
+import com.uniform.store.entity.ProductVariant;
+import com.uniform.store.entity.User;
+import com.uniform.store.enums.OrderStatus;
+import com.uniform.store.enums.PaymentProvider;
+import com.uniform.store.enums.PaymentStatus;
+import com.uniform.store.repository.OrderRepository;
+import com.uniform.store.repository.PaymentRepository;
+import com.uniform.store.repository.ProductVariantRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+
+import java.math.BigDecimal;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+class CartOrderFlowIntegrationTest extends BaseIntegrationTest {
+
+    @Autowired ProductVariantRepository variantRepository;
+    @Autowired OrderRepository orderRepository;
+    @Autowired PaymentRepository paymentRepository;
+
+    User buyer;
+    String jwt;
+    Address address;
+    ProductVariant variant;
+
+    @BeforeEach
+    void seedBuyerAndCatalog() {
+        buyer = data.createCustomer("buyer@uniform.test", "Test1234");
+        jwt = data.accessTokenFor(buyer.getEmail());
+        address = data.createDefaultAddress(buyer);
+        Brand brand = data.createBrand();
+        Category category = data.createCategory();
+        Product product = data.createProduct(brand, category, new BigDecimal("250000"));
+        variant = data.createVariant(product, 20);
+    }
+
+    @Test
+    void addToCart_thenPlaceCodOrder_decrementsStockAndCreatesPendingPayment() throws Exception {
+        AddCartItemRequest addReq = new AddCartItemRequest(variant.getId(), 2);
+        mockMvc.perform(post("/cart/items")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(addReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].quantity").value(2));
+
+        PlaceOrderRequest order = new PlaceOrderRequest();
+        order.setAddressId(address.getId());
+        order.setPaymentMethod("COD");
+
+        String resp = mockMvc.perform(post("/orders")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.order.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.order.grandTotal").value(500000))
+                .andReturn().getResponse().getContentAsString();
+
+        String orderNumber = objectMapper.readTree(resp)
+                .path("data").path("order").path("orderNumber").asText();
+
+        ProductVariant after = variantRepository.findById(variant.getId()).orElseThrow();
+        assertThat(after.getStockQuantity()).as("20 - 2 = 18 after COD order").isEqualTo(18);
+
+        var savedOrder = orderRepository.findByOrderNumber(orderNumber).orElseThrow();
+        assertThat(savedOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
+
+        var payment = paymentRepository.findFirstByOrderIdOrderByIdDesc(savedOrder.getId()).orElseThrow();
+        assertThat(payment.getProvider()).isEqualTo(PaymentProvider.COD);
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(payment.getCurrency()).isEqualTo("VND");
+    }
+
+    @Test
+    void placeOrder_emptyCart_returns400() throws Exception {
+        PlaceOrderRequest order = new PlaceOrderRequest();
+        order.setAddressId(address.getId());
+        order.setPaymentMethod("COD");
+
+        mockMvc.perform(post("/orders")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void placeAndCancelCodOrder_restoresStock() throws Exception {
+        AddCartItemRequest addReq = new AddCartItemRequest(variant.getId(), 3);
+        mockMvc.perform(post("/cart/items")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(addReq)))
+                .andExpect(status().isOk());
+
+        PlaceOrderRequest order = new PlaceOrderRequest();
+        order.setAddressId(address.getId());
+        order.setPaymentMethod("COD");
+
+        String resp = mockMvc.perform(post("/orders")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String orderNumber = objectMapper.readTree(resp)
+                .path("data").path("order").path("orderNumber").asText();
+
+        assertThat(variantRepository.findById(variant.getId()).orElseThrow().getStockQuantity())
+                .as("20 - 3 = 17 after placement").isEqualTo(17);
+
+        mockMvc.perform(post("/orders/" + orderNumber + "/cancel")
+                        .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"));
+
+        assertThat(variantRepository.findById(variant.getId()).orElseThrow().getStockQuantity())
+                .as("stock restored to 20 after cancel").isEqualTo(20);
+    }
+}

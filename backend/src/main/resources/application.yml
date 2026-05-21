@@ -1,13 +1,15 @@
 spring:
+  profiles:
+    default: xampp
   config:
     import:
       - "optional:file:.env[.properties]"
       - "optional:file:../.env[.properties]"
 
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:uniform_store}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
-    username: ${DB_USERNAME:uniform}
-    password: ${DB_PASSWORD:uniform_pass}
+    url: jdbc:mysql://${db.host}:${db.port}/${db.name}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    username: ${db.username}
+    password: ${db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -35,6 +37,9 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
 
+db:
+  name: uniform_store
+
 server:
   port: ${SERVER_PORT:8080}
   servlet:
@@ -42,7 +47,7 @@ server:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:uniform-store-super-secret-key-change-in-production-must-be-at-least-256bits}
+    secret: ${JWT_SECRET:}
     access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY:900000}       # 15 minutes
     refresh-token-expiry: ${JWT_REFRESH_TOKEN_EXPIRY:604800000}  # 7 days
   cors:
@@ -102,21 +107,3 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-  jpa:
-    show-sql: true
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  jpa:
-    show-sql: false
-  datasource:
-    hikari:
-      maximum-pool-size: 50
