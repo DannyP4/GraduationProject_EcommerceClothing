@@ -576,6 +576,18 @@ function UserMenu({ user, onLogout }) {
             {user?.fullName && <p className="text-[11px] text-black/50 truncate">{user.email}</p>}
           </div>
 
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold bg-[#F5C842]/15 text-black hover:bg-[#F5C842]/35 border-l-2 border-[#F5C842] transition-colors"
+              role="menuitem"
+            >
+              <IconShield />
+              Admin Dashboard
+            </Link>
+          )}
+
           {MENU_ITEMS.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
@@ -655,6 +667,13 @@ function IconLogout() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+function IconShield() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
 }

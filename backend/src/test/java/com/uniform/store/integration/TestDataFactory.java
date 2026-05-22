@@ -69,6 +69,20 @@ public class TestDataFactory {
         return userRepository.save(u);
     }
 
+    @Transactional
+    public User createAdmin(String email, String rawPassword) {
+        Role admin = roleRepository.findByName(Role.ADMIN).orElseThrow();
+        User u = User.builder()
+                .email(email.toLowerCase())
+                .passwordHash(passwordEncoder.encode(rawPassword))
+                .fullName("Admin " + email)
+                .preferredLocale("vi")
+                .role(admin)
+                .status(UserStatus.ACTIVE)
+                .build();
+        return userRepository.save(u);
+    }
+
     public String accessTokenFor(String email) {
         return jwtUtil.generateAccessToken(email.toLowerCase());
     }

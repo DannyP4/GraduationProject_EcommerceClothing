@@ -21,6 +21,7 @@ import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.enums.UserStatus;
 import com.uniform.store.exception.BadRequestException;
+import com.uniform.store.mapper.OrderMapper;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.CartItemRepository;
 import com.uniform.store.repository.CartRepository;
@@ -28,7 +29,6 @@ import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
-import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.service.FxService;
@@ -50,7 +50,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -66,7 +65,6 @@ class OrderServiceImplTest {
     @Mock CartRepository cartRepository;
     @Mock CartItemRepository cartItemRepository;
     @Mock ProductVariantRepository variantRepository;
-    @Mock ProductImageRepository imageRepository;
     @Mock OrderRepository orderRepository;
     @Mock OrderItemRepository orderItemRepository;
     @Mock OrderStatusHistoryRepository statusHistoryRepository;
@@ -75,6 +73,7 @@ class OrderServiceImplTest {
     @Mock FxService fxService;
     @Mock VnpayService vnpayService;
     @Mock StripeService stripeService;
+    @Mock OrderMapper orderMapper;
 
     OrderServiceImpl orderService;
 
@@ -89,9 +88,9 @@ class OrderServiceImplTest {
     void setUp() {
         orderService = new OrderServiceImpl(
                 userRepository, addressRepository, cartRepository, cartItemRepository,
-                variantRepository, imageRepository, orderRepository, orderItemRepository,
+                variantRepository, orderRepository, orderItemRepository,
                 statusHistoryRepository, paymentRepository, orderNumberGenerator,
-                fxService, vnpayService, stripeService);
+                fxService, vnpayService, stripeService, orderMapper);
 
         user = User.builder()
                 .email("buyer@uniform.test")
@@ -152,9 +151,6 @@ class OrderServiceImplTest {
             if (o.getId() == null) o.setId(700L);
             return o;
         });
-        when(variantRepository.findAllByIdInWithProduct(anyCollection())).thenReturn(List.of(variant));
-        when(statusHistoryRepository.findByOrderIdOrderByChangedAtAscIdAsc(700L)).thenReturn(List.of());
-        when(paymentRepository.findFirstByOrderIdOrderByIdDesc(700L)).thenReturn(Optional.empty());
 
         PlaceOrderResponse response = orderService.placeOrder(
                 "buyer@uniform.test",
@@ -192,15 +188,11 @@ class OrderServiceImplTest {
             if (o.getId() == null) o.setId(701L);
             return o;
         });
-        when(variantRepository.findAllByIdInWithProduct(anyCollection())).thenReturn(List.of(variant));
-        when(statusHistoryRepository.findByOrderIdOrderByChangedAtAscIdAsc(701L)).thenReturn(List.of());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
             Payment p = inv.getArgument(0);
             p.setId(99L);
             return p;
         });
-        when(paymentRepository.findFirstByOrderIdOrderByIdDesc(701L))
-                .thenReturn(Optional.empty());
         when(vnpayService.buildPaymentUrl(eq("ORD-20260514-VNP001"), any(), eq("127.0.0.1")))
                 .thenReturn("https://vnpay.test/pay?ref=ORD-20260514-VNP001&signed=xxx");
 
@@ -231,10 +223,7 @@ class OrderServiceImplTest {
             if (o.getId() == null) o.setId(702L);
             return o;
         });
-        when(variantRepository.findAllByIdInWithProduct(anyCollection())).thenReturn(List.of(variant));
-        when(statusHistoryRepository.findByOrderIdOrderByChangedAtAscIdAsc(702L)).thenReturn(List.of());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(paymentRepository.findFirstByOrderIdOrderByIdDesc(702L)).thenReturn(Optional.empty());
 
         FxQuote quote = new FxQuote(
                 new BigDecimal("500000"), "VND",
@@ -335,8 +324,6 @@ class OrderServiceImplTest {
         when(orderItemRepository.findByOrderIdOrderByIdAsc(700L)).thenReturn(List.of(orderItem));
         when(variantRepository.findAllByIdInWithProductForUpdate(anyCollection())).thenReturn(List.of(variant));
         when(paymentRepository.findFirstByOrderIdOrderByIdDesc(700L)).thenReturn(Optional.of(payment));
-        when(variantRepository.findAllByIdInWithProduct(anyCollection())).thenReturn(List.of(variant));
-        when(statusHistoryRepository.findByOrderIdOrderByChangedAtAscIdAsc(anyLong())).thenReturn(List.of());
 
         orderService.cancelOrder("buyer@uniform.test", "ORD-20260514-CAN001");
 

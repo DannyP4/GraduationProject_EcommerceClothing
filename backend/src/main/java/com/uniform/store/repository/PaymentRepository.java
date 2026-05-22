@@ -4,6 +4,7 @@ import com.uniform.store.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +16,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findFirstByOrderIdOrderByIdDesc(Long orderId);
 
     Optional<Payment> findFirstByProviderTxnIdOrderByIdDesc(String providerTxnId);
+
+    List<Payment> findByOrderIdInOrderByOrderIdAscIdDesc(Collection<Long> orderIds);
 }

@@ -22,14 +22,15 @@ export default function LoginPage() {
   const layer3 = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = location.state?.from || '/';
+  const fromPath = location.state?.from;
+  const redirectFor = (role) => fromPath || (role === 'admin' ? '/admin' : '/');
 
   // Already signed in
   useEffect(() => {
     if (auth.status === 'authenticated') {
-      navigate(redirectTo, { replace: true });
+      navigate(redirectFor(auth.user?.role), { replace: true });
     }
-  }, [auth.status, navigate, redirectTo]);
+  }, [auth.status, auth.user?.role, navigate, fromPath]);
 
   const switchMode = (m) => {
     setMode(m);
@@ -81,12 +82,10 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      if (mode === 'login') {
-        await auth.login(email.trim(), password);
-      } else {
-        await auth.register({ email: email.trim(), password, fullName: fullName.trim() });
-      }
-      navigate(redirectTo);
+      const loggedInUser = mode === 'login'
+        ? await auth.login(email.trim(), password)
+        : await auth.register({ email: email.trim(), password, fullName: fullName.trim() });
+      navigate(redirectFor(loggedInUser?.role));
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {

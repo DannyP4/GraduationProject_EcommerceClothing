@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './components/Toast';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import BackToTop from './components/BackToTop';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -19,6 +20,16 @@ import AccountOrderDetailPage from './pages/AccountOrderDetailPage';
 import VnpayReturnPage from './pages/VnpayReturnPage';
 import StripeSuccessPage from './pages/StripeSuccessPage';
 import StripeCancelPage from './pages/StripeCancelPage';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminOrdersListPage from './pages/admin/AdminOrdersListPage';
+import AdminOrderDetailPage from './pages/admin/AdminOrderDetailPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminReviewsPage from './pages/admin/AdminReviewsPage';
+import AdminStatsPage from './pages/admin/AdminStatsPage';
+import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
+import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminForbiddenPage from './pages/admin/AdminForbiddenPage';
 
 export default function App() {
   return (
@@ -64,6 +75,25 @@ export default function App() {
               <Route path="addresses" element={<AccountAddressesPage />} />
               <Route path="orders" element={<AccountOrdersPage />} />
               <Route path="orders/:orderNumber" element={<AccountOrderDetailPage />} />
+            </Route>
+
+            <Route path="/admin/forbidden" element={<AdminForbiddenPage />} />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="orders" element={<AdminOrdersListPage />} />
+              <Route path="orders/:orderNumber" element={<AdminOrderDetailPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="reviews" element={<AdminReviewsPage />} />
+              <Route path="stats" element={<AdminStatsPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="products" element={<AdminProductsPage />} />
             </Route>
           </Routes>
           <BackToTop />

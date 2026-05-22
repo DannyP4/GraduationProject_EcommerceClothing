@@ -3,11 +3,8 @@ package com.uniform.store.service.impl;
 import com.uniform.store.dto.fx.FxQuote;
 import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.dto.response.OrderDetailDto;
-import com.uniform.store.dto.response.OrderItemDto;
-import com.uniform.store.dto.response.OrderStatusHistoryDto;
 import com.uniform.store.dto.response.OrderSummaryDto;
 import com.uniform.store.dto.response.PageResponse;
-import com.uniform.store.dto.response.PaymentDto;
 import com.uniform.store.dto.response.PlaceOrderResponse;
 import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Cart;
@@ -17,7 +14,6 @@ import com.uniform.store.entity.OrderItem;
 import com.uniform.store.entity.OrderStatusHistory;
 import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.Product;
-import com.uniform.store.entity.ProductImage;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.OrderStatus;
@@ -25,6 +21,7 @@ import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
+import com.uniform.store.mapper.OrderMapper;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.CartItemRepository;
 import com.uniform.store.repository.CartRepository;
@@ -32,7 +29,6 @@ import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
-import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.service.FxService;
@@ -49,11 +45,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -70,7 +64,6 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository variantRepository;
-    private final ProductImageRepository imageRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderStatusHistoryRepository statusHistoryRepository;
@@ -79,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
     private final FxService fxService;
     private final VnpayService vnpayService;
     private final StripeService stripeService;
+    private final OrderMapper orderMapper;
 
     @Override
     @Transactional
@@ -208,7 +202,7 @@ public class OrderServiceImpl implements OrderService {
                 .status(PaymentStatus.PENDING)
                 .build());
         return PlaceOrderResponse.builder()
-                .order(buildDetailDto(order, orderItems))
+                .order(orderMapper.toDetailDto(order, orderItems))
                 .build();
     }
 
@@ -224,7 +218,7 @@ public class OrderServiceImpl implements OrderService {
                 .build());
         String redirectUrl = vnpayService.buildPaymentUrl(order.getOrderNumber(), grandTotal, clientIp);
         return PlaceOrderResponse.builder()
-                .order(buildDetailDto(order, orderItems))
+                .order(orderMapper.toDetailDto(order, orderItems))
                 .redirectUrl(redirectUrl)
                 .paymentRef(payment.getProviderTxnId())
                 .build();
@@ -252,7 +246,7 @@ public class OrderServiceImpl implements OrderService {
                 .build());
 
         return PlaceOrderResponse.builder()
-                .order(buildDetailDto(order, orderItems))
+                .order(orderMapper.toDetailDto(order, orderItems))
                 .redirectUrl(session.checkoutUrl())
                 .paymentRef(payment.getProviderTxnId())
                 .build();
@@ -266,70 +260,7 @@ public class OrderServiceImpl implements OrderService {
         Pageable safe = PageRequest.of(Math.max(pageable.getPageNumber(), 0), safeSize);
 
         Page<Order> page = orderRepository.findByUserIdOrderByPlacedAtDesc(user.getId(), safe);
-        List<Order> orders = page.getContent();
-        if (orders.isEmpty()) {
-            return PageResponse.from(page, List.of());
-        }
-
-        List<Long> orderIds = orders.stream().map(Order::getId).toList();
-        List<OrderItem> allItems = orderItemRepository.findByOrderIdInOrderByOrderIdAscIdAsc(orderIds);
-
-        Map<Long, List<OrderItem>> itemsByOrder = allItems.stream()
-                .collect(Collectors.groupingBy(
-                        oi -> oi.getOrder().getId(),
-                        LinkedHashMap::new,
-                        Collectors.toList()));
-
-        List<Long> firstVariantIds = itemsByOrder.values().stream()
-                .filter(list -> !list.isEmpty())
-                .map(list -> list.get(0).getVariant().getId())
-                .distinct()
-                .toList();
-
-        Map<Long, ProductVariant> variantMap = firstVariantIds.isEmpty()
-                ? Map.of()
-                : variantRepository.findAllByIdInWithProduct(firstVariantIds).stream()
-                        .collect(Collectors.toMap(ProductVariant::getId, Function.identity()));
-
-        List<Long> productIds = variantMap.values().stream()
-                .map(v -> v.getProduct().getId())
-                .distinct()
-                .toList();
-
-        Map<Long, String> primaryImages = new LinkedHashMap<>();
-        if (!productIds.isEmpty()) {
-            for (ProductImage img : imageRepository.findThumbnailCandidatesByProductIds(productIds)) {
-                primaryImages.putIfAbsent(img.getProduct().getId(), img.getUrl());
-            }
-        }
-
-        List<OrderSummaryDto> dtos = orders.stream().map(o -> {
-            List<OrderItem> orderItemList = itemsByOrder.getOrDefault(o.getId(), List.of());
-            OrderItem first = orderItemList.isEmpty() ? null : orderItemList.get(0);
-
-            String thumbUrl = null;
-            if (first != null) {
-                ProductVariant v = variantMap.get(first.getVariant().getId());
-                if (v != null) {
-                    thumbUrl = primaryImages.get(v.getProduct().getId());
-                }
-            }
-            int totalQty = orderItemList.stream().mapToInt(OrderItem::getQuantity).sum();
-
-            return OrderSummaryDto.builder()
-                    .id(o.getId())
-                    .orderNumber(o.getOrderNumber())
-                    .status(o.getStatus())
-                    .itemCount(totalQty)
-                    .grandTotal(o.getGrandTotal())
-                    .currency(o.getCurrency())
-                    .placedAt(o.getPlacedAt())
-                    .firstItemName(first != null ? first.getProductName() : null)
-                    .thumbnailUrl(thumbUrl)
-                    .build();
-        }).toList();
-
-        return PageResponse.from(page, dtos);
+        return PageResponse.from(page, orderMapper.toSummaryDtos(page.getContent()));
     }
 
     @Override
@@ -339,7 +270,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", orderNumber));
 
         List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId());
-        return buildDetailDto(order, items);
+        return orderMapper.toDetailDto(order, items);
     }
 
     @Override
@@ -386,7 +317,7 @@ public class OrderServiceImpl implements OrderService {
             paymentRepository.save(p);
         });
 
-        return buildDetailDto(order, items);
+        return orderMapper.toDetailDto(order, items);
     }
 
     private User loadUser(String email) {
@@ -420,100 +351,5 @@ public class OrderServiceImpl implements OrderService {
 
     private String formatVariantLabel(ProductVariant v) {
         return v.getSize() + " / " + v.getColor();
-    }
-
-    private OrderDetailDto buildDetailDto(Order order, List<OrderItem> items) {
-        Map<Long, ProductVariant> variantMap = Map.of();
-        Map<Long, String> primaryImages = Map.of();
-
-        if (!items.isEmpty()) {
-            List<Long> variantIds = items.stream().map(oi -> oi.getVariant().getId()).distinct().toList();
-            variantMap = variantRepository.findAllByIdInWithProduct(variantIds).stream()
-                    .collect(Collectors.toMap(ProductVariant::getId, Function.identity()));
-
-            List<Long> productIds = variantMap.values().stream()
-                    .map(v -> v.getProduct().getId())
-                    .distinct()
-                    .toList();
-
-            if (!productIds.isEmpty()) {
-                Map<Long, String> imgs = new LinkedHashMap<>();
-                for (ProductImage img : imageRepository.findThumbnailCandidatesByProductIds(productIds)) {
-                    imgs.putIfAbsent(img.getProduct().getId(), img.getUrl());
-                }
-                primaryImages = imgs;
-            }
-        }
-
-        final Map<Long, ProductVariant> finalVariantMap = variantMap;
-        final Map<Long, String> finalPrimaryImages = primaryImages;
-
-        List<OrderItemDto> itemDtos = items.stream().map(oi -> {
-            ProductVariant v = finalVariantMap.get(oi.getVariant().getId());
-            String slug = null;
-            String img = null;
-            if (v != null) {
-                slug = v.getProduct().getSlug();
-                img = finalPrimaryImages.get(v.getProduct().getId());
-            }
-            return OrderItemDto.builder()
-                    .id(oi.getId())
-                    .variantId(oi.getVariant().getId())
-                    .productName(oi.getProductName())
-                    .variantLabel(oi.getVariantLabel())
-                    .sku(oi.getSku())
-                    .unitPrice(oi.getUnitPrice())
-                    .quantity(oi.getQuantity())
-                    .lineTotal(oi.getLineTotal())
-                    .productSlug(slug)
-                    .imageUrl(img)
-                    .build();
-        }).toList();
-
-        List<OrderStatusHistoryDto> historyDtos = statusHistoryRepository
-                .findByOrderIdOrderByChangedAtAscIdAsc(order.getId()).stream()
-                .map(h -> OrderStatusHistoryDto.builder()
-                        .id(h.getId())
-                        .status(h.getStatus())
-                        .note(h.getNote())
-                        .changedAt(h.getChangedAt())
-                        .build())
-                .toList();
-
-        Optional<Payment> latestPayment = paymentRepository.findFirstByOrderIdOrderByIdDesc(order.getId());
-        PaymentDto paymentDto = latestPayment.map(p -> PaymentDto.builder()
-                .id(p.getId())
-                .provider(p.getProvider())
-                .status(p.getStatus())
-                .amount(p.getAmount())
-                .currency(p.getCurrency())
-                .paidAt(p.getPaidAt())
-                .build()).orElse(null);
-
-        return OrderDetailDto.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .status(order.getStatus())
-                .items(itemDtos)
-                .subtotal(order.getSubtotal())
-                .discountTotal(order.getDiscountTotal())
-                .shippingCost(order.getShippingCost())
-                .taxTotal(order.getTaxTotal())
-                .grandTotal(order.getGrandTotal())
-                .currency(order.getCurrency())
-                .shippingRecipient(order.getShippingRecipient())
-                .shippingPhone(order.getShippingPhone())
-                .shippingLine1(order.getShippingLine1())
-                .shippingWard(order.getShippingWard())
-                .shippingDistrict(order.getShippingDistrict())
-                .shippingCity(order.getShippingCity())
-                .shippingCountry(order.getShippingCountry())
-                .shippingPostalCode(order.getShippingPostalCode())
-                .notes(order.getNotes())
-                .placedAt(order.getPlacedAt())
-                .statusHistory(historyDtos)
-                .payment(paymentDto)
-                .cancellable(order.getStatus() == OrderStatus.PENDING)
-                .build();
     }
 }
