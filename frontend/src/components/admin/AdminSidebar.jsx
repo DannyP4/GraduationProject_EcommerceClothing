@@ -1,10 +1,11 @@
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const NAV = [
   { to: '/admin',            label: 'Dashboard',  end: true, icon: IconGrid },
   { to: '/admin/stats',      label: 'Stats',                 icon: IconChart },
   { to: '/admin/users',      label: 'Users',                 icon: IconUsers },
   { to: '/admin/categories', label: 'Categories',            icon: IconFolder },
+  { to: '/admin/brands',     label: 'Brands',                icon: IconAward },
   { to: '/admin/products',   label: 'Products',              icon: IconTag },
   { to: '/admin/orders',     label: 'Orders',                icon: IconBox },
   { to: '/admin/reviews',    label: 'Reviews',               icon: IconStar },
@@ -34,13 +35,16 @@ export default function AdminSidebar() {
         ))}
       </nav>
 
-      <Link
-        to="/"
+      <a
+        href="/shop"
+        target="_blank"
+        rel="noopener noreferrer"
         className="mt-6 w-full flex items-center gap-3 px-3 py-2.5 text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 text-black/60 hover:border-black hover:text-black transition-colors"
       >
         <IconStore />
-        View Store
-      </Link>
+        <span className="flex-1">View Store</span>
+        <IconExternal />
+      </a>
     </aside>
   );
 }
@@ -103,6 +107,23 @@ function IconFolder() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+function IconAward() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="8" r="7" />
+      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+    </svg>
+  );
+}
+function IconExternal() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-50">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   );
 }

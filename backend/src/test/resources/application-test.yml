@@ -13,6 +13,8 @@ app:
   fx:
     vnd-usd-rate: 0.0000385
     provider: TEST_FIXED
+  seed:
+    enabled: false
 
   payments:
     vnpay:

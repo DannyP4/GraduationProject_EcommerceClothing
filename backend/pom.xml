@@ -116,6 +116,20 @@
             <version>7.18.0</version>
         </dependency>
 
+        <!-- Cloudinary: admin product image upload -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+        <!-- Datafaker: demo seeder for products/orders/reviews -->
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.4.2</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -82,6 +82,17 @@ app:
       success-url: ${FRONTEND_BASE_URL:http://localhost:5173}/payment/stripe/success?session_id={CHECKOUT_SESSION_ID}&order={ORDER_NUMBER}
       cancel-url: ${FRONTEND_BASE_URL:http://localhost:5173}/payment/stripe/cancel?order={ORDER_NUMBER}
       checkout-currency: usd
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+    upload-folder: uniform/products
+  seed:
+    enabled: true
+    products-count: 50
+    customers-count: 60
+    orders-count: 50
+    reviews-count: 20
 
 sentry:
   dsn: ${SENTRY_DSN_BACKEND:}

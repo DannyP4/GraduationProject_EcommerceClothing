@@ -11,4 +11,10 @@ import java.util.List;
 public interface CategoryTranslationRepository extends JpaRepository<CategoryTranslation, Long> {
 
     List<CategoryTranslation> findByCategoryIdInAndLocale(Collection<Long> categoryIds, String locale);
+
+    java.util.Optional<CategoryTranslation> findByCategoryIdAndLocale(Long categoryId, String locale);
+
+    List<CategoryTranslation> findByCategoryIdIn(Collection<Long> categoryIds);
+
+    void deleteByCategoryId(Long categoryId);
 }

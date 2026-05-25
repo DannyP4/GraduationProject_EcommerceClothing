@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import CategoryFormModal from '../../components/admin/CategoryFormModal';
-import * as svc from '../../services/adminCategoryService';
+import BrandFormModal from '../../components/admin/BrandFormModal';
+import * as svc from '../../services/adminBrandService';
 
-export default function AdminCategoriesPage() {
-  const [tree, setTree] = useState([]);
+export default function AdminBrandsPage() {
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -20,10 +20,10 @@ export default function AdminCategoriesPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await svc.listCategories();
-      setTree(data ?? []);
+      const data = await svc.listBrands();
+      setBrands(data ?? []);
     } catch (err) {
-      setError(err.message || 'Could not load categories.');
+      setError(err.message || 'Could not load brands.');
     } finally {
       setLoading(false);
     }
@@ -31,31 +31,29 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const rows = useMemo(() => flatten(tree), [tree]);
-
   const handleCreate = () => {
     setModalMode('create');
     setModalInitial(null);
     setModalOpen(true);
   };
 
-  const handleEdit = (cat) => {
+  const handleEdit = (brand) => {
     setModalMode('edit');
-    setModalInitial(cat);
+    setModalInitial(brand);
     setModalOpen(true);
   };
 
   const handleSubmit = async (payload) => {
     if (modalMode === 'edit' && modalInitial) {
-      await svc.updateCategory(modalInitial.id, payload);
+      await svc.updateBrand(modalInitial.id, payload);
     } else {
-      await svc.createCategory(payload);
+      await svc.createBrand(payload);
     }
     await load();
   };
 
-  const handleAskDelete = (cat) => {
-    setPendingDelete(cat);
+  const handleAskDelete = (brand) => {
+    setPendingDelete(brand);
     setDeleteError(null);
     setConfirmOpen(true);
   };
@@ -69,7 +67,7 @@ export default function AdminCategoriesPage() {
   const handleConfirmDelete = async () => {
     if (!pendingDelete) return;
     try {
-      await svc.deleteCategory(pendingDelete.id);
+      await svc.deleteBrand(pendingDelete.id);
       closeConfirm();
       await load();
     } catch (err) {
@@ -81,14 +79,14 @@ export default function AdminCategoriesPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">Categories</h1>
-          <p className="text-sm text-black/55 mt-1 max-w-md">The taxonomy your storefront navigation is built from.</p>
+          <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">Brands</h1>
+          <p className="text-sm text-black/55 mt-1 max-w-md">Manufacturer labels surfaced across the storefront and search filters.</p>
         </div>
         <button
           onClick={handleCreate}
           className="bg-black text-white text-[11px] font-bold tracking-[0.15em] uppercase px-4 py-3 hover:bg-[#E83354] transition-colors"
         >
-          + New category
+          + New brand
         </button>
       </div>
 
@@ -98,7 +96,7 @@ export default function AdminCategoriesPage() {
 
       <div className="bg-white border border-black/10 overflow-hidden">
         <div className="hidden md:grid grid-cols-[0.5fr_2fr_1fr_0.7fr_0.7fr_0.8fr] gap-3 px-4 py-3 text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 border-b border-black/10 bg-black/[0.02]">
-          <span>Image</span>
+          <span>Logo</span>
           <span>Name</span>
           <span>Slug</span>
           <span>Products</span>
@@ -108,23 +106,23 @@ export default function AdminCategoriesPage() {
 
         {loading ? (
           <div className="px-6 py-10 text-center text-sm text-black/40">Loading...</div>
-        ) : rows.length === 0 ? (
-          <div className="px-6 py-16 text-center text-sm text-black/50">No categories yet. Create your first one.</div>
+        ) : brands.length === 0 ? (
+          <div className="px-6 py-16 text-center text-sm text-black/50">No brands yet. Create your first one.</div>
         ) : (
           <ul className="divide-y divide-black/5">
-            {rows.map((node) => (
-              <CategoryRow
-                key={node.id}
-                node={node}
-                onEdit={() => handleEdit(node)}
-                onDelete={() => handleAskDelete(node)}
+            {brands.map((b) => (
+              <BrandRow
+                key={b.id}
+                brand={b}
+                onEdit={() => handleEdit(b)}
+                onDelete={() => handleAskDelete(b)}
               />
             ))}
           </ul>
         )}
       </div>
 
-      <CategoryFormModal
+      <BrandFormModal
         open={modalOpen}
         mode={modalMode}
         initial={modalInitial}
@@ -134,11 +132,11 @@ export default function AdminCategoriesPage() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title={deleteError ? 'Cannot delete' : 'Delete category?'}
+        title={deleteError ? 'Cannot delete' : 'Delete brand?'}
         message={
           deleteError
             ? deleteError
-            : `"${pendingDelete?.name}" will be permanently removed. Categories that still have products or sub-categories cannot be deleted.`
+            : `"${pendingDelete?.name}" will be permanently removed. Brands that still have products cannot be deleted.`
         }
         confirmLabel={deleteError ? 'Got it' : 'Delete'}
         cancelLabel="Cancel"
@@ -151,33 +149,26 @@ export default function AdminCategoriesPage() {
   );
 }
 
-function flatten(tree, out = []) {
-  for (const n of tree ?? []) {
-    out.push(n);
-    if (n.children?.length) flatten(n.children, out);
-  }
-  return out;
-}
-
-function CategoryRow({ node, onEdit, onDelete }) {
+function BrandRow({ brand, onEdit, onDelete }) {
   return (
     <li className="grid grid-cols-2 md:grid-cols-[0.5fr_2fr_1fr_0.7fr_0.7fr_0.8fr] gap-3 px-4 py-3 items-center text-sm">
       <div className="hidden md:block">
-        {node.imageUrl ? (
-          <img src={node.imageUrl} alt={node.name} className="w-10 h-10 object-cover border border-black/10" />
+        {brand.logoUrl ? (
+          <img src={brand.logoUrl} alt={brand.name} className="w-10 h-10 object-contain border border-black/10" />
         ) : (
           <div className="w-10 h-10 bg-black/5 border border-black/10 flex items-center justify-center text-[9px] text-black/40 uppercase">
-            {node.name?.slice(0, 2)}
+            {brand.name?.slice(0, 2)}
           </div>
         )}
       </div>
       <div className="min-w-0">
-        <p className="font-bold truncate">{node.name}</p>
+        <p className="font-bold truncate">{brand.name}</p>
+        {brand.websiteUrl && <p className="text-[11px] text-black/40 truncate">{brand.websiteUrl}</p>}
       </div>
-      <div className="hidden md:block text-xs text-black/50 font-mono truncate">{node.slug}</div>
-      <div className="hidden md:block text-xs">{node.productCount ?? 0}</div>
+      <div className="hidden md:block text-xs text-black/50 font-mono truncate">{brand.slug}</div>
+      <div className="hidden md:block text-xs">{brand.productCount ?? 0}</div>
       <div className="hidden md:block">
-        <StatusBadge active={node.isActive} />
+        <StatusBadge active={brand.isActive} />
       </div>
       <div className="flex justify-end gap-2">
         <button

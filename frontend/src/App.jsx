@@ -28,6 +28,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminReviewsPage from './pages/admin/AdminReviewsPage';
 import AdminStatsPage from './pages/admin/AdminStatsPage';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
+import AdminBrandsPage from './pages/admin/AdminBrandsPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminForbiddenPage from './pages/admin/AdminForbiddenPage';
 
@@ -93,6 +94,7 @@ export default function App() {
               <Route path="reviews" element={<AdminReviewsPage />} />
               <Route path="stats" element={<AdminStatsPage />} />
               <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="brands" element={<AdminBrandsPage />} />
               <Route path="products" element={<AdminProductsPage />} />
             </Route>
           </Routes>

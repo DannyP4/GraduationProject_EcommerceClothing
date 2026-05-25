@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import AdminNotificationBell from './AdminNotificationBell';
 import AdminUserMenu from './AdminUserMenu';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 export default function AdminTopBar({ user, onSignOutClick }) {
   return (
@@ -8,7 +9,7 @@ export default function AdminTopBar({ user, onSignOutClick }) {
       <div className="max-w-[1440px] mx-auto px-6 flex items-center justify-between h-14">
         <div className="flex items-center gap-3">
           <Link
-            to="/shop"
+            to="/"
             className="font-['Anton'] text-2xl tracking-widest text-black hover:text-[#E83354] transition-colors"
           >
             UNIFORM
@@ -19,6 +20,7 @@ export default function AdminTopBar({ user, onSignOutClick }) {
         </div>
 
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <AdminNotificationBell />
           <AdminUserMenu user={user} onSignOutClick={onSignOutClick} />
         </div>

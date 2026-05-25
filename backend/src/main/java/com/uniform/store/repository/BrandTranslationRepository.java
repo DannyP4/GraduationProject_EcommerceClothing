@@ -11,4 +11,10 @@ import java.util.List;
 public interface BrandTranslationRepository extends JpaRepository<BrandTranslation, Long> {
 
     List<BrandTranslation> findByBrandIdInAndLocale(Collection<Long> brandIds, String locale);
+
+    java.util.Optional<BrandTranslation> findByBrandIdAndLocale(Long brandId, String locale);
+
+    List<BrandTranslation> findByBrandIdIn(Collection<Long> brandIds);
+
+    void deleteByBrandId(Long brandId);
 }

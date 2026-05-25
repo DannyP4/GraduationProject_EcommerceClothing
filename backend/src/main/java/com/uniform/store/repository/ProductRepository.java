@@ -18,6 +18,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findBySlugAndIsActiveTrueAndDeletedAtIsNull(String slug);
 
+    long countByCategoryIdAndDeletedAtIsNull(Long categoryId);
+
+    long countByBrandIdAndDeletedAtIsNull(Long brandId);
+
     /**
      * Query retrieves a paginated list of Products and eagerly fetches brand
      * and category to avoid the N+1 problem.

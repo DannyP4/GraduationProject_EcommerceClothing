@@ -7,7 +7,8 @@ export default function ConfirmDialog({
   message,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
-  tone = 'default', // 'default' | 'danger'
+  tone = 'default',
+  hideCancel = false,
   onConfirm,
   onCancel,
 }) {
@@ -40,13 +41,15 @@ export default function ConfirmDialog({
         <h3 className="font-['Anton'] text-2xl uppercase tracking-tight mb-2">{title}</h3>
         {message && <p className="text-sm text-black/60 mb-6">{message}</p>}
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 border border-black/15 text-[11px] font-bold tracking-[0.15em] uppercase py-3 hover:border-black/40 transition-all"
-          >
-            {cancelLabel}
-          </button>
+          {!hideCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 border border-black/15 text-[11px] font-bold tracking-[0.15em] uppercase py-3 hover:border-black/40 transition-all"
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onConfirm}
