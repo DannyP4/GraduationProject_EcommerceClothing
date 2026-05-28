@@ -30,6 +30,7 @@ import AdminStatsPage from './pages/admin/AdminStatsPage';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminBrandsPage from './pages/admin/AdminBrandsPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminProductEditPage from './pages/admin/AdminProductEditPage';
 import AdminForbiddenPage from './pages/admin/AdminForbiddenPage';
 
 export default function App() {
@@ -96,6 +97,8 @@ export default function App() {
               <Route path="categories" element={<AdminCategoriesPage />} />
               <Route path="brands" element={<AdminBrandsPage />} />
               <Route path="products" element={<AdminProductsPage />} />
+              <Route path="products/new" element={<AdminProductEditPage />} />
+              <Route path="products/:id" element={<AdminProductEditPage />} />
             </Route>
           </Routes>
           <BackToTop />

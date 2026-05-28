@@ -35,6 +35,9 @@ public class ProductImage extends BaseEntity {
     @Column(name = "url", nullable = false, length = 500)
     private String url;
 
+    @Column(name = "public_id", length = 255)
+    private String publicId;
+
     @Column(name = "alt_text", length = 255)
     private String altText;
 

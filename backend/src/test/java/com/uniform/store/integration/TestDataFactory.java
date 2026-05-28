@@ -4,6 +4,7 @@ import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Brand;
 import com.uniform.store.entity.Category;
 import com.uniform.store.entity.Product;
+import com.uniform.store.entity.ProductImage;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
@@ -12,6 +13,7 @@ import com.uniform.store.enums.UserStatus;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.BrandRepository;
 import com.uniform.store.repository.CategoryRepository;
+import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.RoleRepository;
@@ -38,6 +40,7 @@ public class TestDataFactory {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
+    private final ProductImageRepository productImageRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -141,6 +144,19 @@ public class TestDataFactory {
                 .size("M").color("Black").colorHex("#000000")
                 .stockQuantity(stock)
                 .isActive(true)
+                .build());
+    }
+
+    @Transactional
+    public ProductImage createProductImage(Product product, boolean primary, String publicId) {
+        long n = COUNTER.incrementAndGet();
+        return productImageRepository.save(ProductImage.builder()
+                .product(product)
+                .url("https://test/img-" + n + ".jpg")
+                .publicId(publicId)
+                .altText("alt-" + n)
+                .sortOrder((int) (n % 100))
+                .isPrimary(primary)
                 .build());
     }
 }

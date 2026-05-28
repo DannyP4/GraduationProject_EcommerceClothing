@@ -2,6 +2,7 @@ package com.uniform.store.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.uniform.store.dto.response.CloudinarySignatureDto;
 import com.uniform.store.dto.response.CloudinaryUploadResult;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.service.CloudinaryService;
@@ -10,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -47,6 +50,30 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         } catch (IOException e) {
             throw new BadRequestException("Cloudinary upload failed: " + e.getMessage());
         }
+    }
+
+    @Override
+    public CloudinarySignatureDto generateSignedUploadParams(String folder, String filenameHint) {
+        String targetFolder = (folder == null || folder.isBlank()) ? uploadFolder : folder;
+        String publicId = sanitize(filenameHint) + "-" + UUID.randomUUID().toString().substring(0, 8);
+        long timestamp = Instant.now().getEpochSecond();
+
+        Map<String, Object> paramsToSign = new LinkedHashMap<>();
+        paramsToSign.put("folder", targetFolder);
+        paramsToSign.put("public_id", publicId);
+        paramsToSign.put("timestamp", timestamp);
+
+        String apiSecret = cloudinary.config.apiSecret;
+        String signature = cloudinary.apiSignRequest(paramsToSign, apiSecret, 1);
+
+        return CloudinarySignatureDto.builder()
+                .cloudName(cloudinary.config.cloudName)
+                .apiKey(cloudinary.config.apiKey)
+                .timestamp(timestamp)
+                .signature(signature)
+                .folder(targetFolder)
+                .publicId(publicId)
+                .build();
     }
 
     @Override

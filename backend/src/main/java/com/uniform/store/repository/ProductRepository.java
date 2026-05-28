@@ -22,6 +22,44 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     long countByBrandIdAndDeletedAtIsNull(Long brandId);
 
+    boolean existsBySlug(String slug);
+
+    @Query(value = """
+        SELECT DISTINCT p FROM Product p
+        LEFT JOIN FETCH p.brand
+        LEFT JOIN FETCH p.category
+        WHERE (:includeDeleted = TRUE OR p.deletedAt IS NULL)
+          AND (:onlyDeleted = FALSE OR p.deletedAt IS NOT NULL)
+          AND (:brandId IS NULL OR p.brand.id = :brandId)
+          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:gender IS NULL OR p.gender = :gender)
+          AND (:isActive IS NULL OR p.isActive = :isActive)
+          AND (:search IS NULL
+               OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(p.slug) LIKE LOWER(CONCAT('%', :search, '%')))
+        """,
+        countQuery = """
+        SELECT COUNT(p) FROM Product p
+        WHERE (:includeDeleted = TRUE OR p.deletedAt IS NULL)
+          AND (:onlyDeleted = FALSE OR p.deletedAt IS NOT NULL)
+          AND (:brandId IS NULL OR p.brand.id = :brandId)
+          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:gender IS NULL OR p.gender = :gender)
+          AND (:isActive IS NULL OR p.isActive = :isActive)
+          AND (:search IS NULL
+               OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(p.slug) LIKE LOWER(CONCAT('%', :search, '%')))
+        """)
+    Page<Product> searchAdmin(
+            @Param("search") String search,
+            @Param("brandId") Long brandId,
+            @Param("categoryId") Long categoryId,
+            @Param("gender") com.uniform.store.enums.Gender gender,
+            @Param("isActive") Boolean isActive,
+            @Param("includeDeleted") boolean includeDeleted,
+            @Param("onlyDeleted") boolean onlyDeleted,
+            Pageable pageable);
+
     /**
      * Query retrieves a paginated list of Products and eagerly fetches brand
      * and category to avoid the N+1 problem.

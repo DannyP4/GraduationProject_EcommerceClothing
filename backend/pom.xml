@@ -89,10 +89,16 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Jackson (JSON) -->
+        <!-- JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- /actuator/health for IDE Services panel + ops liveness probes -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <!-- OpenAPI / Swagger UI -->

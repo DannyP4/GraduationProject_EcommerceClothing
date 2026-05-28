@@ -14,6 +14,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     List<OrderItem> findByOrderIdOrderByIdAsc(Long orderId);
 
+    boolean existsByVariantId(Long variantId);
+
     // Bulk fetch for the orders list page
     // avoids N+1 when summarising multiple orders.
     @Query("""

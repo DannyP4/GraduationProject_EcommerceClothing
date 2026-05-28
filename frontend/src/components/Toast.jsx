@@ -36,7 +36,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={api}>
       {children}
       {createPortal(
-        <div className="fixed top-20 right-4 z-[200] flex flex-col gap-2 pointer-events-none">
+        <div className="fixed top-20 left-4 z-[200] flex flex-col gap-2 pointer-events-none">
           {toasts.map((t) => (
             <ToastItem key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
           ))}
@@ -71,7 +71,7 @@ function ToastItem({ toast, onDismiss }) {
 
   return (
     <div
-      className={`pointer-events-auto min-w-[280px] max-w-sm shadow-lg flex items-start gap-3 px-4 py-3 transition-all duration-200 ${palette} ${leaving ? 'opacity-0 translate-x-2' : 'opacity-100 translate-x-0'
+      className={`pointer-events-auto min-w-[280px] max-w-sm shadow-lg flex items-start gap-3 px-4 py-3 transition-all duration-200 ${palette} ${leaving ? 'opacity-0 -translate-x-2' : 'opacity-100 translate-x-0'
         }`}
       role="status"
     >

@@ -14,6 +14,8 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
 
     List<ProductImage> findByProductIdOrderByIsPrimaryDescSortOrderAsc(Long productId);
 
+    long countByProductId(Long productId);
+
     @Query("""
         SELECT i FROM ProductImage i
         WHERE i.product.id IN :productIds
