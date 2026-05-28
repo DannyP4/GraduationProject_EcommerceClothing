@@ -7,6 +7,7 @@ import AdminRoute from './components/AdminRoute';
 import BackToTop from './components/BackToTop';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import AccountStatusPage from './pages/AccountStatusPage';
 import ShopPage from './pages/ShopPage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
@@ -25,6 +26,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminOrdersListPage from './pages/admin/AdminOrdersListPage';
 import AdminOrderDetailPage from './pages/admin/AdminOrderDetailPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
 import AdminReviewsPage from './pages/admin/AdminReviewsPage';
 import AdminStatsPage from './pages/admin/AdminStatsPage';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
@@ -42,6 +44,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/account-status" element={<AccountStatusPage />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/cart" element={<CartPage />} />
@@ -92,6 +95,7 @@ export default function App() {
               <Route path="orders" element={<AdminOrdersListPage />} />
               <Route path="orders/:orderNumber" element={<AdminOrderDetailPage />} />
               <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users/:id" element={<AdminUserDetailPage />} />
               <Route path="reviews" element={<AdminReviewsPage />} />
               <Route path="stats" element={<AdminStatsPage />} />
               <Route path="categories" element={<AdminCategoriesPage />} />

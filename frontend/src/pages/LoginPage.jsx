@@ -87,6 +87,12 @@ export default function LoginPage() {
         : await auth.register({ email: email.trim(), password, fullName: fullName.trim() });
       navigate(redirectFor(loggedInUser?.role));
     } catch (err) {
+      const msg = (err.message || '').toLowerCase();
+      if (mode === 'login' && (msg.includes('suspended') || msg.includes('deleted'))) {
+        const status = msg.includes('deleted') ? 'DELETED' : 'SUSPENDED';
+        navigate('/auth/account-status', { state: { status, email: email.trim() } });
+        return;
+      }
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
@@ -166,7 +172,7 @@ export default function LoginPage() {
               </label>
               <input
                 type="email"
-                placeholder="you@university.edu"
+                placeholder="you@gmail.com"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

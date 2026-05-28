@@ -46,13 +46,18 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(message));
     }
 
-    // Catches "/orders/{}" when the controller expects Long — without this it
-    // would fall through to a generic 500.
+    // handles cases where a path variable or request parameter cannot be converted to the required type
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String required = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "value";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("Invalid value for '" + ex.getName() + "': expected " + required));
+    }
+
+    @ExceptionHandler(AccountInactiveException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccountInactive(AccountInactiveException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(AuthenticationException.class)

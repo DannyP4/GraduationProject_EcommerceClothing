@@ -6,6 +6,7 @@ import com.uniform.store.dto.response.AuthResponse;
 import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.UserStatus;
+import com.uniform.store.exception.AccountInactiveException;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.repository.RoleRepository;
@@ -76,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new BadRequestException("Account is " + user.getStatus().name().toLowerCase());
+            throw new AccountInactiveException("Account " + user.getStatus().name().toLowerCase());
         }
 
         user.setLastLoginAt(Instant.now());
@@ -110,7 +111,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new BadRequestException("Account is " + user.getStatus().name().toLowerCase());
+            throw new AccountInactiveException("Account " + user.getStatus().name().toLowerCase());
         }
 
         return buildAuthResponse(user);
