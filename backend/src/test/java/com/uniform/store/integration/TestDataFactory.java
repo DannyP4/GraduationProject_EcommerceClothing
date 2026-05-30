@@ -3,16 +3,25 @@ package com.uniform.store.integration;
 import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Brand;
 import com.uniform.store.entity.Category;
+import com.uniform.store.entity.Order;
+import com.uniform.store.entity.OrderItem;
+import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.Product;
 import com.uniform.store.entity.ProductImage;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.Gender;
+import com.uniform.store.enums.OrderStatus;
+import com.uniform.store.enums.PaymentProvider;
+import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.enums.UserStatus;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.BrandRepository;
 import com.uniform.store.repository.CategoryRepository;
+import com.uniform.store.repository.OrderItemRepository;
+import com.uniform.store.repository.OrderRepository;
+import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductRepository;
 import com.uniform.store.repository.ProductVariantRepository;
@@ -25,6 +34,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -41,6 +52,9 @@ public class TestDataFactory {
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository productImageRepository;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final PaymentRepository paymentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -145,6 +159,63 @@ public class TestDataFactory {
                 .stockQuantity(stock)
                 .isActive(true)
                 .build());
+    }
+
+    @Transactional
+    public Order createOrderWithItem(User customer, ProductVariant variant, int qty,
+                                     OrderStatus status, Instant placedAt, PaymentProvider provider) {
+        long n = COUNTER.incrementAndGet();
+        BigDecimal unit = variant.getProduct().getBasePrice();
+        BigDecimal subtotal = unit.multiply(BigDecimal.valueOf(qty)).setScale(4, RoundingMode.HALF_UP);
+        BigDecimal shipping = new BigDecimal("30000").setScale(4, RoundingMode.HALF_UP);
+        BigDecimal grand = subtotal.add(shipping).setScale(4, RoundingMode.HALF_UP);
+
+        Order order = orderRepository.save(Order.builder()
+                .orderNumber(String.format("TEST-%05d", 10000 + n))
+                .user(customer)
+                .status(status)
+                .subtotal(subtotal)
+                .discountTotal(BigDecimal.ZERO.setScale(4))
+                .shippingCost(shipping)
+                .taxTotal(BigDecimal.ZERO.setScale(4))
+                .grandTotal(grand)
+                .currency("VND")
+                .shippingRecipient(customer.getFullName())
+                .shippingPhone("0900000000")
+                .shippingLine1("1 Test St")
+                .shippingDistrict("Quan 1")
+                .shippingCity("HCM")
+                .shippingCountry("VN")
+                .placedAt(placedAt)
+                .build());
+
+        orderItemRepository.save(OrderItem.builder()
+                .order(order)
+                .variant(variant)
+                .productName(variant.getProduct().getName())
+                .variantLabel(variant.getSize() + " / " + variant.getColor())
+                .sku(variant.getSku())
+                .unitPrice(unit)
+                .quantity(qty)
+                .lineTotal(unit.multiply(BigDecimal.valueOf(qty)).setScale(4, RoundingMode.HALF_UP))
+                .build());
+
+        if (provider != null) {
+            PaymentStatus payStatus = status == OrderStatus.CANCELLED
+                    ? PaymentStatus.FAILED
+                    : PaymentStatus.CAPTURED;
+            paymentRepository.save(Payment.builder()
+                    .order(order)
+                    .provider(provider)
+                    .providerTxnId(provider.name().toLowerCase() + "-test-" + n)
+                    .amount(grand)
+                    .currency("VND")
+                    .status(payStatus)
+                    .paidAt(payStatus == PaymentStatus.CAPTURED ? placedAt : null)
+                    .build());
+        }
+
+        return order;
     }
 
     @Transactional

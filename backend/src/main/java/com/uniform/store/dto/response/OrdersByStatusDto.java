@@ -1,0 +1,17 @@
+package com.uniform.store.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.uniform.store.enums.OrderStatus;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.math.BigDecimal;
+
+@Getter
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class OrdersByStatusDto {
+    private final OrderStatus status;
+    private final long count;
+    private final BigDecimal revenue;
+}
