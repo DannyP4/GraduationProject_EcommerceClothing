@@ -6,8 +6,10 @@ import com.stripe.Stripe;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
+import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 
 
@@ -86,5 +88,19 @@ public class StripeServiceImpl implements StripeService {
         } catch (Exception ignored) {
         }
         return new WebhookEvent(event.getType(), sessionId, paymentIntent, paymentStatus);
+    }
+
+    @Override
+    public RefundResult refund(String paymentIntentId, long amountInMinorUnits) {
+        RefundCreateParams params = RefundCreateParams.builder()
+                .setPaymentIntent(paymentIntentId)
+                .setAmount(amountInMinorUnits)
+                .build();
+        try {
+            Refund refund = Refund.create(params);
+            return new RefundResult(refund.getId(), refund.getStatus());
+        } catch (StripeException e) {
+            throw new BadRequestException("Stripe refund failed: " + e.getMessage());
+        }
     }
 }

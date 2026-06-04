@@ -22,4 +22,7 @@ public class ProductSummaryDto {
     private String primaryImageUrl;
     private String brandName;
     private String categoryName;
+    private Double averageRating;
+    private Long reviewCount;
+    private Long soldCount;
 }

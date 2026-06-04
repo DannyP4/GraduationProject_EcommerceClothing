@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
@@ -7,10 +7,15 @@ import QuantityStepper from '../components/QuantityStepper';
 import { useToast } from '../components/Toast';
 import { getProductByIdOrSlug } from '../services/productService';
 import { useCart } from '../context/CartContext';
+import StarRating from '../components/StarRating';
+import ReviewsSection from '../components/ReviewsSection';
+import { goBack } from '../lib/historyBack';
 
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backToShop = location.state?.backTo || '/shop';
   const { addItem } = useCart();
   const toast = useToast();
 
@@ -54,6 +59,10 @@ export default function ProductPage() {
     return () => { cancelled = true; };
   }, [id]);
 
+  const reloadProduct = useCallback(() => {
+    getProductByIdOrSlug(id).then((data) => setProduct(data)).catch(() => {});
+  }, [id]);
+
   const colors = useMemo(() => uniqueValues(product?.variants, 'color'), [product]);
   const sizes = useMemo(() => uniqueValues(product?.variants, 'size'), [product]);
   const selectedVariant = useMemo(
@@ -76,7 +85,7 @@ export default function ProductPage() {
           <p className="text-sm font-bold text-[#E83354] mb-2 uppercase tracking-wider">Product not available</p>
           <p className="text-xs text-black/60 mb-6">{error || 'This product could not be found.'}</p>
           <Link
-            to="/shop"
+            to={backToShop}
             className="inline-block text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
           >
             Back to Shop
@@ -129,7 +138,7 @@ export default function ProductPage() {
       <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] uppercase mb-8">
         <Link to="/" className="text-[#E83354] hover:text-black transition-colors">Home</Link>
         <span className="text-black/30">›</span>
-        <Link to="/shop" className="text-[#E83354] hover:text-black transition-colors">Shop</Link>
+        <button type="button" onClick={() => goBack(navigate, location, '/shop')} className="text-[#E83354] hover:text-black transition-colors">Shop</button>
         <span className="text-black/30">›</span>
         <span className="text-black/60 normal-case tracking-normal font-normal">{product.name}</span>
       </nav>
@@ -175,7 +184,7 @@ export default function ProductPage() {
             {product.name}
           </h1>
 
-          <ProductStatsPlaceholder />
+          <ProductRatingLine product={product} />
 
           <div className="flex items-center gap-3 mb-6">
             <span className="font-['Anton'] text-3xl">
@@ -285,85 +294,37 @@ export default function ProductPage() {
         </div>
       </div>
 
-      <ReviewsPlaceholder />
+      <ReviewsSection product={product} onChanged={reloadProduct} />
     </PageShell>
   );
 }
 
-// Stats placeholder — kept until ratings/sales aggregations land. Greyed-out so users don't read it as live data.
-function ProductStatsPlaceholder() {
+function ProductRatingLine({ product }) {
+  const count = product.reviewCount ?? 0;
+  const avg = product.averageRating;
+  const sold = product.soldCount ?? 0;
   return (
-    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-black/8 text-[11px] text-black/40">
-      <span className="flex items-center gap-1">
-        <StarIcon /> <span className="font-bold">—</span>
-      </span>
-      <span className="text-black/15">|</span>
-      <span><span className="font-bold">—</span> reviews</span>
-      <span className="text-black/15">|</span>
-      <span><span className="font-bold">—</span> sold</span>
-      <span className="ml-auto text-[9px] tracking-[0.15em] uppercase bg-black/5 px-2 py-0.5">Coming soon</span>
+    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-black/8 text-[12px] text-black/60">
+      {count > 0 ? (
+        <>
+          <StarRating value={avg ?? 0} size={15} />
+          <span className="font-bold text-black">{Number(avg ?? 0).toFixed(1)}</span>
+          <a href="#reviews" className="text-black/50 hover:text-[#E83354] transition-colors">
+            {count} review{count > 1 ? 's' : ''}
+          </a>
+        </>
+      ) : (
+        <span className="flex items-center gap-2 text-black/40">
+          <StarRating value={0} size={15} /> No reviews yet
+        </span>
+      )}
+      {sold > 0 && (
+        <>
+          <span className="text-black/20">·</span>
+          <span className="text-black/50">{sold} sold</span>
+        </>
+      )}
     </div>
-  );
-}
-
-function StarIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="text-amber-500/40">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-
-function ReviewsPlaceholder() {
-  return (
-    <section className="mt-16 pt-10 border-t border-black/10">
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Customer Voices</p>
-          <h2 className="font-['Anton'] text-3xl md:text-4xl uppercase tracking-tight">Reviews</h2>
-        </div>
-        <span className="text-[10px] tracking-[0.15em] uppercase bg-black/5 text-black/40 px-2 py-1">Coming soon</span>
-      </div>
-
-      <div className="bg-white border border-dashed border-black/15 px-6 py-12 text-center">
-        <div className="inline-flex flex-col items-center gap-3">
-          <div className="flex gap-1 text-black/15">
-            {[0, 1, 2, 3, 4].map((i) => <StarIcon key={i} />)}
-          </div>
-          <p className="text-sm font-bold uppercase tracking-wider text-black/60">No reviews yet</p>
-          <p className="text-xs text-black/50 max-w-sm">
-            Be the first to share your thoughts. Lazy-loaded reviews with infinite scroll will land in a later phase.
-          </p>
-          <button
-            disabled
-            title="Available after the reviews phase ships"
-            className="mt-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-black/20 text-black/40 px-4 py-2 cursor-not-allowed"
-          >
-            Write a Review
-          </button>
-        </div>
-      </div>
-
-      {/* Skeleton: shape of the future review card so the layout slot is visible to demo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 opacity-30 pointer-events-none">
-        {[0, 1].map((i) => (
-          <div key={i} className="bg-white border border-black/8 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-full bg-black/10" />
-              <div className="h-3 w-24 bg-black/10" />
-              <div className="ml-auto flex gap-0.5">
-                {[0, 1, 2, 3, 4].map((s) => <StarIcon key={s} />)}
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="h-2 w-full bg-black/8" />
-              <div className="h-2 w-5/6 bg-black/8" />
-              <div className="h-2 w-2/3 bg-black/8" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 

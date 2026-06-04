@@ -19,6 +19,7 @@ public abstract class BaseIntegrationTest {
     private static final List<String> TABLES_TO_TRUNCATE = List.of(
             "product_views",
             "audit_log",
+            "review_helpful_votes",
             "review_images",
             "reviews",
             "order_status_history",

@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import OrderStatusBadge from '../../components/admin/OrderStatusBadge';
 import { useToast } from '../../components/Toast';
 import { useAuth } from '../../context/AuthContext';
+import { goBack } from '../../lib/historyBack';
 import * as userSvc from '../../services/adminUserService';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backTo = location.state?.backTo || '/admin/users';
   const toast = useToast();
   const { user: currentUser } = useAuth();
 
@@ -73,7 +76,7 @@ export default function AdminUserDetailPage() {
       <div className="bg-white border border-black/10 p-8 text-center">
         <div className="border border-[#E83354]/30 bg-[#E83354]/5 text-[#E83354] px-4 py-3 text-xs">{error}</div>
         <button
-          onClick={() => navigate('/admin/users')}
+          onClick={() => goBack(navigate, location, '/admin/users')}
           className="inline-block mt-4 text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
         >
           Back to Users
@@ -86,10 +89,21 @@ export default function AdminUserDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/admin/users" className="text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 hover:text-black">
+        <button
+          type="button"
+          onClick={() => goBack(navigate, location, '/admin/users')}
+          className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-3 py-2 hover:bg-black hover:text-white transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
           All Users
-        </Link>
-        <div className="flex items-center gap-3 mt-2 flex-wrap">
+        </button>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="font-['Anton'] text-4xl uppercase tracking-tight break-all">{data.email}</h1>
           <StatusBadge status={data.status} />
           {data.roleName === 'admin' && (

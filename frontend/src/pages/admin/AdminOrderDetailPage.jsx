@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import OrderStatusBadge from '../../components/admin/OrderStatusBadge';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { goBack } from '../../lib/historyBack';
 import * as adminOrderService from '../../services/adminOrderService';
 
 export default function AdminOrderDetailPage() {
   const { orderNumber } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const backTo = location.state?.backTo || '/admin/orders';
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +17,7 @@ export default function AdminOrderDetailPage() {
 
   const [confirmTransition, setConfirmTransition] = useState(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmRefund, setConfirmRefund] = useState(false);
   const [actionMsg, setActionMsg] = useState(null);
   const [acting, setActing] = useState(false);
 
@@ -56,11 +61,34 @@ export default function AdminOrderDetailPage() {
       setActionMsg({
         type: updated.requiresRefund ? 'warning' : 'success',
         text: updated.requiresRefund
-          ? 'Cancelled. Captured payment requires manual refund (Phase 4c).'
+          ? 'Cancelled. Captured payment still needs a refund — use Refund Payment below.'
           : 'Cancelled and stock restored.',
       });
     } catch (e) {
       setActionMsg({ type: 'error', text: e.message || 'Cancel failed.' });
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const doRefund = async () => {
+    setConfirmRefund(false);
+    setActing(true);
+    setActionMsg(null);
+    try {
+      const updated = await adminOrderService.refundOrder(orderNumber, { reason: 'Refunded by admin' });
+      setData(updated);
+      const provider = updated.order?.payment?.provider;
+      setActionMsg({
+        type: 'success',
+        text: provider === 'STRIPE'
+          ? 'Refunded via Stripe at the original FX rate.'
+          : provider === 'VNPAY'
+            ? 'Refunded via VNPAY.'
+            : 'Refunded (offline payment marked refunded).',
+      });
+    } catch (e) {
+      setActionMsg({ type: 'error', text: e.message || 'Refund failed.' });
     } finally {
       setActing(false);
     }
@@ -72,7 +100,7 @@ export default function AdminOrderDetailPage() {
       <div className="bg-white border border-black/10 p-8 text-center">
         <Banner type="error">{error}</Banner>
         <Link
-          to="/admin/orders"
+          to={backTo}
           className="inline-block mt-4 text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
         >
           Back to Orders
@@ -86,15 +114,27 @@ export default function AdminOrderDetailPage() {
   const customer = data.customer;
   const allowed = data.allowedTransitions ?? [];
   const cancellable = data.cancellableByAdmin;
+  const refundable = data.refundableByAdmin;
   const requiresRefund = data.requiresRefund;
 
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/admin/orders" className="text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 hover:text-black">
+        <button
+          type="button"
+          onClick={() => goBack(navigate, location, '/admin/orders')}
+          className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-3 py-2 hover:bg-black hover:text-white transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
           All Orders
-        </Link>
-        <div className="flex items-center gap-3 mt-2 flex-wrap">
+        </button>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="font-['Anton'] text-4xl uppercase tracking-tight">{order.orderNumber}</h1>
           <OrderStatusBadge status={order.status} size="md" />
         </div>
@@ -104,7 +144,7 @@ export default function AdminOrderDetailPage() {
       {actionMsg && <Banner type={actionMsg.type}>{actionMsg.text}</Banner>}
       {requiresRefund && (
         <Banner type="warning">
-          Order was cancelled while payment was already captured. Refund must be processed manually (Phase 4c).
+          Order was cancelled while payment was already captured. Use Refund Payment to return the money.
         </Banner>
       )}
 
@@ -188,7 +228,7 @@ export default function AdminOrderDetailPage() {
           <div className="bg-white border border-black/10 p-5 space-y-3">
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40">Admin Actions</p>
 
-            {allowed.length === 0 && !cancellable && (
+            {allowed.length === 0 && !cancellable && !refundable && (
               <p className="text-[11px] text-black/40 tracking-wider">No further actions available.</p>
             )}
 
@@ -212,6 +252,16 @@ export default function AdminOrderDetailPage() {
                 Cancel Order
               </button>
             )}
+
+            {refundable && (
+              <button
+                disabled={acting}
+                onClick={() => setConfirmRefund(true)}
+                className="w-full text-[11px] font-bold tracking-[0.15em] uppercase py-3 border border-black text-black hover:bg-black hover:text-white disabled:opacity-50 transition-colors"
+              >
+                Refund Payment
+              </button>
+            )}
           </div>
         </aside>
       </div>
@@ -229,15 +279,43 @@ export default function AdminOrderDetailPage() {
       <ConfirmDialog
         open={confirmCancel}
         title="Cancel this order?"
-        message={`Order ${order.orderNumber} will be cancelled and any reserved stock returned. Captured payments must be refunded manually.`}
+        message={`Order ${order.orderNumber} will be cancelled and any reserved stock returned. Captured payments can then be refunded via Refund Payment.`}
         confirmLabel="Cancel Order"
         cancelLabel="Keep Order"
         tone="danger"
         onCancel={() => setConfirmCancel(false)}
         onConfirm={doCancel}
       />
+
+      <ConfirmDialog
+        open={confirmRefund}
+        title="Refund this payment?"
+        message={refundDialogMessage(order)}
+        confirmLabel="Refund Payment"
+        cancelLabel="Keep As-Is"
+        tone="danger"
+        onCancel={() => setConfirmRefund(false)}
+        onConfirm={doRefund}
+      />
     </div>
   );
+}
+
+function refundDialogMessage(order) {
+  const p = order.payment;
+  const amount = p ? formatMoney(p.amount, p.currency) : formatMoney(order.grandTotal, order.currency);
+  const gateway = p?.provider === 'STRIPE'
+    ? 'Stripe will be refunded at the original FX rate'
+    : p?.provider === 'VNPAY'
+      ? 'VNPAY will be refunded'
+      : 'The offline payment will be marked refunded';
+  const outcome = order.status === 'CANCELLED'
+    ? 'The order stays CANCELLED.'
+    : 'The order will move to REFUNDED.';
+  const stock = order.status === 'PAID' || order.status === 'PROCESSING'
+    ? ' Reserved stock will be returned.'
+    : '';
+  return `${gateway} (${amount}). ${outcome}${stock}`;
 }
 
 function Section({ title, children }) {

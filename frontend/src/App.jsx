@@ -5,6 +5,7 @@ import { ToastProvider } from './components/Toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import BackToTop from './components/BackToTop';
+import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AccountStatusPage from './pages/AccountStatusPage';
@@ -41,6 +42,7 @@ export default function App() {
       <CartProvider>
         <ToastProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />

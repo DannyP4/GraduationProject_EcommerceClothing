@@ -7,6 +7,7 @@ import com.uniform.store.dto.response.PaymentDto;
 import com.uniform.store.entity.Order;
 import com.uniform.store.entity.OrderItem;
 import com.uniform.store.entity.OrderStatusHistory;
+import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.Product;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.Role;
@@ -21,6 +22,7 @@ import com.uniform.store.mapper.OrderMapper;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
+import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +58,7 @@ class AdminOrderServiceImplTest {
     @Mock ProductVariantRepository variantRepository;
     @Mock UserRepository userRepository;
     @Mock OrderMapper orderMapper;
+    @Mock PaymentRepository paymentRepository;
 
     AdminOrderServiceImpl adminOrderService;
 
@@ -69,7 +72,7 @@ class AdminOrderServiceImplTest {
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(
                 orderRepository, orderItemRepository, statusHistoryRepository,
-                variantRepository, userRepository, orderMapper);
+                variantRepository, userRepository, orderMapper, paymentRepository);
 
         adminUser = User.builder()
                 .email("admin@uniform.test")
@@ -192,6 +195,42 @@ class AdminOrderServiceImplTest {
                 "UNF-20260520-0001", OrderStatus.SHIPPED, null, "admin@uniform.test"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("terminal");
+    }
+
+    @Test
+    void transition_codPendingToProcessing_allowed() {
+        order.setStatus(OrderStatus.PENDING);
+        Payment cod = Payment.builder().order(order).provider(PaymentProvider.COD)
+                .status(PaymentStatus.PENDING).amount(new BigDecimal("500000")).currency("VND").build();
+        when(orderRepository.findByOrderNumber("UNF-20260520-0001")).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByOrderIdOrderByIdDesc(700L)).thenReturn(Optional.of(cod));
+        when(userRepository.findByEmail("admin@uniform.test")).thenReturn(Optional.of(adminUser));
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(700L)).thenReturn(List.of(orderItem));
+        when(orderMapper.toAdminDetailDto(any(), any())).thenReturn(stubDetailDto(OrderStatus.PROCESSING, false));
+
+        adminOrderService.transitionOrder("UNF-20260520-0001", OrderStatus.PROCESSING, null, "admin@uniform.test");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PROCESSING);
+        assertThat(cod.getStatus()).as("not delivered yet").isEqualTo(PaymentStatus.PENDING);
+    }
+
+    @Test
+    void transition_codShippedToDelivered_capturesPayment() {
+        order.setStatus(OrderStatus.SHIPPED);
+        Payment cod = Payment.builder().order(order).provider(PaymentProvider.COD)
+                .status(PaymentStatus.PENDING).amount(new BigDecimal("500000")).currency("VND").build();
+        when(orderRepository.findByOrderNumber("UNF-20260520-0001")).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByOrderIdOrderByIdDesc(700L)).thenReturn(Optional.of(cod));
+        when(userRepository.findByEmail("admin@uniform.test")).thenReturn(Optional.of(adminUser));
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(700L)).thenReturn(List.of(orderItem));
+        when(orderMapper.toAdminDetailDto(any(), any())).thenReturn(stubDetailDto(OrderStatus.DELIVERED, false));
+
+        adminOrderService.transitionOrder("UNF-20260520-0001", OrderStatus.DELIVERED, null, "admin@uniform.test");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(cod.getStatus()).isEqualTo(PaymentStatus.CAPTURED);
+        assertThat(cod.getPaidAt()).isNotNull();
+        verify(paymentRepository).save(cod);
     }
 
     @Test

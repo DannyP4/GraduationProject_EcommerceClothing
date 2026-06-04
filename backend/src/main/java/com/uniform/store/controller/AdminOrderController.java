@@ -2,6 +2,7 @@ package com.uniform.store.controller;
 
 import com.uniform.store.dto.request.AdminOrderFilter;
 import com.uniform.store.dto.request.CancelOrderRequest;
+import com.uniform.store.dto.request.RefundOrderRequest;
 import com.uniform.store.dto.request.TransitionOrderRequest;
 import com.uniform.store.dto.response.AdminOrderDetailDto;
 import com.uniform.store.dto.response.AdminOrderSummaryDto;
@@ -9,6 +10,7 @@ import com.uniform.store.dto.response.ApiResponse;
 import com.uniform.store.dto.response.PageResponse;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.service.AdminOrderService;
+import com.uniform.store.service.RefundService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,6 +44,7 @@ public class AdminOrderController {
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final AdminOrderService adminOrderService;
+    private final RefundService refundService;
 
     @GetMapping
     @Operation(summary = "List orders with optional status / date-range / search filter")
@@ -90,5 +93,15 @@ public class AdminOrderController {
         String reason = req == null ? null : req.getReason();
         return ApiResponse.ok("Order cancelled",
                 adminOrderService.cancelOrder(orderNumber, reason, auth.getName()));
+    }
+
+    @PostMapping("/{orderNumber}/refund")
+    @Operation(summary = "Refund a captured order; restores stock if not yet shipped (Stripe real, VNPAY simulated, COD offline)")
+    public ApiResponse<AdminOrderDetailDto> refund(Authentication auth,
+                                                   @PathVariable String orderNumber,
+                                                   @RequestBody(required = false) @Valid RefundOrderRequest req) {
+        String reason = req == null ? null : req.getReason();
+        return ApiResponse.ok("Order refunded",
+                refundService.refundOrder(orderNumber, reason, auth.getName()));
     }
 }

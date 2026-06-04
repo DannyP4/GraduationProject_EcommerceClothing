@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { useToast } from '../../components/Toast';
 import { useAuth } from '../../context/AuthContext';
 import * as userSvc from '../../services/adminUserService';
+import useScrollRestore from '../../lib/useScrollRestore';
+import AdminPagination from '../../components/admin/AdminPagination';
 
 const STATUS_OPTIONS = [
   { value: 'ACTIVE', label: 'Active' },
@@ -20,33 +22,50 @@ const SEARCH_DEBOUNCE_MS = 400;
 
 export default function AdminUsersPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { user: currentUser } = useAuth();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('ACTIVE');
-  const [sort, setSort] = useState('createdAt,desc');
-  const [pageIndex, setPageIndex] = useState(0);
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('q') ?? '');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [status, setStatus] = useState(() => searchParams.get('status') ?? 'ACTIVE');
+  const [sort, setSort] = useState(() => searchParams.get('sort') ?? 'createdAt,desc');
+  const [pageIndex, setPageIndex] = useState(() => Math.max(0, Math.floor(Number(searchParams.get('page')) || 1) - 1));
   const pageSize = 20;
 
   const [confirmSuspend, setConfirmSuspend] = useState(null);
   const [confirmActivate, setConfirmActivate] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  useScrollRestore(!loading);
+
   useEffect(() => {
     const id = setTimeout(() => {
       const trimmed = searchInput.trim();
-      setSearch(trimmed);
-      setPageIndex(0);
-      if (trimmed && status !== '') setStatus('');
+      if (trimmed !== search) {
+        setSearch(trimmed);
+        setPageIndex(0);
+        if (trimmed && status !== '') setStatus('');
+      }
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(id);
-  }, [searchInput, status]);
+  }, [searchInput, search, status]);
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (pageIndex > 0) next.set('page', String(pageIndex + 1));
+    if (status !== 'ACTIVE') next.set('status', status);
+    if (search) next.set('q', search);
+    if (sort !== 'createdAt,desc') next.set('sort', sort);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [pageIndex, status, search, sort, searchParams, setSearchParams]);
 
   const filtersDirty = !!(searchInput || status !== 'ACTIVE' || sort !== 'createdAt,desc');
 
@@ -193,7 +212,7 @@ export default function AdminUsersPage() {
                 key={u.id}
                 user={u}
                 isSelf={currentUser?.email === u.email}
-                onView={() => navigate(`/admin/users/${u.id}`)}
+                onView={() => navigate(`/admin/users/${u.id}`, { state: { backTo: `/admin/users${location.search}` } })}
                 onSuspend={() => setConfirmSuspend(u)}
                 onActivate={() => setConfirmActivate(u)}
                 onDelete={() => setConfirmDelete(u)}
@@ -203,31 +222,12 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-black/70">
-            Page <strong>{pageIndex + 1}</strong> of <strong>{totalPages}</strong> <span className="text-black/40">({totalElements} total)</span>
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
-              disabled={pageIndex === 0}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] uppercase border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-colors disabled:border-black/30 disabled:text-black/30 disabled:hover:bg-transparent disabled:hover:text-black/30 disabled:cursor-not-allowed"
-            >
-              <span>&larr;</span> Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => setPageIndex((i) => Math.min(totalPages - 1, i + 1))}
-              disabled={pageIndex >= totalPages - 1}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] uppercase border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-colors disabled:border-black/30 disabled:text-black/30 disabled:hover:bg-transparent disabled:hover:text-black/30 disabled:cursor-not-allowed"
-            >
-              Next <span>&rarr;</span>
-            </button>
-          </div>
-        </div>
-      )}
+      <AdminPagination
+        page={pageIndex}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        onChange={setPageIndex}
+      />
 
       <ConfirmDialog
         open={!!confirmSuspend}

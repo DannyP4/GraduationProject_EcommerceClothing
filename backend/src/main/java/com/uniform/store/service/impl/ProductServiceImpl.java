@@ -12,14 +12,18 @@ import com.uniform.store.entity.ProductAttribute;
 import com.uniform.store.entity.ProductImage;
 import com.uniform.store.entity.ProductTranslation;
 import com.uniform.store.entity.ProductVariant;
+import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.ProductSort;
+import com.uniform.store.enums.ReviewStatus;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.repository.CategoryTranslationRepository;
+import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.ProductAttributeRepository;
 import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductRepository;
 import com.uniform.store.repository.ProductTranslationRepository;
 import com.uniform.store.repository.ProductVariantRepository;
+import com.uniform.store.repository.ReviewRepository;
 import com.uniform.store.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +47,8 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final List<OrderStatus> SOLD_STATUSES = List.of(
+            OrderStatus.PAID, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED);
 
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
@@ -49,6 +56,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductAttributeRepository attributeRepository;
     private final ProductTranslationRepository productTranslationRepository;
     private final CategoryTranslationRepository categoryTranslationRepository;
+    private final ReviewRepository reviewRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     public PageResponse<ProductSummaryDto> listProducts(ProductFilterRequest filter, Pageable pageable, String locale) {
@@ -91,6 +100,18 @@ public class ProductServiceImpl implements ProductService {
             primaryImageUrls.putIfAbsent(img.getProduct().getId(), img.getUrl());
         }
 
+        Map<Long, double[]> ratingByProduct = new HashMap<>();
+        for (Object[] row : reviewRepository.aggregateRatingByProductIds(productIds, ReviewStatus.APPROVED)) {
+            double avg = row[1] == null ? 0 : ((Number) row[1]).doubleValue();
+            long cnt = ((Number) row[2]).longValue();
+            ratingByProduct.put((Long) row[0], new double[]{ avg, cnt });
+        }
+
+        Map<Long, Long> soldByProduct = new HashMap<>();
+        for (Object[] row : orderItemRepository.aggregateSoldByProductIds(productIds, SOLD_STATUSES)) {
+            soldByProduct.put((Long) row[0], ((Number) row[1]).longValue());
+        }
+
         List<ProductSummaryDto> mapped = products.stream()
                 .map(p -> ProductSummaryDto.builder()
                         .id(p.getId())
@@ -101,6 +122,13 @@ public class ProductServiceImpl implements ProductService {
                         .primaryImageUrl(primaryImageUrls.get(p.getId()))
                         .brandName(p.getBrand().getName())
                         .categoryName(translatedCategoryName(p, categoryTranslations.get(p.getCategory().getId())))
+                        .averageRating(ratingByProduct.containsKey(p.getId())
+                                ? Double.valueOf(Math.round(ratingByProduct.get(p.getId())[0] * 10.0) / 10.0)
+                                : null)
+                        .reviewCount(ratingByProduct.containsKey(p.getId())
+                                ? (long) ratingByProduct.get(p.getId())[1]
+                                : 0L)
+                        .soldCount(soldByProduct.getOrDefault(p.getId(), 0L))
                         .build())
                 .toList();
 
@@ -137,6 +165,18 @@ public class ProductServiceImpl implements ProductService {
             attributeMap.put(a.getAttrKey(), a.getAttrValue());
         }
 
+        long reviewCount = reviewRepository.countByProductIdAndStatus(product.getId(), ReviewStatus.APPROVED);
+        Double averageRating = null;
+        if (reviewCount > 0) {
+            Double avg = reviewRepository.averageRating(product.getId(), ReviewStatus.APPROVED);
+            averageRating = avg == null ? null : Math.round(avg * 10.0) / 10.0;
+        }
+
+        long soldCount = 0L;
+        for (Object[] row : orderItemRepository.aggregateSoldByProductIds(List.of(product.getId()), SOLD_STATUSES)) {
+            soldCount = ((Number) row[1]).longValue();
+        }
+
         return ProductDetailDto.builder()
                 .id(product.getId())
                 .slug(product.getSlug())
@@ -154,6 +194,9 @@ public class ProductServiceImpl implements ProductService {
                         .map(v -> toVariantDto(v, product.getBasePrice()))
                         .toList())
                 .attributes(attributeMap)
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
+                .soldCount(soldCount)
                 .build();
     }
 

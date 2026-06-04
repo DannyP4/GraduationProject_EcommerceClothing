@@ -16,6 +16,8 @@ import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.OrderTransitions;
+import com.uniform.store.enums.PaymentProvider;
+import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
@@ -201,16 +203,18 @@ public class OrderMapper {
 
     public AdminOrderDetailDto toAdminDetailDto(Order order, List<OrderItem> items) {
         OrderDetailDto base = toDetailDto(order, items);
-        boolean requiresRefund = order.getStatus() == OrderStatus.CANCELLED
-                && base.getPayment() != null
-                && base.getPayment().getStatus() != null
-                && base.getPayment().getStatus().name().equals("CAPTURED");
+        boolean paymentCaptured = base.getPayment() != null
+                && base.getPayment().getStatus() == PaymentStatus.CAPTURED;
+        boolean requiresRefund = order.getStatus() == OrderStatus.CANCELLED && paymentCaptured;
+        boolean refundableByAdmin = OrderTransitions.isRefundableByAdmin(order.getStatus()) && paymentCaptured;
+        PaymentProvider provider = base.getPayment() != null ? base.getPayment().getProvider() : null;
 
         return AdminOrderDetailDto.builder()
                 .order(base)
                 .customer(toCustomerInfo(order.getUser()))
-                .allowedTransitions(OrderTransitions.allowedFrom(order.getStatus()))
+                .allowedTransitions(OrderTransitions.allowedFrom(order.getStatus(), provider))
                 .cancellableByAdmin(OrderTransitions.isCancellableByAdmin(order.getStatus()))
+                .refundableByAdmin(refundableByAdmin)
                 .requiresRefund(requiresRefund)
                 .build();
     }

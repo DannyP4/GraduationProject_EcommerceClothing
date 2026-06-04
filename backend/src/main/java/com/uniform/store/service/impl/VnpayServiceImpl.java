@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -93,6 +94,19 @@ public class VnpayServiceImpl implements VnpayService {
                 signatureValid ? (paymentSuccess ? "Payment confirmed" : "Payment failed at gateway")
                         : "Signature mismatch",
                 filtered);
+    }
+
+    @Override
+    public RefundResult refund(String orderNumber, BigDecimal vndAmount, String originalTxnId) {
+        Map<String, Object> raw = new LinkedHashMap<>();
+        raw.put("vnp_Command", "refund");
+        raw.put("vnp_TmnCode", props.getTmnCode());
+        raw.put("vnp_TxnRef", orderNumber);
+        raw.put("vnp_Amount", vndAmount.movePointRight(2).toBigInteger().toString());
+        raw.put("vnp_TransactionNo", originalTxnId);
+        raw.put("vnp_CreateDate", ZonedDateTime.now(VN_ZONE).format(VN_DATE));
+        raw.put("simulated", true);
+        return new RefundResult("VNPAY-REFUND-" + orderNumber, "SIMULATED", raw);
     }
 
     private static String buildSignData(Map<String, String> sortedParams) {

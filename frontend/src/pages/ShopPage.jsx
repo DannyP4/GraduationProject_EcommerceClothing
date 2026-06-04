@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
 import { getProducts, getCategories } from '../services/productService';
+import useScrollRestore from '../lib/useScrollRestore';
 
 const SORT_OPTIONS = [
   { label: 'Newest', value: 'NEWEST' },
@@ -16,19 +17,43 @@ const PAGE_SIZE = 12;
 
 export default function ShopPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q')?.trim() ?? '';
 
   const [categories, setCategories] = useState([]);
-  const [activeCategoryId, setActiveCategoryId] = useState(null);
-  const [sort, setSort] = useState('NEWEST');
-  const [page, setPage] = useState(0);
+  const [activeCategoryId, setActiveCategoryId] = useState(() => {
+    const n = Number(searchParams.get('category'));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
+  const [sort, setSort] = useState(() => searchParams.get('sort') ?? 'NEWEST');
+  const [page, setPage] = useState(() => Math.max(0, Math.floor(Number(searchParams.get('page')) || 1) - 1));
 
-  const [pageData, setPageData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [meta, setMeta] = useState({ totalElements: 0, totalPages: 0, hasNext: false });
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
 
-  useEffect(() => { setPage(0); }, [activeCategoryId, sort, query]);
+  const prevQuery = useRef(query);
+  useEffect(() => {
+    if (prevQuery.current !== query) {
+      prevQuery.current = query;
+      setPage(0);
+    }
+  }, [query]);
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (query) next.set('q', query);
+    if (activeCategoryId != null) next.set('category', String(activeCategoryId));
+    if (sort !== 'NEWEST') next.set('sort', sort);
+    if (page > 0) next.set('page', String(page + 1));
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [query, activeCategoryId, sort, page, searchParams, setSearchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,22 +63,50 @@ export default function ShopPage() {
     return () => { cancelled = true; };
   }, []);
 
+  const loaded = useRef({ key: null, through: -1 });
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    getProducts({
-      page,
+    const filterKey = `${activeCategoryId ?? ''}|${sort}|${query}`;
+    const fetchPage = (p) => getProducts({
+      page: p,
       size: PAGE_SIZE,
       sort,
       categoryId: activeCategoryId ?? undefined,
       search: query || undefined,
-    })
-      .then((data) => { if (!cancelled) setPageData(data); })
-      .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load products'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    });
+    const prev = loaded.current;
+    const sameFilter = prev.key === filterKey;
+    if (sameFilter && page <= prev.through) return;
+
+    const run = async () => {
+      try {
+        if (sameFilter && page === prev.through + 1) {
+          setLoadingMore(true);
+          const data = await fetchPage(page);
+          if (cancelled) return;
+          setItems((cur) => [...cur, ...(data?.content ?? [])]);
+          setMeta({ totalElements: data?.totalElements ?? 0, totalPages: data?.totalPages ?? 0, hasNext: !!data?.hasNext });
+        } else {
+          setLoading(true);
+          const results = await Promise.all(
+            Array.from({ length: page + 1 }, (_, p) => fetchPage(p))
+          );
+          if (cancelled) return;
+          const last = results[results.length - 1];
+          setItems(results.flatMap((r) => r?.content ?? []));
+          setMeta({ totalElements: last?.totalElements ?? 0, totalPages: last?.totalPages ?? 0, hasNext: !!last?.hasNext });
+        }
+        loaded.current = { key: filterKey, through: page };
+        setError(null);
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to load products');
+      } finally {
+        if (!cancelled) { setLoading(false); setLoadingMore(false); }
+      }
+    };
+    run();
     return () => { cancelled = true; };
-  }, [page, sort, activeCategoryId, query]);
+  }, [page, sort, activeCategoryId, query, reloadNonce]);
 
   const clearQuery = () => {
     const next = new URLSearchParams(searchParams);
@@ -61,11 +114,11 @@ export default function ShopPage() {
     setSearchParams(next, { replace: true });
   };
 
-  const products = pageData?.content ?? [];
-  const totalPages = pageData?.totalPages ?? 0;
-  const totalElements = pageData?.totalElements ?? 0;
+  const products = items;
+  const totalElements = meta.totalElements;
+  const hasNext = meta.hasNext;
 
-  const pageNumbers = useMemo(() => buildPageList(page, totalPages), [page, totalPages]);
+  useScrollRestore(!loading && products.length > 0);
 
   return (
     <div className="min-h-screen bg-[#E8E8E8]">
@@ -105,7 +158,7 @@ export default function ShopPage() {
               <ul className="space-y-1">
                 <li>
                   <button
-                    onClick={() => setActiveCategoryId(null)}
+                    onClick={() => { setActiveCategoryId(null); setPage(0); }}
                     className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${activeCategoryId === null
                       ? 'bg-black text-white'
                       : 'text-black/60 hover:text-black hover:bg-black/5'
@@ -117,7 +170,7 @@ export default function ShopPage() {
                 {categories.map((c) => (
                   <li key={c.id}>
                     <button
-                      onClick={() => setActiveCategoryId(c.id)}
+                      onClick={() => { setActiveCategoryId(c.id); setPage(0); }}
                       className={`w-full text-left text-sm py-1.5 px-2 transition-all font-medium ${activeCategoryId === c.id
                         ? 'bg-black text-white'
                         : 'text-black/60 hover:text-black hover:bg-black/5'
@@ -135,7 +188,7 @@ export default function ShopPage() {
               <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-4">Sort By</h3>
               <select
                 value={sort}
-                onChange={(e) => setSort(e.target.value)}
+                onChange={(e) => { setSort(e.target.value); setPage(0); }}
                 className="w-full border border-black/15 bg-white text-sm px-3 py-2.5 focus:outline-none focus:border-black appearance-none cursor-pointer"
               >
                 {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -144,7 +197,7 @@ export default function ShopPage() {
 
             {activeCategoryId !== null && (
               <button
-                onClick={() => setActiveCategoryId(null)}
+                onClick={() => { setActiveCategoryId(null); setPage(0); }}
                 className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#E83354] hover:underline"
               >
                 Clear Filters
@@ -160,7 +213,7 @@ export default function ShopPage() {
               <p className="text-sm font-bold text-[#E83354] mb-1 uppercase tracking-wider">Could not load products</p>
               <p className="text-xs text-black/60 mb-4">{error}</p>
               <button
-                onClick={() => setPage((p) => p)}
+                onClick={() => { loaded.current = { key: null, through: -1 }; setError(null); setReloadNonce((n) => n + 1); }}
                 className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
               >
                 Retry
@@ -196,7 +249,7 @@ export default function ShopPage() {
                 <div
                   key={product.id}
                   className="group bg-white cursor-pointer relative overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_12px_24px_-12px_rgba(0,0,0,0.25)]"
-                  onClick={() => navigate(`/product/${product.slug || product.id}`)}
+                  onClick={() => navigate(`/product/${product.slug || product.id}`, { state: { backTo: `/shop${location.search}` } })}
                 >
                   <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
                     {product.primaryImageUrl ? (
@@ -226,45 +279,44 @@ export default function ShopPage() {
                         {formatPrice(product.basePrice, product.currency)}
                       </span>
                     </div>
+                    {(product.reviewCount > 0 || product.soldCount > 0) && (
+                      <div className="flex items-center gap-1.5 mt-1.5 text-black/40">
+                        {product.reviewCount > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="block text-amber-500">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            <span className="text-[13px] font-bold leading-none text-black/80">{(product.averageRating ?? 0).toFixed(1)}</span>
+                            <span className="text-[11px] leading-none">({product.reviewCount})</span>
+                          </span>
+                        )}
+                        {product.reviewCount > 0 && product.soldCount > 0 && <span className="text-black/20">·</span>}
+                        {product.soldCount > 0 && (
+                          <span className="text-[11px] leading-none">{product.soldCount} sold</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Pagination */}
-          {!loading && !error && totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-12">
-              <button
-                disabled={!pageData?.hasPrevious}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                className="px-3 h-9 text-sm font-bold transition-all bg-white text-black/60 border border-black/15 hover:border-black hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Prev
-              </button>
-              {pageNumbers.map((p, i) =>
-                p === '…' ? (
-                  <span key={`gap-${i}`} className="w-9 h-9 flex items-center justify-center text-black/40">…</span>
-                ) : (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p - 1)}
-                    className={`w-9 h-9 text-sm font-bold transition-all ${p - 1 === page
-                      ? 'bg-black text-white'
-                      : 'bg-white text-black/60 border border-black/15 hover:border-black hover:text-black'
-                      }`}
-                  >
-                    {p}
-                  </button>
-                )
+          {!loading && !error && products.length > 0 && (
+            <div className="mt-12 flex flex-col items-center gap-3">
+              <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-black/40">
+                Showing {products.length} of {totalElements}
+              </p>
+              {hasNext && (
+                <button
+                  type="button"
+                  disabled={loadingMore}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="text-[12px] font-bold tracking-[0.15em] uppercase border-2 border-black px-10 py-3.5 hover:bg-black hover:text-white transition-colors disabled:opacity-40 disabled:cursor-wait"
+                >
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </button>
               )}
-              <button
-                disabled={!pageData?.hasNext}
-                onClick={() => setPage((p) => p + 1)}
-                className="px-3 h-9 text-sm font-bold transition-all bg-white text-black/60 border border-black/15 hover:border-black hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
             </div>
           )}
         </main>
@@ -290,21 +342,6 @@ function SkeletonGrid({ count }) {
       ))}
     </div>
   );
-}
-
-function buildPageList(currentPage, totalPages) {
-  if (totalPages <= 1) return [];
-  const cur = currentPage + 1;
-  const last = totalPages;
-  const range = [];
-  range.push(1);
-  if (cur - 2 > 2) range.push('…');
-  for (let i = Math.max(2, cur - 1); i <= Math.min(last - 1, cur + 1); i++) {
-    range.push(i);
-  }
-  if (cur + 2 < last - 1) range.push('…');
-  if (last > 1) range.push(last);
-  return range;
 }
 
 function formatPrice(value, currency) {

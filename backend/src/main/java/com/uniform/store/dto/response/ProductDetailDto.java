@@ -31,4 +31,7 @@ public class ProductDetailDto {
     private List<ProductImageDto> images;
     private List<ProductVariantDto> variants;
     private Map<String, String> attributes;
+    private Double averageRating;
+    private Long reviewCount;
+    private Long soldCount;
 }

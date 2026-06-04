@@ -7,16 +7,20 @@ import com.uniform.store.dto.response.PageResponse;
 import com.uniform.store.entity.Order;
 import com.uniform.store.entity.OrderItem;
 import com.uniform.store.entity.OrderStatusHistory;
+import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.OrderTransitions;
+import com.uniform.store.enums.PaymentProvider;
+import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.mapper.OrderMapper;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
+import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.repository.spec.OrderSpecs;
@@ -28,6 +32,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -44,6 +49,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final ProductVariantRepository variantRepository;
     private final UserRepository userRepository;
     private final OrderMapper orderMapper;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public PageResponse<AdminOrderSummaryDto> listOrders(AdminOrderFilter filter, Pageable pageable) {
@@ -67,11 +73,22 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", orderNumber));
 
-        OrderTransitions.assertCanTransition(order.getStatus(), targetStatus);
+        Payment payment = paymentRepository.findFirstByOrderIdOrderByIdDesc(order.getId()).orElse(null);
+        PaymentProvider provider = payment != null ? payment.getProvider() : null;
+
+        OrderTransitions.assertCanTransition(order.getStatus(), targetStatus, provider);
 
         User actor = loadActor(actorEmail);
         order.setStatus(targetStatus);
         orderRepository.save(order);
+
+        // COD
+        if (targetStatus == OrderStatus.DELIVERED && provider == PaymentProvider.COD
+                && payment != null && payment.getStatus() != PaymentStatus.CAPTURED) {
+            payment.setStatus(PaymentStatus.CAPTURED);
+            payment.setPaidAt(Instant.now());
+            paymentRepository.save(payment);
+        }
 
         statusHistoryRepository.save(OrderStatusHistory.builder()
                 .order(order)

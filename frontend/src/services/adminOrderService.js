@@ -37,3 +37,8 @@ export async function cancelOrder(orderNumber, { reason } = {}) {
   const resp = await apiClient.post(`/admin/orders/${orderNumber}/cancel`, { reason });
   return unwrap(resp);
 }
+
+export async function refundOrder(orderNumber, { reason } = {}) {
+  const resp = await apiClient.post(`/admin/orders/${orderNumber}/refund`, { reason });
+  return unwrap(resp);
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
+import { goBack } from '../../lib/historyBack';
 import * as productSvc from '../../services/adminProductService';
 import * as brandSvc from '../../services/adminBrandService';
 import * as catSvc from '../../services/adminCategoryService';
@@ -25,6 +26,8 @@ export default function AdminProductEditPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { id } = useParams();
+  const location = useLocation();
+  const backTo = location.state?.backTo || '/admin/products';
   const [searchParams, setSearchParams] = useSearchParams();
   const isCreate = !id;
   const viewMode = !isCreate && searchParams.get('view') === '1';
@@ -127,8 +130,9 @@ export default function AdminProductEditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          to="/admin/products"
+        <button
+          type="button"
+          onClick={() => goBack(navigate, location, '/admin/products')}
           className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-3 py-2 hover:bg-black hover:text-white transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -136,7 +140,7 @@ export default function AdminProductEditPage() {
             <polyline points="12 19 5 12 12 5" />
           </svg>
           Back to products
-        </Link>
+        </button>
       </div>
 
       <div className="flex items-start justify-between flex-wrap gap-3">

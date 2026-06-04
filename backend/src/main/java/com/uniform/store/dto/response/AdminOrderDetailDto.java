@@ -21,5 +21,6 @@ public class AdminOrderDetailDto {
 
     private Set<OrderStatus> allowedTransitions;
     private Boolean cancellableByAdmin;
+    private Boolean refundableByAdmin;
     private Boolean requiresRefund;
 }

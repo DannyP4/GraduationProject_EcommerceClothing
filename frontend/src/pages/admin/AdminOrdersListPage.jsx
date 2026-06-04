@@ -1,20 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import OrderStatusBadge from '../../components/admin/OrderStatusBadge';
 import * as adminOrderService from '../../services/adminOrderService';
+import useScrollRestore from '../../lib/useScrollRestore';
+import AdminPagination from '../../components/admin/AdminPagination';
 
 const STATUS_OPTIONS = ['ALL', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 export default function AdminOrdersListPage() {
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [search, setSearch] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? 'ALL');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') ?? '');
+  const [page, setPage] = useState(() => Math.max(0, Math.floor(Number(searchParams.get('page')) || 1) - 1));
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useScrollRestore(!loading);
 
   useEffect(() => {
     const t = setTimeout(() => setSearchTerm(search.trim()), 300);
@@ -40,56 +47,73 @@ export default function AdminOrdersListPage() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [statusFilter, searchTerm, page]);
+  }, [statusFilter, searchTerm, page, reloadNonce]);
 
-  const totalPages = data?.totalPages ?? 1;
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (statusFilter !== 'ALL') next.set('status', statusFilter);
+    if (searchTerm) next.set('q', searchTerm);
+    if (page > 0) next.set('page', String(page + 1));
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [statusFilter, searchTerm, page, searchParams, setSearchParams]);
+
+  const totalPages = data?.totalPages ?? 0;
   const totalElements = data?.totalElements ?? 0;
   const rows = data?.content ?? [];
 
-  const resetPage = () => setPage(0);
+  const filtersDirty = !!(search || statusFilter !== 'ALL');
+  const clearFilters = () => {
+    setSearch('');
+    setSearchTerm('');
+    setStatusFilter('ALL');
+    setPage(0);
+  };
+  const backTo = `/admin/orders${location.search}`;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">Orders</h1>
-        <p className="text-xs text-black/50 mt-1">Manage and transition all customer orders.</p>
+        <p className="text-sm text-black/55 mt-1 max-w-md">Manage and transition all customer orders.</p>
       </div>
 
-      <div className="bg-white border border-black/10 p-4 flex flex-col md:flex-row md:items-center gap-3">
-        <div className="flex flex-wrap gap-1">
-          {STATUS_OPTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => { setStatusFilter(s); resetPage(); }}
-              className={`text-[10px] font-bold tracking-[0.15em] uppercase px-3 py-2 border transition-colors ${
-                statusFilter === s
-                  ? 'bg-black text-white border-black'
-                  : 'bg-white text-black/60 border-black/10 hover:border-black hover:text-black'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        <div className="md:ml-auto flex items-center gap-2 flex-1 md:flex-initial md:w-72 border border-black/15 px-3 py-2 focus-within:border-black">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-black/40">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
+      <div className="bg-white border border-black/10 p-3">
+        <div className="flex flex-wrap items-stretch gap-2">
           <input
             type="text"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); resetPage(); }}
-            placeholder="Order # or customer..."
-            className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-black/30"
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            placeholder="Search order # or customer..."
+            className="flex-1 min-w-[180px] border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
           />
-          {search && (
-            <button onClick={() => { setSearch(''); resetPage(); }} className="text-black/30 hover:text-black" aria-label="Clear search">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
+            className="border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none bg-white min-w-[130px]"
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={clearFilters}
+            disabled={!filtersDirty}
+            className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 px-4 py-2 hover:border-black hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black/40"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={() => setReloadNonce((n) => n + 1)}
+            disabled={loading}
+            title="Reload orders"
+            className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 px-4 py-2 hover:border-black hover:bg-black hover:text-white transition-colors disabled:opacity-40 inline-flex items-center gap-1.5"
+          >
+            <RefreshIcon spinning={loading} /> {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
         </div>
       </div>
 
@@ -117,6 +141,7 @@ export default function AdminOrdersListPage() {
               <li key={o.id}>
                 <Link
                   to={`/admin/orders/${o.orderNumber}`}
+                  state={{ backTo }}
                   className="grid grid-cols-2 md:grid-cols-[1.4fr_1.4fr_0.9fr_0.9fr_1fr_0.6fr] gap-3 px-4 py-4 hover:bg-black/[0.03] transition-colors items-center"
                 >
                   <div className="min-w-0">
@@ -145,33 +170,23 @@ export default function AdminOrdersListPage() {
         )}
       </div>
 
-      {totalElements > 0 && (
-        <div className="flex items-center justify-between text-[11px] tracking-wider">
-          <span className="text-black/40">
-            Showing {page * PAGE_SIZE + 1}-{Math.min(totalElements, (page + 1) * PAGE_SIZE)} of {totalElements}
-          </span>
-          <div className="flex gap-2">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage(page - 1)}
-              className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 px-4 py-2 hover:border-black disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              Prev
-            </button>
-            <span className="text-[11px] text-black/50 self-center px-2">
-              Page {page + 1} / {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(page + 1)}
-              className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 px-4 py-2 hover:border-black disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        onChange={setPage}
+      />
     </div>
+  );
+}
+
+function RefreshIcon({ spinning }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={spinning ? 'animate-spin' : ''}>
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </svg>
   );
 }
 

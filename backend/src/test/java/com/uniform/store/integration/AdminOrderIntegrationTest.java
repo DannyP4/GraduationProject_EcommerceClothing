@@ -11,7 +11,10 @@ import com.uniform.store.entity.Product;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.OrderStatus;
+import com.uniform.store.enums.PaymentProvider;
+import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.repository.OrderRepository;
+import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +35,7 @@ class AdminOrderIntegrationTest extends BaseIntegrationTest {
 
     @Autowired ProductVariantRepository variantRepository;
     @Autowired OrderRepository orderRepository;
+    @Autowired PaymentRepository paymentRepository;
 
     User customer;
     User adminUser;
@@ -169,6 +174,135 @@ class AdminOrderIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message")
                         .value(org.hamcrest.Matchers.containsString("Cannot cancel")));
+    }
+
+    @Test
+    void refund_withoutJwt_returns401() throws Exception {
+        mockMvc.perform(post("/admin/orders/" + firstOrderNumber + "/refund"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refund_withCustomerJwt_returns403() throws Exception {
+        mockMvc.perform(post("/admin/orders/" + firstOrderNumber + "/refund")
+                        .header("Authorization", "Bearer " + customerJwt))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void refund_paidCodOrder_returnsRefundedAndRestoresStock() throws Exception {
+        ProductVariant v = freshVariant(10);
+        Order paidOrder = data.createOrderWithItem(customer, v, 2,
+                OrderStatus.PAID, Instant.now(), PaymentProvider.COD);
+
+        mockMvc.perform(post("/admin/orders/" + paidOrder.getOrderNumber() + "/refund")
+                        .header("Authorization", "Bearer " + adminJwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Customer returned item\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.status").value("REFUNDED"))
+                .andExpect(jsonPath("$.data.order.payment.status").value("REFUNDED"));
+
+        assertThat(orderRepository.findByOrderNumber(paidOrder.getOrderNumber()).orElseThrow().getStatus())
+                .isEqualTo(OrderStatus.REFUNDED);
+        assertThat(variantRepository.findById(v.getId()).orElseThrow().getStockQuantity())
+                .as("10 + 2 restored (not yet shipped)").isEqualTo(12);
+    }
+
+    @Test
+    void refund_deliveredVnpayOrder_refundedWithoutStockRestore() throws Exception {
+        ProductVariant v = freshVariant(10);
+        Order delivered = data.createOrderWithItem(customer, v, 3,
+                OrderStatus.DELIVERED, Instant.now(), PaymentProvider.VNPAY);
+
+        mockMvc.perform(post("/admin/orders/" + delivered.getOrderNumber() + "/refund")
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.status").value("REFUNDED"));
+
+        assertThat(variantRepository.findById(v.getId()).orElseThrow().getStockQuantity())
+                .as("shipped goods are not restocked").isEqualTo(10);
+        assertThat(paymentRepository.findFirstByOrderIdOrderByIdDesc(delivered.getId()).orElseThrow().getStatus())
+                .isEqualTo(PaymentStatus.REFUNDED);
+    }
+
+    @Test
+    void refund_pendingOrder_returns400() throws Exception {
+        mockMvc.perform(post("/admin/orders/" + firstOrderNumber + "/refund")
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value(org.hamcrest.Matchers.containsString("Cannot refund order in status PENDING")));
+    }
+
+    @Test
+    void refund_alreadyRefundedOrder_returns400() throws Exception {
+        ProductVariant v = freshVariant(10);
+        Order refunded = data.createOrderWithItem(customer, v, 1,
+                OrderStatus.REFUNDED, Instant.now(), PaymentProvider.COD);
+
+        mockMvc.perform(post("/admin/orders/" + refunded.getOrderNumber() + "/refund")
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value(org.hamcrest.Matchers.containsString("Cannot refund order in status REFUNDED")));
+    }
+
+    @Test
+    void refund_nonexistentOrder_returns404() throws Exception {
+        mockMvc.perform(post("/admin/orders/UNF-NOPE-9999/refund")
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void transition_codPendingToProcessing_succeeds() throws Exception {
+        TransitionOrderRequest req = new TransitionOrderRequest();
+        req.setTargetStatus(OrderStatus.PROCESSING);
+        mockMvc.perform(patch("/admin/orders/" + firstOrderNumber + "/transition")
+                        .header("Authorization", "Bearer " + adminJwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.status").value("PROCESSING"));
+    }
+
+    @Test
+    void transition_onlinePendingToProcessing_rejected() throws Exception {
+        Order vnpayPending = data.createOrderWithItem(customer, freshVariant(5), 1,
+                OrderStatus.PENDING, Instant.now(), PaymentProvider.VNPAY);
+        TransitionOrderRequest req = new TransitionOrderRequest();
+        req.setTargetStatus(OrderStatus.PROCESSING);
+        mockMvc.perform(patch("/admin/orders/" + vnpayPending.getOrderNumber() + "/transition")
+                        .header("Authorization", "Bearer " + adminJwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void transition_codToDelivered_capturesPayment() throws Exception {
+        OrderStatus[] chain = { OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED };
+        for (OrderStatus target : chain) {
+            TransitionOrderRequest req = new TransitionOrderRequest();
+            req.setTargetStatus(target);
+            mockMvc.perform(patch("/admin/orders/" + firstOrderNumber + "/transition")
+                            .header("Authorization", "Bearer " + adminJwt)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.order.status").value(target.name()));
+        }
+        Order delivered = orderRepository.findByOrderNumber(firstOrderNumber).orElseThrow();
+        assertThat(paymentRepository.findFirstByOrderIdOrderByIdDesc(delivered.getId()).orElseThrow().getStatus())
+                .isEqualTo(PaymentStatus.CAPTURED);
+    }
+
+    private ProductVariant freshVariant(int stock) {
+        Brand b = data.createBrand();
+        Category c = data.createCategory();
+        Product p = data.createProduct(b, c, new BigDecimal("250000"));
+        return data.createVariant(p, stock);
     }
 
     private String placeCodOrder(int qty) throws Exception {

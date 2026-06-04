@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { useToast } from '../../components/Toast';
 import * as productSvc from '../../services/adminProductService';
 import * as brandSvc from '../../services/adminBrandService';
 import * as catSvc from '../../services/adminCategoryService';
+import useScrollRestore from '../../lib/useScrollRestore';
+import AdminPagination from '../../components/admin/AdminPagination';
 
 const GENDER_OPTIONS = ['MEN', 'WOMEN', 'UNISEX', 'KIDS'];
 const STATUS_OPTIONS = [
@@ -25,6 +27,7 @@ function formatPrice(value) {
 
 export default function AdminProductsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,26 +35,45 @@ export default function AdminProductsPage() {
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [brandId, setBrandId] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [gender, setGender] = useState('');
-  const [status, setStatus] = useState('active');
-  const [pageIndex, setPageIndex] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('q') ?? '');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [brandId, setBrandId] = useState(() => searchParams.get('brand') ?? '');
+  const [categoryId, setCategoryId] = useState(() => searchParams.get('category') ?? '');
+  const [gender, setGender] = useState(() => searchParams.get('gender') ?? '');
+  const [status, setStatus] = useState(() => searchParams.get('status') ?? 'active');
+  const [pageIndex, setPageIndex] = useState(() => Math.max(0, Math.floor(Number(searchParams.get('page')) || 1) - 1));
   const pageSize = 20;
 
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [confirmRestore, setConfirmRestore] = useState(null);
   const [hardDeleteStage, setHardDeleteStage] = useState(null);
 
+  useScrollRestore(!loading);
+
   useEffect(() => {
     const id = setTimeout(() => {
-      setSearch(searchInput.trim());
-      setPageIndex(0);
+      const trimmed = searchInput.trim();
+      if (trimmed !== search) {
+        setSearch(trimmed);
+        setPageIndex(0);
+      }
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(id);
-  }, [searchInput]);
+  }, [searchInput, search]);
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (pageIndex > 0) next.set('page', String(pageIndex + 1));
+    if (search) next.set('q', search);
+    if (brandId) next.set('brand', brandId);
+    if (categoryId) next.set('category', categoryId);
+    if (gender) next.set('gender', gender);
+    if (status !== 'active') next.set('status', status);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [pageIndex, search, brandId, categoryId, gender, status, searchParams, setSearchParams]);
 
   const filtersDirty = !!(searchInput || brandId || categoryId || gender || status !== 'active');
 
@@ -236,8 +258,8 @@ export default function AdminProductsPage() {
               <ProductRow
                 key={p.id}
                 product={p}
-                onView={() => navigate(`/admin/products/${p.id}?view=1`)}
-                onEdit={() => navigate(`/admin/products/${p.id}`)}
+                onView={() => navigate(`/admin/products/${p.id}?view=1`, { state: { backTo: `/admin/products${location.search}` } })}
+                onEdit={() => navigate(`/admin/products/${p.id}`, { state: { backTo: `/admin/products${location.search}` } })}
                 onDelete={() => setConfirmDelete(p)}
                 onRestore={() => setConfirmRestore(p)}
                 onHardDelete={() => setHardDeleteStage(p)}
@@ -247,31 +269,12 @@ export default function AdminProductsPage() {
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-black/70">
-            Page <strong>{pageIndex + 1}</strong> of <strong>{totalPages}</strong> <span className="text-black/40">({totalElements} total)</span>
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
-              disabled={pageIndex === 0}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] uppercase border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-colors disabled:border-black/30 disabled:text-black/30 disabled:hover:bg-transparent disabled:hover:text-black/30 disabled:cursor-not-allowed"
-            >
-              <span>&larr;</span> Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => setPageIndex((i) => Math.min(totalPages - 1, i + 1))}
-              disabled={pageIndex >= totalPages - 1}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] uppercase border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-colors disabled:border-black/30 disabled:text-black/30 disabled:hover:bg-transparent disabled:hover:text-black/30 disabled:cursor-not-allowed"
-            >
-              Next <span>&rarr;</span>
-            </button>
-          </div>
-        </div>
-      )}
+      <AdminPagination
+        page={pageIndex}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        onChange={setPageIndex}
+      />
 
       <ConfirmDialog
         open={!!confirmDelete}
