@@ -23,9 +23,9 @@ export default function NavbarGlass() {
         <Link
           to="/"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="font-['Anton'] text-2xl tracking-widest text-black hover:text-[#E83354] transition-all hover:-translate-y-0.5 inline-block"
+          className="font-['Anton'] text-3xl tracking-widest text-black hover:text-[#E83354] transition-all hover:-translate-y-0.5 inline-block"
         >
-          UNIFORM
+          VESTA
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

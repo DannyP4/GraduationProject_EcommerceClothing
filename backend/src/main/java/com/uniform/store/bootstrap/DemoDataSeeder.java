@@ -57,7 +57,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     private static final long SEED = 42L;
     private static final String[] CATEGORY_SLUGS = {"t-shirts", "hoodies", "jackets", "pants", "accessories"};
     private static final String[] CATEGORY_NAMES = {"T-Shirts", "Hoodies", "Jackets", "Pants", "Accessories"};
-    private static final String[] BRAND_NAMES = {"Uniform", "North Drift", "Atlas Studio", "Mono Lab", "Riverwear", "Six Mile", "Static Co.", "Halftone"};
+    private static final String[] BRAND_NAMES = {"Vesta", "North Drift", "Atlas Studio", "Mono Lab", "Riverwear", "Six Mile", "Static Co.", "Halftone"};
     private static final String[] SIZES = {"S", "M", "L", "XL"};
     private static final String[][] COLORS = {
             {"Black", "#000000"}, {"White", "#FFFFFF"}, {"Navy", "#1F2A44"},
@@ -94,27 +94,31 @@ public class DemoDataSeeder implements CommandLineRunner {
             log.info("Demo seeder disabled (app.seed.enabled=false)");
             return;
         }
-        if (productRepository.count() > 0) {
-            log.info("Demo seeder skipped: products table already populated ({} rows). " +
-                    "Truncate the catalog tables manually to re-seed.", productRepository.count());
-            return;
-        }
-
-        log.info("Demo seeder starting...");
         Random rng = new Random(SEED);
         Faker faker = new Faker(rng);
 
-        List<Category> categories = seedCategories();
-        List<Brand> brands = seedBrands();
-        List<Product> products = seedProducts(faker, rng, categories, brands);
-        seedImagesAndVariants(rng, products);
-        List<User> customers = seedCustomers(faker, rng);
-        seedOrdersAndPayments(rng, customers, products);
-        seedReviews(rng, customers, products);
+        if (productRepository.count() == 0) {
+            List<Category> categories = seedCategories();
+            List<Brand> brands = seedBrands();
+            List<Product> products = seedProducts(faker, rng, categories, brands);
+            seedImagesAndVariants(rng, products);
+            log.info("Demo seeder: seeded {} categories, {} brands, {} placeholder products.",
+                    categories.size(), brands.size(), products.size());
+        } else {
+            log.info("Demo seeder: catalog present ({} products), layering demo transactions on it.",
+                    productRepository.count());
+        }
 
-        log.info("Demo seeder finished: {} categories, {} brands, {} products, {} customers, {} orders, {} reviews",
-                categories.size(), brands.size(), products.size(), customers.size(),
-                props.getOrdersCount(), props.getReviewsCount());
+        if (orderRepository.count() == 0) {
+            List<User> customers = seedCustomers(faker, rng);
+            List<Product> products = productRepository.findAll();
+            seedOrdersAndPayments(rng, customers, products);
+            seedReviews(rng, customers, products);
+            log.info("Demo seeder: seeded {} customers, {} orders, {} reviews.",
+                    customers.size(), props.getOrdersCount(), props.getReviewsCount());
+        } else {
+            log.info("Demo seeder: orders present ({}), skipping demo transactions.", orderRepository.count());
+        }
     }
 
     private List<Category> seedCategories() {

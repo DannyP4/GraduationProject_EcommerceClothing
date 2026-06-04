@@ -15,6 +15,8 @@ app:
     provider: TEST_FIXED
   seed:
     enabled: false
+  catalog-seed:
+    enabled: false
 
   payments:
     vnpay:

@@ -5,7 +5,7 @@ export default function FooterFull() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
-            <div className="font-['Anton'] text-3xl tracking-widest mb-4">UNIFORM</div>
+            <div className="font-['Anton'] text-3xl tracking-widest mb-4">VESTA</div>
             <p className="text-white/50 text-sm leading-relaxed mb-6">
               Campus-born streetwear for the generation that refuses to dress like everyone else.
             </p>
@@ -68,7 +68,7 @@ export default function FooterFull() {
         {/* Bottom row */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-[11px] text-white/30 tracking-wider">
-            © 2026 UNIFORM. All rights reserved.
+            © 2026 VESTA. All rights reserved.
           </p>
           <div className="flex gap-6">
             {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((l) => (

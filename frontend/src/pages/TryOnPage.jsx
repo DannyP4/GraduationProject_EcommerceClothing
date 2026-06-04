@@ -81,7 +81,7 @@ export default function TryOnPage() {
 
       {/* Top bar */}
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/60 to-transparent z-10">
-        <div className="font-['Anton'] text-2xl tracking-widest text-white">UNIFORM</div>
+        <div className="font-['Anton'] text-2xl tracking-widest text-white">VESTA</div>
         <div className="text-center">
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">Virtual Try-On Studio</p>
           {captured && (

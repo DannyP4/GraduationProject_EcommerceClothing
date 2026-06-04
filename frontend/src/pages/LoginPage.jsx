@@ -117,7 +117,7 @@ export default function LoginPage() {
         <div className="max-w-sm w-full mx-auto">
           {/* Logo */}
           <Link to="/" className="font-['Anton'] text-3xl tracking-widest text-black block mb-10">
-            UNIFORM
+            VESTA
           </Link>
 
           {/* Toggle */}
@@ -282,7 +282,7 @@ export default function LoginPage() {
             animation: 'ticker 20s linear infinite',
           }}
         >
-          UNIFORM CAMPUS LEGEND STREETWEAR
+          VESTA CAMPUS LEGEND STREETWEAR
         </div>
 
         {/* Parallax layers */}

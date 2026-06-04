@@ -5,6 +5,7 @@ import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
 import { getProducts, getCategories } from '../services/productService';
 import useScrollRestore from '../lib/useScrollRestore';
+import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
 
 const SORT_OPTIONS = [
   { label: 'Newest', value: 'NEWEST' },
@@ -22,6 +23,8 @@ export default function ShopPage() {
   const query = searchParams.get('q')?.trim() ?? '';
 
   const [categories, setCategories] = useState([]);
+  const [catFilter, setCatFilter] = useState('');
+  const catScrollRef = useAutoHideScrollbar();
   const [activeCategoryId, setActiveCategoryId] = useState(() => {
     const n = Number(searchParams.get('category'));
     return Number.isFinite(n) && n > 0 ? n : null;
@@ -154,8 +157,15 @@ export default function ShopPage() {
           <div className="sticky top-20 space-y-8">
             {/* Categories */}
             <div>
-              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-4">Collections</h3>
-              <ul className="space-y-1">
+              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-3">Collections</h3>
+              <input
+                type="text"
+                value={catFilter}
+                onChange={(e) => setCatFilter(e.target.value)}
+                placeholder="Search category…"
+                className="w-full border border-black/15 bg-white text-xs px-2.5 py-1.5 mb-2 focus:outline-none focus:border-black"
+              />
+              <ul ref={catScrollRef} className="space-y-1 max-h-[52vh] overflow-y-auto pr-1 scrollbar-subtle">
                 <li>
                   <button
                     onClick={() => { setActiveCategoryId(null); setPage(0); }}
@@ -167,7 +177,9 @@ export default function ShopPage() {
                     All
                   </button>
                 </li>
-                {categories.map((c) => (
+                {categories
+                  .filter((c) => c.name.toLowerCase().includes(catFilter.trim().toLowerCase()))
+                  .map((c) => (
                   <li key={c.id}>
                     <button
                       onClick={() => { setActiveCategoryId(c.id); setPage(0); }}

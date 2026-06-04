@@ -12,7 +12,7 @@ export default function AdminTopBar({ user, onSignOutClick }) {
             to="/"
             className="font-['Anton'] text-2xl tracking-widest text-black hover:text-[#E83354] transition-colors"
           >
-            UNIFORM
+            VESTA
           </Link>
           <span className="text-[10px] font-bold tracking-[0.2em] uppercase bg-black text-white px-2 py-1">
             Admin

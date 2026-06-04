@@ -93,6 +93,12 @@ app:
     customers-count: 60
     orders-count: 50
     reviews-count: 20
+  kaggle-import:
+    enabled: ${KAGGLE_IMPORT_ENABLED:false}
+    path: ${KAGGLE_IMPORT_PATH:}
+    limit: ${KAGGLE_IMPORT_LIMIT:500}
+  catalog-seed:
+    enabled: ${CATALOG_SEED_ENABLED:true}
 
 sentry:
   dsn: ${SENTRY_DSN_BACKEND:}

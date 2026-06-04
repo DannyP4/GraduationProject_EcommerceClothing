@@ -105,7 +105,7 @@ export default function HomePage() {
         <div className="lookbooks-grid">
           {[
             { tag: 'Campus Essentials', title: 'Back to School' },
-            { tag: 'Streetwear', title: 'Urban Uniform' },
+            { tag: 'Streetwear', title: 'Urban Edit' },
             { tag: 'Seasonal', title: 'Winter Layers' },
             { tag: 'Minimal', title: 'Clean Cuts' },
             { tag: 'Retro', title: 'Varsity Club' },
