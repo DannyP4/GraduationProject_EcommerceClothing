@@ -89,7 +89,7 @@ export default function AdminNotificationBell() {
 
           <div className="px-4 py-2 border-t border-black/5 text-center flex-shrink-0">
             <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/30">
-              Mock feed · Phase 4 wires live events
+              Demo feed
             </span>
           </div>
         </div>

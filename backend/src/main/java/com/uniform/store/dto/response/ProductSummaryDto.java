@@ -18,6 +18,8 @@ public class ProductSummaryDto {
     private String slug;
     private String name;
     private BigDecimal basePrice;
+    private BigDecimal salePrice;
+    private Integer discountPercent;
     private String currency;
     private String primaryImageUrl;
     private String brandName;

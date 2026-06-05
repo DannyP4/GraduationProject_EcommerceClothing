@@ -30,6 +30,7 @@ public class CartItemDto {
     private String imageUrl;
 
     private BigDecimal unitPrice;
+    private BigDecimal originalUnitPrice;
     private String currency;
     private Integer quantity;
     private BigDecimal lineTotal;

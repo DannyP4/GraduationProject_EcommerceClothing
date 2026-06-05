@@ -97,6 +97,10 @@ export default function ProductPage() {
 
   const images = product.images?.length ? product.images : [];
 
+  const displayOriginal = selectedVariant?.price ?? product.basePrice;
+  const displaySale = selectedVariant ? selectedVariant.salePrice : product.salePrice;
+  const displayPct = selectedVariant ? selectedVariant.discountPercent : product.discountPercent;
+
   const handleAddToCart = async () => {
     if (!selectedSize) {
       toast.error('Please select a size');
@@ -122,7 +126,8 @@ export default function ProductPage() {
         color: selectedVariant.color,
         colorHex: selectedVariant.colorHex,
         imageUrl: images[0]?.url,
-        unitPrice: Number(selectedVariant.price ?? product.basePrice),
+        unitPrice: Number(selectedVariant.salePrice ?? selectedVariant.price ?? product.basePrice),
+        originalUnitPrice: selectedVariant.salePrice != null ? Number(selectedVariant.price ?? product.basePrice) : undefined,
         currency: product.currency,
       });
       toast.success(`Added ${quantity} × ${product.name} to cart`);
@@ -186,10 +191,33 @@ export default function ProductPage() {
 
           <ProductRatingLine product={product} />
 
-          <div className="flex items-center gap-3 mb-6">
-            <span className="font-['Anton'] text-3xl">
-              {formatPrice(selectedVariant?.price ?? product.basePrice, product.currency)}
-            </span>
+          <div className="mb-6">
+            <div className="flex items-center gap-3">
+              {displaySale != null ? (
+                <>
+                  <span className="font-['Anton'] text-3xl text-[#E83354]">
+                    {formatPrice(displaySale, product.currency)}
+                  </span>
+                  <span className="text-lg text-black/40 line-through">
+                    {formatPrice(displayOriginal, product.currency)}
+                  </span>
+                  {displayPct != null && (
+                    <span className="bg-[#E83354] text-white text-[11px] font-bold tracking-widest uppercase px-2 py-1">
+                      -{displayPct}%
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="font-['Anton'] text-3xl">
+                  {formatPrice(displayOriginal, product.currency)}
+                </span>
+              )}
+            </div>
+            {displaySale != null && product.saleEndsAt && (
+              <p className="text-[11px] font-bold tracking-wider uppercase text-[#E83354] mt-1.5">
+                Sale ends {new Date(product.saleEndsAt).toLocaleDateString('vi-VN')}
+              </p>
+            )}
           </div>
 
           {product.description && (

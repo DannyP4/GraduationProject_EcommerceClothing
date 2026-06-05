@@ -8,6 +8,7 @@ import com.uniform.store.entity.Brand;
 import com.uniform.store.entity.Category;
 import com.uniform.store.entity.Product;
 import com.uniform.store.enums.Gender;
+import com.uniform.store.enums.SaleType;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.entity.ProductImage;
@@ -31,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -260,5 +262,113 @@ class AdminProductServiceImplTest {
         assertThat(product.getName()).isEqualTo("Renamed Tee");
         assertThat(product.getDescription()).isEqualTo("Updated description");
         assertThat(dto.getName()).isEqualTo("Renamed Tee");
+    }
+
+    @Test
+    void create_withPercentSale_persistsSaleFields() {
+        CreateProductRequest req = new CreateProductRequest();
+        req.setSlug("sale-tee"); req.setName("Sale Tee");
+        req.setBrandId(10L); req.setCategoryId(20L);
+        req.setGender(Gender.UNISEX); req.setBasePrice(new BigDecimal("250000"));
+        req.setSaleType(SaleType.PERCENT); req.setSaleValue(new BigDecimal("30"));
+
+        when(productRepository.existsBySlug("sale-tee")).thenReturn(false);
+        when(brandRepository.findById(10L)).thenReturn(Optional.of(brand));
+        when(categoryRepository.findById(20L)).thenReturn(Optional.of(category));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> {
+            Product p = inv.getArgument(0); p.setId(102L); return p;
+        });
+
+        AdminProductDetailDto dto = service.create(req);
+
+        assertThat(dto.getSaleType()).isEqualTo(SaleType.PERCENT);
+        assertThat(dto.getSaleValue()).isEqualByComparingTo("30");
+    }
+
+    @Test
+    void create_percentSaleOver100_throwsBadRequest() {
+        CreateProductRequest req = new CreateProductRequest();
+        req.setSlug("bad-sale"); req.setName("Bad"); req.setBrandId(10L); req.setCategoryId(20L);
+        req.setGender(Gender.UNISEX); req.setBasePrice(new BigDecimal("100000"));
+        req.setSaleType(SaleType.PERCENT); req.setSaleValue(new BigDecimal("150"));
+
+        when(productRepository.existsBySlug("bad-sale")).thenReturn(false);
+        when(brandRepository.findById(10L)).thenReturn(Optional.of(brand));
+        when(categoryRepository.findById(20L)).thenReturn(Optional.of(category));
+
+        assertThatThrownBy(() -> service.create(req))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("cannot exceed 100");
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void create_saleValueWithoutType_throwsBadRequest() {
+        CreateProductRequest req = new CreateProductRequest();
+        req.setSlug("orphan-value"); req.setName("X"); req.setBrandId(10L); req.setCategoryId(20L);
+        req.setGender(Gender.UNISEX); req.setBasePrice(new BigDecimal("100000"));
+        req.setSaleValue(new BigDecimal("30"));
+
+        when(productRepository.existsBySlug("orphan-value")).thenReturn(false);
+        when(brandRepository.findById(10L)).thenReturn(Optional.of(brand));
+        when(categoryRepository.findById(20L)).thenReturn(Optional.of(category));
+
+        assertThatThrownBy(() -> service.create(req))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("saleType is required");
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void create_saleEndsBeforeStarts_throwsBadRequest() {
+        Instant start = Instant.now();
+        CreateProductRequest req = new CreateProductRequest();
+        req.setSlug("bad-window"); req.setName("X"); req.setBrandId(10L); req.setCategoryId(20L);
+        req.setGender(Gender.UNISEX); req.setBasePrice(new BigDecimal("100000"));
+        req.setSaleType(SaleType.PERCENT); req.setSaleValue(new BigDecimal("30"));
+        req.setSaleStartsAt(start); req.setSaleEndsAt(start.minusSeconds(3600));
+
+        when(productRepository.existsBySlug("bad-window")).thenReturn(false);
+        when(brandRepository.findById(10L)).thenReturn(Optional.of(brand));
+        when(categoryRepository.findById(20L)).thenReturn(Optional.of(category));
+
+        assertThatThrownBy(() -> service.create(req))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("must be after");
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void update_clearSale_nullsSaleFields() {
+        product.setSaleType(SaleType.PERCENT);
+        product.setSaleValue(new BigDecimal("30"));
+        UpdateProductRequest req = new UpdateProductRequest();
+        req.setClearSale(true);
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+        when(variantRepository.findByProductIdOrderBySizeAscColorAsc(100L)).thenReturn(List.of());
+        when(imageRepository.findByProductIdOrderByIsPrimaryDescSortOrderAsc(100L)).thenReturn(List.of());
+
+        service.update(100L, req);
+
+        assertThat(product.getSaleType()).isNull();
+        assertThat(product.getSaleValue()).isNull();
+    }
+
+    @Test
+    void update_setsSaleBlock() {
+        UpdateProductRequest req = new UpdateProductRequest();
+        req.setSaleType(SaleType.FIXED);
+        req.setSaleValue(new BigDecimal("50000"));
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+        when(variantRepository.findByProductIdOrderBySizeAscColorAsc(100L)).thenReturn(List.of());
+        when(imageRepository.findByProductIdOrderByIsPrimaryDescSortOrderAsc(100L)).thenReturn(List.of());
+
+        AdminProductDetailDto dto = service.update(100L, req);
+
+        assertThat(product.getSaleType()).isEqualTo(SaleType.FIXED);
+        assertThat(product.getSaleValue()).isEqualByComparingTo("50000");
+        assertThat(dto.getSaleType()).isEqualTo(SaleType.FIXED);
     }
 }

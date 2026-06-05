@@ -8,6 +8,7 @@ import * as catSvc from '../../services/adminCategoryService';
 import ProductBasicsSection from '../../components/admin/ProductBasicsSection';
 import VariantTableEditor from '../../components/admin/VariantTableEditor';
 import ProductImageUploader from '../../components/admin/ProductImageUploader';
+import { isoToLocalInput, localInputToIso } from '../../lib/datetimeLocal';
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -19,6 +20,10 @@ const EMPTY = {
   categoryId: '',
   gender: 'UNISEX',
   basePrice: '',
+  saleType: '',
+  saleValue: '',
+  saleStartsAt: '',
+  saleEndsAt: '',
   isActive: true,
 };
 
@@ -62,6 +67,10 @@ export default function AdminProductEditPage() {
         categoryId: data.category?.id ?? '',
         gender: data.gender,
         basePrice: data.basePrice,
+        saleType: data.saleType ?? '',
+        saleValue: data.saleValue ?? '',
+        saleStartsAt: isoToLocalInput(data.saleStartsAt),
+        saleEndsAt: isoToLocalInput(data.saleEndsAt),
         isActive: data.isActive,
       });
     } catch (err) {
@@ -81,6 +90,24 @@ export default function AdminProductEditPage() {
     if (values.basePrice === '' || Number(values.basePrice) < 0) { setBasicsError('Base price must be 0 or greater.'); return; }
     if (isCreate && !SLUG_PATTERN.test(values.slug)) { setBasicsError('Slug must be lowercase kebab-case.'); return; }
 
+    if (values.saleType) {
+      const sv = Number(values.saleValue);
+      if (!(sv > 0)) { setBasicsError('Sale value must be greater than 0.'); return; }
+      if (values.saleType === 'PERCENT' && sv > 100) { setBasicsError('Percent off cannot exceed 100.'); return; }
+      const s = localInputToIso(values.saleStartsAt);
+      const e = localInputToIso(values.saleEndsAt);
+      if (s && e && new Date(e) <= new Date(s)) { setBasicsError('Sale end must be after start.'); return; }
+    }
+
+    const saleFields = values.saleType
+      ? {
+          saleType: values.saleType,
+          saleValue: Number(values.saleValue),
+          saleStartsAt: localInputToIso(values.saleStartsAt),
+          saleEndsAt: localInputToIso(values.saleEndsAt),
+        }
+      : null;
+
     setSaving(true);
     try {
       if (isCreate) {
@@ -92,6 +119,7 @@ export default function AdminProductEditPage() {
           categoryId: Number(values.categoryId),
           gender: values.gender,
           basePrice: Number(values.basePrice),
+          ...(saleFields ?? {}),
           isActive: values.isActive,
         });
         toast.success(`Created "${created.name}" — add variants and images below`);
@@ -104,6 +132,7 @@ export default function AdminProductEditPage() {
           categoryId: Number(values.categoryId),
           gender: values.gender,
           basePrice: Number(values.basePrice),
+          ...(saleFields ?? { clearSale: true }),
           isActive: values.isActive,
         });
         setProduct(updated);
@@ -129,7 +158,7 @@ export default function AdminProductEditPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <button
           type="button"
           onClick={() => goBack(navigate, location, '/admin/products')}
@@ -141,22 +170,6 @@ export default function AdminProductEditPage() {
           </svg>
           Back to products
         </button>
-      </div>
-
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">
-              {isCreate ? 'New product' : product?.name || 'Edit product'}
-            </h1>
-            {viewMode && (
-              <span className="text-[10px] font-bold tracking-[0.15em] uppercase bg-black text-white px-2 py-1">View only</span>
-            )}
-          </div>
-          {!isCreate && product && (
-            <p className="text-xs text-black/50 mt-1 font-mono">{product.slug}</p>
-          )}
-        </div>
         {viewMode ? (
           <button
             type="button"
@@ -175,6 +188,22 @@ export default function AdminProductEditPage() {
             {saving ? 'Saving...' : isCreate ? 'Create product' : 'Save changes'}
           </button>
         )}
+      </div>
+
+      <div className="flex items-start flex-wrap gap-3">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">
+              {isCreate ? 'New product' : product?.name || 'Edit product'}
+            </h1>
+            {viewMode && (
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase bg-black text-white px-2 py-1">View only</span>
+            )}
+          </div>
+          {!isCreate && product && (
+            <p className="text-xs text-black/50 mt-1 font-mono">{product.slug}</p>
+          )}
+        </div>
       </div>
 
       <ProductBasicsSection

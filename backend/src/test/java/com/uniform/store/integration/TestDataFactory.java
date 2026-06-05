@@ -3,6 +3,7 @@ package com.uniform.store.integration;
 import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Brand;
 import com.uniform.store.entity.Category;
+import com.uniform.store.entity.Coupon;
 import com.uniform.store.entity.Order;
 import com.uniform.store.entity.OrderItem;
 import com.uniform.store.entity.Payment;
@@ -13,12 +14,14 @@ import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.Gender;
 import com.uniform.store.enums.OrderStatus;
+import com.uniform.store.enums.SaleType;
 import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
 import com.uniform.store.enums.UserStatus;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.BrandRepository;
 import com.uniform.store.repository.CategoryRepository;
+import com.uniform.store.repository.CouponRepository;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.PaymentRepository;
@@ -55,6 +58,7 @@ public class TestDataFactory {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
+    private final CouponRepository couponRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -150,6 +154,26 @@ public class TestDataFactory {
     }
 
     @Transactional
+    public Product createProductWithSale(Brand brand, Category category, BigDecimal basePrice,
+                                         SaleType saleType, BigDecimal saleValue,
+                                         Instant saleStartsAt, Instant saleEndsAt) {
+        String slug = "sale-tee-" + COUNTER.incrementAndGet();
+        return productRepository.save(Product.builder()
+                .brand(brand).category(category)
+                .slug(slug).name("Sale Tee " + slug)
+                .description("On sale")
+                .gender(Gender.UNISEX)
+                .basePrice(basePrice)
+                .saleType(saleType)
+                .saleValue(saleValue)
+                .saleStartsAt(saleStartsAt)
+                .saleEndsAt(saleEndsAt)
+                .currency("VND")
+                .isActive(true)
+                .build());
+    }
+
+    @Transactional
     public ProductVariant createVariant(Product product, int stock) {
         long n = COUNTER.incrementAndGet();
         return variantRepository.save(ProductVariant.builder()
@@ -216,6 +240,11 @@ public class TestDataFactory {
         }
 
         return order;
+    }
+
+    @Transactional
+    public Coupon saveCoupon(Coupon coupon) {
+        return couponRepository.save(coupon);
     }
 
     @Transactional

@@ -112,7 +112,7 @@ export default function BrandFormModal({ open, mode, initial, onClose, onSubmit 
             placeholder="https://res.cloudinary.com/..."
             className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
           />
-          <span className="block mt-1 text-[10px] text-black/40">Direct file upload arrives with the next release; paste a hosted URL for now.</span>
+          <span className="block mt-1 text-[10px] text-black/40">Paste a hosted image URL (e.g. Cloudinary).</span>
         </label>
 
         <label className="block mb-4">

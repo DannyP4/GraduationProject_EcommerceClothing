@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-['Anton'] text-xl uppercase tracking-wider">Revenue · Last 7 Days</h2>
-            <p className="text-[11px] text-black/40 tracking-wider">Mock data — Phase 4b will wire real API.</p>
+            <p className="text-[11px] text-black/40 tracking-wider">Demo data — live numbers at Stats.</p>
           </div>
           <span className="text-[10px] font-bold tracking-[0.2em] uppercase bg-black/5 text-black/40 px-2 py-1">
             VND

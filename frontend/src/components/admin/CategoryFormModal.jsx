@@ -110,7 +110,7 @@ export default function CategoryFormModal({ open, mode, initial, onClose, onSubm
             placeholder="https://res.cloudinary.com/..."
             className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
           />
-          <span className="block mt-1 text-[10px] text-black/40">Storefront tile / banner image. Direct upload arrives in the next release; paste a hosted URL for now.</span>
+          <span className="block mt-1 text-[10px] text-black/40">Storefront tile / banner image. Paste a hosted image URL (e.g. Cloudinary).</span>
         </label>
 
         <div className="mb-6">

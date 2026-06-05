@@ -7,6 +7,7 @@ const NAV = [
   { to: '/admin/categories', label: 'Categories',            icon: IconFolder },
   { to: '/admin/brands',     label: 'Brands',                icon: IconAward },
   { to: '/admin/products',   label: 'Products',              icon: IconTag },
+  { to: '/admin/coupons',    label: 'Coupons',               icon: IconTicket },
   { to: '/admin/orders',     label: 'Orders',                icon: IconBox },
   { to: '/admin/reviews',    label: 'Reviews',               icon: IconStar },
 ];
@@ -92,6 +93,14 @@ function IconTag() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
       <line x1="7" y1="7" x2="7.01" y2="7" />
+    </svg>
+  );
+}
+function IconTicket() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z" />
+      <line x1="13" y1="5" x2="13" y2="19" strokeDasharray="2 2" />
     </svg>
   );
 }

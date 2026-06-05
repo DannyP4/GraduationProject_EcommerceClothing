@@ -8,6 +8,7 @@ import { useToast } from '../components/Toast';
 import { useCart } from '../context/CartContext';
 import * as addressService from '../services/addressService';
 import * as orderService from '../services/orderService';
+import * as couponService from '../services/couponService';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -26,12 +27,40 @@ export default function CheckoutPage() {
   const [submitError, setSubmitError] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState(null);
+
   const shippingCost = 0;
   const taxTotal = 0;
+  const discountTotal = appliedCoupon ? Number(appliedCoupon.discountAmount ?? 0) : 0;
   const grandTotal = useMemo(
-    () => Number(subtotal ?? 0) + shippingCost + taxTotal,
-    [subtotal]
+    () => Math.max(0, Number(subtotal ?? 0) + shippingCost + taxTotal - discountTotal),
+    [subtotal, discountTotal]
   );
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    try {
+      const result = await couponService.validateCoupon(code);
+      setAppliedCoupon(result);
+      setCouponInput('');
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponError(err.message || 'Invalid coupon code.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +102,7 @@ export default function CheckoutPage() {
         addressId: selectedAddressId,
         paymentMethod,
         notes: notes.trim() || undefined,
+        couponCode: appliedCoupon?.code,
       });
       const order = result?.order ?? result;
       const redirectUrl = result?.redirectUrl;
@@ -153,10 +183,53 @@ export default function CheckoutPage() {
               <div className="bg-[#0A0A0A] text-white p-6">
                 <h2 className="font-['Anton'] text-2xl uppercase tracking-wider mb-6">Summary</h2>
 
-                <div className="space-y-3 mb-6 text-sm">
+                <div className="space-y-3 mb-4 text-sm">
                   <Row label={`Subtotal (${cartCount} ${cartCount === 1 ? 'item' : 'items'})`} value={formatPrice(subtotal, currency)} />
-                  <Row label="Shipping" value={shippingCost === 0 ? 'Free' : formatPrice(shippingCost, currency)} note="Phase 3b placeholder" />
+                  <Row label="Shipping" value={shippingCost === 0 ? 'Free' : formatPrice(shippingCost, currency)} />
                   <Row label="Tax" value={formatPrice(taxTotal, currency)} note="VAT not applied" />
+                  {appliedCoupon && (
+                    <Row label={`Discount · ${appliedCoupon.code}`} value={`− ${formatPrice(discountTotal, currency)}`} />
+                  )}
+                </div>
+
+                <div className="mb-6">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between gap-2 border border-[#E83354]/50 bg-[#E83354]/10 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#E83354]">✓ {appliedCoupon.code}</p>
+                        <p className="text-[10px] text-white/50">−{formatPrice(discountTotal, currency)} applied</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeCoupon}
+                        className="text-[10px] font-bold tracking-[0.1em] uppercase text-white/50 hover:text-white"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } }}
+                          placeholder="Coupon code"
+                          className="flex-1 min-w-0 bg-white text-black text-sm px-3 py-2 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={applyCoupon}
+                          disabled={couponLoading || !couponInput.trim()}
+                          className="text-[11px] font-bold tracking-[0.1em] uppercase border border-white/30 px-4 hover:bg-white hover:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {couponLoading ? '…' : 'Apply'}
+                        </button>
+                      </div>
+                      {couponError && <p className="text-[10px] text-[#E83354] mt-1.5">{couponError}</p>}
+                    </>
+                  )}
                 </div>
 
                 <div className="border-t border-white/15 pt-4 mb-6">

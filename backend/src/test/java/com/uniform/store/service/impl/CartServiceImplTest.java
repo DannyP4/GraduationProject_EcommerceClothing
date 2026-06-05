@@ -20,6 +20,7 @@ import com.uniform.store.repository.CartRepository;
 import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
+import com.uniform.store.service.PricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,7 +64,7 @@ class CartServiceImplTest {
         cartProperties = new CartProperties();
         cartService = new CartServiceImpl(
                 userRepository, cartRepository, cartItemRepository,
-                variantRepository, imageRepository, cartProperties);
+                variantRepository, imageRepository, cartProperties, new PricingService());
 
         user = User.builder()
                 .email("buyer@uniform.test")

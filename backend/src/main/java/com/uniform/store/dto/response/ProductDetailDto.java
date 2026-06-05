@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,9 @@ public class ProductDetailDto {
     private String description;
     private Gender gender;
     private BigDecimal basePrice;
+    private BigDecimal salePrice;
+    private Integer discountPercent;
+    private Instant saleEndsAt;
     private String currency;
     private String brandName;
     private String brandSlug;

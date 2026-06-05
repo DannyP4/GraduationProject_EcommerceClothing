@@ -1,6 +1,7 @@
 package com.uniform.store.entity;
 
 import com.uniform.store.enums.Gender;
+import com.uniform.store.enums.SaleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -57,6 +58,19 @@ public class Product extends BaseEntity {
     @Column(name = "currency", nullable = false, length = 3)
     @Builder.Default
     private String currency = "VND";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sale_type", length = 10)
+    private SaleType saleType;
+
+    @Column(name = "sale_value", precision = 19, scale = 4)
+    private BigDecimal saleValue;
+
+    @Column(name = "sale_starts_at")
+    private Instant saleStartsAt;
+
+    @Column(name = "sale_ends_at")
+    private Instant saleEndsAt;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

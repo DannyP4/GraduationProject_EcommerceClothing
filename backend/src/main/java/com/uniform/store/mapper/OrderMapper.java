@@ -84,6 +84,7 @@ public class OrderMapper {
                     .variantLabel(oi.getVariantLabel())
                     .sku(oi.getSku())
                     .unitPrice(oi.getUnitPrice())
+                    .originalUnitPrice(oi.getOriginalUnitPrice())
                     .quantity(oi.getQuantity())
                     .lineTotal(oi.getLineTotal())
                     .productSlug(slug)

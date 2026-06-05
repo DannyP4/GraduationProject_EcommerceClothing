@@ -16,4 +16,7 @@ public class PlaceOrderRequest {
 
     @Size(max = 500, message = "notes cannot exceed 500 characters")
     private String notes;
+
+    @Size(max = 50, message = "couponCode cannot exceed 50 characters")
+    private String couponCode;
 }

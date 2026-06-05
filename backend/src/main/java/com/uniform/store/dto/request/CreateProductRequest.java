@@ -1,6 +1,7 @@
 package com.uniform.store.dto.request;
 
 import com.uniform.store.enums.Gender;
+import com.uniform.store.enums.SaleType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -40,6 +41,15 @@ public class CreateProductRequest {
     @NotNull
     @DecimalMin(value = "0.0", message = "Base price must be non-negative")
     private BigDecimal basePrice;
+
+    private SaleType saleType;
+
+    @DecimalMin(value = "0.0", message = "Sale value must be non-negative")
+    private BigDecimal saleValue;
+
+    private Instant saleStartsAt;
+
+    private Instant saleEndsAt;
 
     private Boolean isActive = true;
 

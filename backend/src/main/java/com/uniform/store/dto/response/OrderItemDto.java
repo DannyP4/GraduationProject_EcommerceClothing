@@ -18,15 +18,16 @@ public class OrderItemDto {
     private Long id;
     private Long variantId;
 
-    // Snapshots — these are the source of truth for display, not the live product/variant.
+    // Denormalized for convenience
     private String productName;
     private String variantLabel;
     private String sku;
     private BigDecimal unitPrice;
+    private BigDecimal originalUnitPrice;
     private Integer quantity;
     private BigDecimal lineTotal;
 
-    // Live lookup — null if product/variant is gone (rare; we soft-delete) — for click-through and thumbnail.
+    // Live lookup — null if product/variant is gone
     private String productSlug;
     private String imageUrl;
 }

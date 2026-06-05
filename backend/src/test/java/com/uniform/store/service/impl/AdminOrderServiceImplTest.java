@@ -25,6 +25,7 @@ import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
+import com.uniform.store.service.CouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +60,7 @@ class AdminOrderServiceImplTest {
     @Mock UserRepository userRepository;
     @Mock OrderMapper orderMapper;
     @Mock PaymentRepository paymentRepository;
+    @Mock CouponService couponService;
 
     AdminOrderServiceImpl adminOrderService;
 
@@ -72,7 +74,7 @@ class AdminOrderServiceImplTest {
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(
                 orderRepository, orderItemRepository, statusHistoryRepository,
-                variantRepository, userRepository, orderMapper, paymentRepository);
+                variantRepository, userRepository, orderMapper, paymentRepository, couponService);
 
         adminUser = User.builder()
                 .email("admin@uniform.test")

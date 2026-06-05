@@ -13,6 +13,7 @@ import com.uniform.store.entity.Category;
 import com.uniform.store.entity.Product;
 import com.uniform.store.entity.ProductImage;
 import com.uniform.store.entity.ProductVariant;
+import com.uniform.store.enums.SaleType;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.repository.BrandRepository;
@@ -31,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -112,6 +114,8 @@ public class AdminProductServiceImpl implements AdminProductService {
         Category category = categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", req.getCategoryId()));
 
+        validateSale(req.getSaleType(), req.getSaleValue(), req.getSaleStartsAt(), req.getSaleEndsAt());
+
         Product saved = productRepository.save(Product.builder()
                 .brand(brand)
                 .category(category)
@@ -120,6 +124,10 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .description(blankToNull(req.getDescription()))
                 .gender(req.getGender())
                 .basePrice(req.getBasePrice())
+                .saleType(req.getSaleType())
+                .saleValue(req.getSaleValue())
+                .saleStartsAt(req.getSaleStartsAt())
+                .saleEndsAt(req.getSaleEndsAt())
                 .currency("VND")
                 .isActive(req.getIsActive() == null ? Boolean.TRUE : req.getIsActive())
                 .publishedAt(req.getPublishedAt())
@@ -148,10 +156,40 @@ public class AdminProductServiceImpl implements AdminProductService {
         }
         if (req.getGender() != null) product.setGender(req.getGender());
         if (req.getBasePrice() != null) product.setBasePrice(req.getBasePrice());
+        if (Boolean.TRUE.equals(req.getClearSale())) {
+            product.setSaleType(null);
+            product.setSaleValue(null);
+            product.setSaleStartsAt(null);
+            product.setSaleEndsAt(null);
+        } else if (req.getSaleType() != null) {
+            validateSale(req.getSaleType(), req.getSaleValue(), req.getSaleStartsAt(), req.getSaleEndsAt());
+            product.setSaleType(req.getSaleType());
+            product.setSaleValue(req.getSaleValue());
+            product.setSaleStartsAt(req.getSaleStartsAt());
+            product.setSaleEndsAt(req.getSaleEndsAt());
+        }
         if (req.getIsActive() != null) product.setIsActive(req.getIsActive());
         if (req.getPublishedAt() != null) product.setPublishedAt(req.getPublishedAt());
 
         return get(id);
+    }
+
+    private void validateSale(SaleType type, BigDecimal value, Instant startsAt, Instant endsAt) {
+        if (type == null) {
+            if (value != null || startsAt != null || endsAt != null) {
+                throw new BadRequestException("saleType is required when any sale field is set");
+            }
+            return;
+        }
+        if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("saleValue must be greater than 0 when saleType is set");
+        }
+        if (type == SaleType.PERCENT && value.compareTo(new BigDecimal("100")) > 0) {
+            throw new BadRequestException("PERCENT sale value cannot exceed 100");
+        }
+        if (startsAt != null && endsAt != null && !endsAt.isAfter(startsAt)) {
+            throw new BadRequestException("sale_ends_at must be after sale_starts_at");
+        }
     }
 
     @Override
@@ -221,6 +259,10 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .name(p.getName())
                 .gender(p.getGender())
                 .basePrice(p.getBasePrice())
+                .saleType(p.getSaleType())
+                .saleValue(p.getSaleValue())
+                .saleStartsAt(p.getSaleStartsAt())
+                .saleEndsAt(p.getSaleEndsAt())
                 .currency(p.getCurrency())
                 .isActive(p.getIsActive())
                 .deletedAt(p.getDeletedAt())
@@ -242,6 +284,10 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .description(p.getDescription())
                 .gender(p.getGender())
                 .basePrice(p.getBasePrice())
+                .saleType(p.getSaleType())
+                .saleValue(p.getSaleValue())
+                .saleStartsAt(p.getSaleStartsAt())
+                .saleEndsAt(p.getSaleEndsAt())
                 .currency(p.getCurrency())
                 .isActive(p.getIsActive())
                 .publishedAt(p.getPublishedAt())

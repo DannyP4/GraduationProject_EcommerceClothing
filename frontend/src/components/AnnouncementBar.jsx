@@ -4,7 +4,7 @@ export default function AnnouncementBar() {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
 
-  const text = '⚡ FREE SHIPPING ON ORDERS $75+ · USE CODE CAMPUS20 FOR 20% OFF · NEW DROP EVERY FRIDAY · ';
+  const text = '⚡ VIRTUAL TRY-ON ON EVERY PIECE · SEASONAL SALE — SELECT STYLES MARKED DOWN · GOT A VOUCHER? APPLY IT AT CHECKOUT · NEW ARRIVALS EVERY WEEK · ';
 
   return (
     <div className="bg-black text-white text-[11px] font-semibold tracking-[0.15em] uppercase py-2 overflow-hidden relative flex items-center">

@@ -34,6 +34,7 @@ import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminBrandsPage from './pages/admin/AdminBrandsPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminProductEditPage from './pages/admin/AdminProductEditPage';
+import AdminCouponsPage from './pages/admin/AdminCouponsPage';
 import AdminForbiddenPage from './pages/admin/AdminForbiddenPage';
 
 export default function App() {
@@ -105,6 +106,7 @@ export default function App() {
               <Route path="products" element={<AdminProductsPage />} />
               <Route path="products/new" element={<AdminProductEditPage />} />
               <Route path="products/:id" element={<AdminProductEditPage />} />
+              <Route path="coupons" element={<AdminCouponsPage />} />
             </Route>
           </Routes>
           <BackToTop />

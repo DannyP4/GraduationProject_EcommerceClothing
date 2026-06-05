@@ -10,6 +10,7 @@ import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Cart;
 import com.uniform.store.entity.CartItem;
 import com.uniform.store.entity.Order;
+import com.uniform.store.entity.OrderCoupon;
 import com.uniform.store.entity.OrderItem;
 import com.uniform.store.entity.OrderStatusHistory;
 import com.uniform.store.entity.Payment;
@@ -25,14 +26,17 @@ import com.uniform.store.mapper.OrderMapper;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.CartItemRepository;
 import com.uniform.store.repository.CartRepository;
+import com.uniform.store.repository.OrderCouponRepository;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
+import com.uniform.store.service.CouponService;
 import com.uniform.store.service.FxService;
 import com.uniform.store.service.OrderService;
+import com.uniform.store.service.PricingService;
 import com.uniform.store.service.StripeService;
 import com.uniform.store.service.VnpayService;
 import lombok.RequiredArgsConstructor;
@@ -73,6 +77,9 @@ public class OrderServiceImpl implements OrderService {
     private final VnpayService vnpayService;
     private final StripeService stripeService;
     private final OrderMapper orderMapper;
+    private final PricingService pricingService;
+    private final CouponService couponService;
+    private final OrderCouponRepository orderCouponRepository;
 
     @Override
     @Transactional
@@ -120,11 +127,14 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subtotal = BigDecimal.ZERO;
         String currency = DEFAULT_CURRENCY;
         List<OrderItem> orderItems = new ArrayList<>(items.size());
+        List<CouponService.CartLine> couponLines = new ArrayList<>(items.size());
+        Instant now = Instant.now();
 
         for (CartItem ci : items) {
             ProductVariant v = variants.get(ci.getVariant().getId());
             Product p = v.getProduct();
-            BigDecimal unitPrice = v.getPriceOverride() != null ? v.getPriceOverride() : p.getBasePrice();
+            PricingService.EffectivePrice ep = pricingService.resolve(p, v, now);
+            BigDecimal unitPrice = ep.effectivePrice();
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(ci.getQuantity()));
             currency = p.getCurrency();
 
@@ -134,9 +144,11 @@ public class OrderServiceImpl implements OrderService {
                     .variantLabel(formatVariantLabel(v))
                     .sku(v.getSku())
                     .unitPrice(unitPrice)
+                    .originalUnitPrice(ep.onSale() ? ep.originalPrice() : null)
                     .quantity(ci.getQuantity())
                     .lineTotal(lineTotal)
                     .build());
+            couponLines.add(new CouponService.CartLine(p.getId(), p.getCategory().getId(), lineTotal));
 
             v.setStockQuantity(v.getStockQuantity() - ci.getQuantity());
             subtotal = subtotal.add(lineTotal);
@@ -145,6 +157,11 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal shippingCost = BigDecimal.ZERO;
         BigDecimal taxTotal = BigDecimal.ZERO;
         BigDecimal discountTotal = BigDecimal.ZERO;
+        CouponService.CouponApplication couponApp = null;
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
+            couponApp = couponService.applyToOrder(req.getCouponCode(), user.getId(), couponLines, subtotal);
+            discountTotal = couponApp.discountAmount();
+        }
         BigDecimal grandTotal = subtotal.add(shippingCost).add(taxTotal).subtract(discountTotal);
 
         Order order = Order.builder()
@@ -173,6 +190,14 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItem oi : orderItems) {
             oi.setOrder(order);
             orderItemRepository.save(oi);
+        }
+
+        if (couponApp != null) {
+            orderCouponRepository.save(OrderCoupon.builder()
+                    .order(order)
+                    .coupon(couponApp.coupon())
+                    .discountAmount(couponApp.discountAmount())
+                    .build());
         }
 
         statusHistoryRepository.save(OrderStatusHistory.builder()
@@ -303,6 +328,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+        couponService.releaseForOrder(order.getId());
 
         statusHistoryRepository.save(OrderStatusHistory.builder()
                 .order(order)

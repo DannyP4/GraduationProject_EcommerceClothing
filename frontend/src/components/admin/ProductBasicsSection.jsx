@@ -14,6 +14,14 @@ export default function ProductBasicsSection({
   const update = (patch) => setValues((v) => ({ ...v, ...patch }));
   const disabledCls = 'disabled:bg-black/5 disabled:text-black/50';
 
+  const salePreview = (() => {
+    const base = Number(values.basePrice);
+    const v = Number(values.saleValue);
+    if (!values.saleType || !(base > 0) || !(v > 0)) return null;
+    const raw = values.saleType === 'PERCENT' ? base * (1 - v / 100) : base - v;
+    return new Intl.NumberFormat('vi-VN').format(Math.max(0, Math.round(raw))) + ' ₫';
+  })();
+
   return (
     <section className="bg-white border border-black/10 p-6 space-y-5">
       <h2 className="font-['Anton'] text-2xl uppercase tracking-tight">Basics</h2>
@@ -101,6 +109,69 @@ export default function ProductBasicsSection({
             className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none ${disabledCls}`}
           />
         </label>
+      </div>
+
+      <div className="border-t border-black/10 pt-5">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Sale (optional)</span>
+          {salePreview && (
+            <span className="text-[11px] font-bold text-[#E83354]">Sale price → {salePreview}</span>
+          )}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Discount type</span>
+            <select
+              value={values.saleType}
+              onChange={(e) => update({ saleType: e.target.value })}
+              disabled={readOnly}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none bg-white ${disabledCls}`}
+            >
+              <option value="">No sale</option>
+              <option value="PERCENT">Percent off (%)</option>
+              <option value="FIXED">Fixed amount off (VND)</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">
+              {values.saleType === 'FIXED' ? 'Amount off (VND)' : 'Percent off (%)'}
+            </span>
+            <input
+              type="number"
+              min="0"
+              step={values.saleType === 'FIXED' ? '1000' : '1'}
+              value={values.saleValue}
+              onChange={(e) => update({ saleValue: e.target.value })}
+              placeholder={values.saleType === 'FIXED' ? '50000' : '30'}
+              disabled={readOnly || !values.saleType}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none ${disabledCls}`}
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Starts at (optional)</span>
+            <input
+              type="datetime-local"
+              value={values.saleStartsAt}
+              onChange={(e) => update({ saleStartsAt: e.target.value })}
+              disabled={readOnly || !values.saleType}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none ${disabledCls}`}
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Ends at (optional)</span>
+            <input
+              type="datetime-local"
+              value={values.saleEndsAt}
+              onChange={(e) => update({ saleEndsAt: e.target.value })}
+              disabled={readOnly || !values.saleType}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none ${disabledCls}`}
+            />
+          </label>
+        </div>
+        <p className="mt-2 text-[10px] text-black/40">Leave both dates empty for an always-on sale. End time is exclusive.</p>
       </div>
 
       <label className="block">

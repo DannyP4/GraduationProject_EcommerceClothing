@@ -264,6 +264,11 @@ export default function ShopPage() {
                   onClick={() => navigate(`/product/${product.slug || product.id}`, { state: { backTo: `/shop${location.search}` } })}
                 >
                   <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
+                    {product.discountPercent != null && (
+                      <span className="absolute top-2 left-2 z-10 bg-[#E83354] text-white text-[10px] font-bold tracking-widest uppercase px-2 py-1">
+                        -{product.discountPercent}%
+                      </span>
+                    )}
                     {product.primaryImageUrl ? (
                       <img
                         src={product.primaryImageUrl}
@@ -285,11 +290,22 @@ export default function ShopPage() {
                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 mb-1">
                       {product.categoryName}
                     </p>
-                    <h3 className="text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-[#E83354] transition-colors">{product.name}</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="font-['Anton'] text-xl">
-                        {formatPrice(product.basePrice, product.currency)}
-                      </span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-[#E83354] transition-colors">{product.name}</h3>
+                    <div className="flex items-baseline gap-2">
+                      {product.salePrice != null ? (
+                        <>
+                          <span className="font-['Anton'] text-xl text-[#E83354]">
+                            {formatPrice(product.salePrice, product.currency)}
+                          </span>
+                          <span className="text-xs text-black/40 line-through">
+                            {formatPrice(product.basePrice, product.currency)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-['Anton'] text-xl">
+                          {formatPrice(product.basePrice, product.currency)}
+                        </span>
+                      )}
                     </div>
                     {(product.reviewCount > 0 || product.soldCount > 0) && (
                       <div className="flex items-center gap-1.5 mt-1.5 text-black/40">

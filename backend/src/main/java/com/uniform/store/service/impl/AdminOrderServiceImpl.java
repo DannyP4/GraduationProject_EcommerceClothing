@@ -25,6 +25,7 @@ import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.repository.spec.OrderSpecs;
 import com.uniform.store.service.AdminOrderService;
+import com.uniform.store.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final UserRepository userRepository;
     private final OrderMapper orderMapper;
     private final PaymentRepository paymentRepository;
+    private final CouponService couponService;
 
     @Override
     public PageResponse<AdminOrderSummaryDto> listOrders(AdminOrderFilter filter, Pageable pageable) {
@@ -132,6 +134,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         User actor = loadActor(actorEmail);
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+        couponService.releaseForOrder(order.getId());
 
         statusHistoryRepository.save(OrderStatusHistory.builder()
                 .order(order)

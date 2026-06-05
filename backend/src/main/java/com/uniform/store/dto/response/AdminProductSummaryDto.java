@@ -2,6 +2,7 @@ package com.uniform.store.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.uniform.store.enums.Gender;
+import com.uniform.store.enums.SaleType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,6 +19,10 @@ public class AdminProductSummaryDto {
     private final String name;
     private final Gender gender;
     private final BigDecimal basePrice;
+    private final SaleType saleType;
+    private final BigDecimal saleValue;
+    private final Instant saleStartsAt;
+    private final Instant saleEndsAt;
     private final String currency;
     private final Boolean isActive;
     private final Instant deletedAt;

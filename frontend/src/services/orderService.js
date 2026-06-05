@@ -8,8 +8,8 @@ function unwrap(response) {
   return body?.data;
 }
 
-export async function placeOrder({ addressId, paymentMethod, notes }) {
-  const resp = await apiClient.post('/orders', { addressId, paymentMethod, notes });
+export async function placeOrder({ addressId, paymentMethod, notes, couponCode }) {
+  const resp = await apiClient.post('/orders', { addressId, paymentMethod, notes, couponCode });
   return unwrap(resp);
 }
 

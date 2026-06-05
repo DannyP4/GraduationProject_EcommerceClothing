@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
@@ -6,7 +6,7 @@ import FooterFull from '../components/FooterFull';
 import QuantityStepper from '../components/QuantityStepper';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useCart } from '../context/CartContext';
-import { products } from '../data/products';
+import { getProducts } from '../services/productService';
 
 export default function CartPage() {
   const {
@@ -25,14 +25,23 @@ export default function CartPage() {
 
   const [actionError, setActionError] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [picks, setPicks] = useState([]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getProducts({ size: 8, sort: 'POPULAR' })
+      .then((data) => { if (!cancelled) setPicks(data?.content ?? []); })
+      .catch(() => { });
+    return () => { cancelled = true; };
+  }, []);
 
   const hasBlockedItems = items.some(
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'
   );
   const checkoutDisabled = items.length === 0 || hasBlockedItems;
 
-  const suggestions = products.slice(4, 8);
+  const cartProductIds = new Set(items.map((i) => i.productId).filter(Boolean));
+  const suggestions = picks.filter((p) => !cartProductIds.has(p.id)).slice(0, 4);
 
   const handleQty = async (item, nextQty) => {
     setActionError(null);
@@ -212,39 +221,56 @@ export default function CartPage() {
           </div>
         )}
 
-        <section className="mt-20">
-          <div className="mb-8">
-            <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Suggested</p>
-            <h2 className="font-['Anton'] text-4xl uppercase tracking-tight">You May Also Like</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {suggestions.map((p) => (
-              <div
-                key={p.id}
-                className="group bg-white cursor-pointer"
-                onClick={() => navigate(`/product/${p.id}`)}
-              >
-                <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
-                  <img
-                    src={p.images[0]}
-                    alt={p.name}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  {p.badge && (
-                    <span className="absolute top-2 left-2 bg-[#E83354] text-white text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5">
-                      {p.badge}
-                    </span>
-                  )}
+        {suggestions.length > 0 && (
+          <section className="mt-20">
+            <div className="mb-8">
+              <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Suggested</p>
+              <h2 className="font-['Anton'] text-4xl uppercase tracking-tight">You May Also Like</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {suggestions.map((p) => (
+                <div
+                  key={p.id}
+                  className="group bg-white cursor-pointer"
+                  onClick={() => navigate(`/product/${p.slug || p.id}`)}
+                >
+                  <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
+                    {p.discountPercent != null && (
+                      <span className="absolute top-2 left-2 z-10 bg-[#E83354] text-white text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5">
+                        -{p.discountPercent}%
+                      </span>
+                    )}
+                    {p.primaryImageUrl ? (
+                      <img
+                        src={p.primaryImageUrl}
+                        alt={p.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
+                        No image
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-black/40 mb-0.5">{p.categoryName}</p>
+                    <h3 className="text-xs font-bold uppercase tracking-wider mb-1 line-clamp-2 min-h-[2rem]">{p.name}</h3>
+                    <div className="flex items-baseline gap-2">
+                      {p.salePrice != null ? (
+                        <>
+                          <span className="font-['Anton'] text-lg text-[#E83354]">{formatPrice(p.salePrice, p.currency)}</span>
+                          <span className="text-[11px] text-black/40 line-through">{formatPrice(p.basePrice, p.currency)}</span>
+                        </>
+                      ) : (
+                        <span className="font-['Anton'] text-lg">{formatPrice(p.basePrice, p.currency)}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-black/40 mb-0.5">{p.category}</p>
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-1">{p.name}</h3>
-                  <span className="font-['Anton'] text-lg">${p.price}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <ConfirmDialog
@@ -302,8 +328,16 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
                 Try On
               </button>
             </div>
-            <p className="text-[11px] text-black/50 mt-1.5">
-              {formatPrice(item.unitPrice, item.currency ?? currency)} each
+            <p className="text-[11px] text-black/50 mt-1.5 flex items-center gap-1.5 flex-wrap">
+              {item.originalUnitPrice != null && (
+                <span className="line-through text-black/30">
+                  {formatPrice(item.originalUnitPrice, item.currency ?? currency)}
+                </span>
+              )}
+              <span className={item.originalUnitPrice != null ? 'text-[#E83354] font-bold' : ''}>
+                {formatPrice(item.unitPrice, item.currency ?? currency)}
+              </span>
+              <span>each</span>
             </p>
             <StockBadge status={item.stockStatus} stock={item.stockQuantity} />
           </div>

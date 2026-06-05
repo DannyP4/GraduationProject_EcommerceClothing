@@ -321,7 +321,8 @@ function ProductRow({ product, onView, onEdit, onDelete, onRestore, onHardDelete
         <button
           type="button"
           onClick={onView}
-          className="font-bold truncate text-left hover:underline hover:text-[#E83354] transition-colors"
+          title={product.name}
+          className="block w-full font-bold truncate text-left hover:underline hover:text-[#E83354] transition-colors"
         >
           {product.name}
         </button>
@@ -329,7 +330,10 @@ function ProductRow({ product, onView, onEdit, onDelete, onRestore, onHardDelete
       </div>
       <div className="hidden md:block text-xs text-black/60 truncate">{product.brand?.name}</div>
       <div className="hidden md:block text-xs text-black/60 truncate">{product.category?.name}</div>
-      <div className="hidden md:block text-xs">{formatPrice(product.basePrice)}</div>
+      <div className="hidden md:block text-xs">
+        <span>{formatPrice(product.basePrice)}</span>
+        {product.saleType && <SaleTag product={product} />}
+      </div>
       <div className="hidden md:block text-xs">{product.variantCount ?? 0}</div>
       <div className="hidden md:block">
         <StatusBadge product={product} />
@@ -427,6 +431,22 @@ function HardDeleteDialog({ product, onCancel, onConfirm }) {
       </div>
     </div>,
     document.body,
+  );
+}
+
+function SaleTag({ product }) {
+  const now = Date.now();
+  const start = product.saleStartsAt ? new Date(product.saleStartsAt).getTime() : null;
+  const end = product.saleEndsAt ? new Date(product.saleEndsAt).getTime() : null;
+  const active = (start == null || now >= start) && (end == null || now < end);
+  const suffix = active ? '' : (end != null && now >= end ? ' · ended' : ' · scheduled');
+  const label = product.saleType === 'PERCENT'
+    ? `-${Number(product.saleValue)}%`
+    : `-${formatPrice(product.saleValue)}`;
+  return (
+    <span className={`block mt-0.5 text-[9px] font-bold uppercase tracking-wider ${active ? 'text-[#E83354]' : 'text-black/35'}`}>
+      {label}{suffix}
+    </span>
   );
 }
 

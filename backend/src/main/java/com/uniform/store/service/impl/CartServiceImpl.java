@@ -21,11 +21,13 @@ import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.service.CartService;
+import com.uniform.store.service.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +49,7 @@ public class CartServiceImpl implements CartService {
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final CartProperties cartProperties;
+    private final PricingService pricingService;
 
     @Override
     public CartDto getCart(String email) {
@@ -259,10 +262,11 @@ public class CartServiceImpl implements CartService {
         String currency = DEFAULT_CURRENCY;
         List<CartItemDto> dtos = new ArrayList<>(items.size());
         int totalQty = 0;
+        Instant now = Instant.now();
 
         for (CartItem ci : items) {
             ProductVariant v = variantMap.get(ci.getVariant().getId());
-            // Defensive: ON DELETE CASCADE should keep cart_items in sync, but guard anyway.
+            // ON DELETE CASCADE should keep cart_items in sync, but guard anyway.
             if (v == null) {
                 dtos.add(CartItemDto.builder()
                         .id(ci.getId())
@@ -276,8 +280,8 @@ public class CartServiceImpl implements CartService {
             }
 
             Product p = v.getProduct();
-            // Dynamic pricing: variant override wins, else product base — matches catalog rule.
-            BigDecimal unitPrice = v.getPriceOverride() != null ? v.getPriceOverride() : p.getBasePrice();
+            PricingService.EffectivePrice ep = pricingService.resolve(p, v, now);
+            BigDecimal unitPrice = ep.effectivePrice();
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(ci.getQuantity()));
             currency = p.getCurrency();
 
@@ -293,6 +297,7 @@ public class CartServiceImpl implements CartService {
                     .colorHex(v.getColorHex())
                     .imageUrl(primaryImageUrls.get(p.getId()))
                     .unitPrice(unitPrice)
+                    .originalUnitPrice(ep.onSale() ? ep.originalPrice() : null)
                     .currency(p.getCurrency())
                     .quantity(ci.getQuantity())
                     .lineTotal(lineTotal)

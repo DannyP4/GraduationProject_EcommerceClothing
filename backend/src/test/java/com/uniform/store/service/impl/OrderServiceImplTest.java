@@ -25,13 +25,16 @@ import com.uniform.store.mapper.OrderMapper;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.CartItemRepository;
 import com.uniform.store.repository.CartRepository;
+import com.uniform.store.repository.OrderCouponRepository;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.UserRepository;
+import com.uniform.store.service.CouponService;
 import com.uniform.store.service.FxService;
+import com.uniform.store.service.PricingService;
 import com.uniform.store.service.StripeService;
 import com.uniform.store.service.VnpayService;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,6 +77,8 @@ class OrderServiceImplTest {
     @Mock VnpayService vnpayService;
     @Mock StripeService stripeService;
     @Mock OrderMapper orderMapper;
+    @Mock CouponService couponService;
+    @Mock OrderCouponRepository orderCouponRepository;
 
     OrderServiceImpl orderService;
 
@@ -90,7 +95,8 @@ class OrderServiceImplTest {
                 userRepository, addressRepository, cartRepository, cartItemRepository,
                 variantRepository, orderRepository, orderItemRepository,
                 statusHistoryRepository, paymentRepository, orderNumberGenerator,
-                fxService, vnpayService, stripeService, orderMapper);
+                fxService, vnpayService, stripeService, orderMapper, new PricingService(),
+                couponService, orderCouponRepository);
 
         user = User.builder()
                 .email("buyer@uniform.test")

@@ -20,6 +20,8 @@ public class ProductVariantDto {
     private String color;
     private String colorHex;
     private BigDecimal price;
+    private BigDecimal salePrice;
+    private Integer discountPercent;
     private Integer stockQuantity;
     private Boolean isActive;
 }

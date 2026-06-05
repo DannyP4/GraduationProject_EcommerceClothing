@@ -24,6 +24,7 @@ import com.uniform.store.repository.ProductRepository;
 import com.uniform.store.repository.ProductTranslationRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.ReviewRepository;
+import com.uniform.store.service.PricingService;
 import com.uniform.store.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,7 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,6 +59,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryTranslationRepository categoryTranslationRepository;
     private final ReviewRepository reviewRepository;
     private final OrderItemRepository orderItemRepository;
+    private final PricingService pricingService;
 
     @Override
     public PageResponse<ProductSummaryDto> listProducts(ProductFilterRequest filter, Pageable pageable, String locale) {
@@ -112,12 +114,17 @@ public class ProductServiceImpl implements ProductService {
             soldByProduct.put((Long) row[0], ((Number) row[1]).longValue());
         }
 
+        Instant now = Instant.now();
         List<ProductSummaryDto> mapped = products.stream()
-                .map(p -> ProductSummaryDto.builder()
+                .map(p -> {
+                    PricingService.EffectivePrice ep = pricingService.resolve(p, null, now);
+                    return ProductSummaryDto.builder()
                         .id(p.getId())
                         .slug(p.getSlug())
                         .name(translatedProductName(p, productTranslations.get(p.getId())))
                         .basePrice(p.getBasePrice())
+                        .salePrice(ep.onSale() ? ep.effectivePrice() : null)
+                        .discountPercent(ep.discountPercent())
                         .currency(p.getCurrency())
                         .primaryImageUrl(primaryImageUrls.get(p.getId()))
                         .brandName(p.getBrand().getName())
@@ -129,7 +136,8 @@ public class ProductServiceImpl implements ProductService {
                                 ? (long) ratingByProduct.get(p.getId())[1]
                                 : 0L)
                         .soldCount(soldByProduct.getOrDefault(p.getId(), 0L))
-                        .build())
+                        .build();
+                })
                 .toList();
 
         return PageResponse.from(page, mapped);
@@ -177,6 +185,9 @@ public class ProductServiceImpl implements ProductService {
             soldCount = ((Number) row[1]).longValue();
         }
 
+        Instant now = Instant.now();
+        PricingService.EffectivePrice headline = pricingService.resolve(product, null, now);
+
         return ProductDetailDto.builder()
                 .id(product.getId())
                 .slug(product.getSlug())
@@ -184,6 +195,9 @@ public class ProductServiceImpl implements ProductService {
                 .description(translatedProductDescription(product, pTranslation))
                 .gender(product.getGender())
                 .basePrice(product.getBasePrice())
+                .salePrice(headline.onSale() ? headline.effectivePrice() : null)
+                .discountPercent(headline.discountPercent())
+                .saleEndsAt(headline.onSale() ? product.getSaleEndsAt() : null)
                 .currency(product.getCurrency())
                 .brandName(product.getBrand().getName())
                 .brandSlug(product.getBrand().getSlug())
@@ -191,7 +205,7 @@ public class ProductServiceImpl implements ProductService {
                 .categorySlug(product.getCategory().getSlug())
                 .images(images.stream().map(this::toImageDto).toList())
                 .variants(variants.stream()
-                        .map(v -> toVariantDto(v, product.getBasePrice()))
+                        .map(v -> toVariantDto(v, product, now))
                         .toList())
                 .attributes(attributeMap)
                 .averageRating(averageRating)
@@ -227,15 +241,17 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 
-    private ProductVariantDto toVariantDto(ProductVariant v, BigDecimal basePrice) {
-        BigDecimal resolvedPrice = v.getPriceOverride() != null ? v.getPriceOverride() : basePrice;
+    private ProductVariantDto toVariantDto(ProductVariant v, Product product, Instant now) {
+        PricingService.EffectivePrice ep = pricingService.resolve(product, v, now);
         return ProductVariantDto.builder()
                 .id(v.getId())
                 .sku(v.getSku())
                 .size(v.getSize())
                 .color(v.getColor())
                 .colorHex(v.getColorHex())
-                .price(resolvedPrice)
+                .price(ep.originalPrice())
+                .salePrice(ep.onSale() ? ep.effectivePrice() : null)
+                .discountPercent(ep.discountPercent())
                 .stockQuantity(v.getStockQuantity())
                 .isActive(v.getIsActive())
                 .build();
