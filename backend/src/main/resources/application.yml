@@ -58,6 +58,11 @@ app:
   cart:
     low-stock-threshold: 5
     max-quantity-per-item: 99
+  shipping:
+    north: 25000
+    central: 30000
+    south: 35000
+    free-threshold: 500000
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
   fx:

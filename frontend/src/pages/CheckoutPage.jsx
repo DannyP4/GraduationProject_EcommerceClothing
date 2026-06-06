@@ -9,6 +9,7 @@ import { useCart } from '../context/CartContext';
 import * as addressService from '../services/addressService';
 import * as orderService from '../services/orderService';
 import * as couponService from '../services/couponService';
+import * as shippingService from '../services/shippingService';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -45,12 +46,13 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState(null);
 
-  const shippingCost = 0;
+  const [shipping, setShipping] = useState({ fee: 0, freeThreshold: null });
+  const shippingCost = shipping.fee;
   const taxTotal = 0;
   const discountTotal = appliedCoupon ? Number(appliedCoupon.discountAmount ?? 0) : 0;
   const grandTotal = useMemo(
     () => Math.max(0, Number(subtotal ?? 0) + shippingCost + taxTotal - discountTotal),
-    [subtotal, discountTotal]
+    [subtotal, shippingCost, discountTotal]
   );
 
   const applyCoupon = async () => {
@@ -96,6 +98,23 @@ export default function CheckoutPage() {
     return () => { cancelled = true; };
   }, []);
 
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || null;
+
+  useEffect(() => {
+    if (!selectedAddressId) { setShipping({ fee: 0, freeThreshold: null }); return undefined; }
+    let cancelled = false;
+    shippingService.getQuote({ region: selectedAddress?.region, subtotal })
+      .then((q) => {
+        if (cancelled || !q) return;
+        setShipping({
+          fee: Number(q.fee ?? 0),
+          freeThreshold: q.freeThreshold != null ? Number(q.freeThreshold) : null,
+        });
+      })
+      .catch(() => { if (!cancelled) setShipping({ fee: 0, freeThreshold: null }); });
+    return () => { cancelled = true; };
+  }, [selectedAddressId, selectedAddress?.region, subtotal]);
+
   const blockedItems = items.filter(
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'
   );
@@ -140,8 +159,6 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
-
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   return (
     <div className="min-h-screen bg-[#E8E8E8]">
@@ -208,7 +225,11 @@ export default function CheckoutPage() {
 
                 <div className="space-y-3 mb-4 text-sm">
                   <Row label={`Subtotal (${cartCount} ${cartCount === 1 ? 'item' : 'items'})`} value={formatPrice(subtotal, currency)} />
-                  <Row label="Shipping" value={shippingCost === 0 ? 'Free' : formatPrice(shippingCost, currency)} />
+                  <Row
+                    label="Shipping"
+                    value={shippingCost === 0 ? 'Free' : formatPrice(shippingCost, currency)}
+                    note={shippingCost > 0 && shipping.freeThreshold ? `Free over ${formatPrice(shipping.freeThreshold, currency)}` : undefined}
+                  />
                   <Row label="Tax" value={formatPrice(taxTotal, currency)} note="VAT not applied" />
                   {appliedCoupon && (
                     <Row label={`Discount · ${appliedCoupon.code}`} value={`− ${formatPrice(discountTotal, currency)}`} />

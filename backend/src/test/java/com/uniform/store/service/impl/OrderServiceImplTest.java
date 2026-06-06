@@ -37,6 +37,7 @@ import com.uniform.store.service.CouponService;
 import com.uniform.store.service.FxService;
 import com.uniform.store.service.PricingService;
 import com.uniform.store.service.StripeService;
+import com.uniform.store.service.ShippingService;
 import com.uniform.store.service.VnpayService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -80,6 +82,7 @@ class OrderServiceImplTest {
     @Mock OrderMapper orderMapper;
     @Mock CouponService couponService;
     @Mock OrderCouponRepository orderCouponRepository;
+    @Mock ShippingService shippingService;
 
     OrderServiceImpl orderService;
 
@@ -97,7 +100,9 @@ class OrderServiceImplTest {
                 variantRepository, orderRepository, orderItemRepository,
                 statusHistoryRepository, paymentRepository, orderNumberGenerator,
                 fxService, vnpayService, stripeService, orderMapper, new PricingService(),
-                couponService, orderCouponRepository);
+                couponService, orderCouponRepository, shippingService);
+
+        lenient().when(shippingService.fee(any(), any())).thenReturn(BigDecimal.ZERO);
 
         user = User.builder()
                 .email("buyer@uniform.test")

@@ -38,6 +38,7 @@ import com.uniform.store.service.CouponService;
 import com.uniform.store.service.FxService;
 import com.uniform.store.service.OrderService;
 import com.uniform.store.service.PricingService;
+import com.uniform.store.service.ShippingService;
 import com.uniform.store.service.StripeService;
 import com.uniform.store.service.VnpayService;
 import lombok.RequiredArgsConstructor;
@@ -81,6 +82,7 @@ public class OrderServiceImpl implements OrderService {
     private final PricingService pricingService;
     private final CouponService couponService;
     private final OrderCouponRepository orderCouponRepository;
+    private final ShippingService shippingService;
 
     @Override
     @Transactional
@@ -180,7 +182,7 @@ public class OrderServiceImpl implements OrderService {
             subtotal = subtotal.add(lineTotal);
         }
 
-        BigDecimal shippingCost = BigDecimal.ZERO;
+        BigDecimal shippingCost = shippingService.fee(address.getRegion(), subtotal);
         BigDecimal taxTotal = BigDecimal.ZERO;
         BigDecimal discountTotal = BigDecimal.ZERO;
         CouponService.CouponApplication couponApp = null;
@@ -208,6 +210,7 @@ public class OrderServiceImpl implements OrderService {
                 .shippingCity(address.getCity())
                 .shippingCountry(address.getCountry())
                 .shippingPostalCode(address.getPostalCode())
+                .shippingRegion(address.getRegion())
                 .notes(notes)
                 .placedAt(Instant.now())
                 .build();

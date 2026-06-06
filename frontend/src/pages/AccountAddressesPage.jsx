@@ -4,6 +4,8 @@ import * as addressService from '../services/addressService';
 import AddressFormModal from '../components/AddressFormModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 
+const REGION_LABEL = { NORTH: 'Northern Vietnam', CENTRAL: 'Central Vietnam', SOUTH: 'Southern Vietnam' };
+
 export default function AccountAddressesPage() {
   const { user } = useAuth();
 
@@ -136,6 +138,11 @@ export default function AccountAddressesPage() {
                 {a.line1}
                 {a.ward ? `, ${a.ward}` : ''}, {a.district}, {a.city}
                 {a.postalCode ? ` ${a.postalCode}` : ''} · {a.country}
+                {a.region && (
+                  <span className="block mt-0.5 text-[10px] font-bold tracking-[0.1em] uppercase text-black/45">
+                    {REGION_LABEL[a.region] ?? a.region}
+                  </span>
+                )}
               </div>
 
               <div className="mt-auto pt-3 border-t border-black/5 flex flex-wrap gap-2">

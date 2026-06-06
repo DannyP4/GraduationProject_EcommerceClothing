@@ -126,7 +126,8 @@ class ProductSaleIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(order)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.order.grandTotal").value(350000))
+                .andExpect(jsonPath("$.data.order.shippingCost").value(35000))
+                .andExpect(jsonPath("$.data.order.grandTotal").value(385000))
                 .andExpect(jsonPath("$.data.order.items[0].unitPrice").value(175000))
                 .andExpect(jsonPath("$.data.order.items[0].originalUnitPrice").value(250000))
                 .andReturn().getResponse().getContentAsString();

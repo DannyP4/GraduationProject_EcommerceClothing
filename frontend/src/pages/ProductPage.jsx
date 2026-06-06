@@ -367,18 +367,18 @@ export default function ProductPage() {
 
           <div className="flex flex-col gap-3 mb-8">
             <button
-              onClick={handleAddToCart}
-              disabled={adding}
-              className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-black text-white hover:bg-[#E83354] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {adding ? 'Adding…' : '+ Add to Cart'}
-            </button>
-            <button
               onClick={handleBuyNow}
               disabled={adding}
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-[#E83354] text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Buy Now
+            </button>
+            <button
+              onClick={handleAddToCart}
+              disabled={adding}
+              className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-black text-white hover:bg-[#E83354] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {adding ? 'Adding…' : '+ Add to Cart'}
             </button>
             <button
               onClick={() => navigate('/try-on')}

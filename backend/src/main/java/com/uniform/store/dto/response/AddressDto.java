@@ -1,6 +1,7 @@
 package com.uniform.store.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.uniform.store.enums.ShippingRegion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,5 +23,6 @@ public class AddressDto {
     private String city;
     private String country;
     private String postalCode;
+    private ShippingRegion region;
     private Boolean isDefault;
 }

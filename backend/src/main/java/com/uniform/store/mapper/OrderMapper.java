@@ -131,6 +131,7 @@ public class OrderMapper {
                 .shippingCity(order.getShippingCity())
                 .shippingCountry(order.getShippingCountry())
                 .shippingPostalCode(order.getShippingPostalCode())
+                .shippingRegion(order.getShippingRegion())
                 .notes(order.getNotes())
                 .placedAt(order.getPlacedAt())
                 .statusHistory(historyDtos)

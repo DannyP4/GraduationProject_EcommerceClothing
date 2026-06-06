@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ADMIN_NOTIFICATIONS } from '../../mocks/adminNotifications';
+import { getNotifications } from '../../services/adminNotificationService';
+import useAutoHideScrollbar from '../../lib/useAutoHideScrollbar';
 
 const TYPE_META = {
   ORDER:  { label: 'Order',  cls: 'text-blue-700   bg-blue-50    border-blue-300',   icon: IconBox },
@@ -8,12 +9,46 @@ const TYPE_META = {
   REVIEW: { label: 'Review', cls: 'text-purple-700 bg-purple-50  border-purple-300', icon: IconStar },
 };
 
+const SEEN_KEY = 'vesta_admin_notif_seen';
+const POLL_MS = 60000;
+
+function loadSeen() {
+  try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)) || []); }
+  catch { return new Set(); }
+}
+function saveSeen(set) {
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify([...set])); } catch { /* ignore */ }
+}
+
 export default function AdminNotificationBell() {
   const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([]);
+  const [seen, setSeen] = useState(loadSeen);
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
 
-  const unreadCount = ADMIN_NOTIFICATIONS.filter((n) => n.unread).length;
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await getNotifications();
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : [];
+        setItems(list);
+        setSeen((prev) => {
+          const ids = new Set(list.map((n) => n.id));
+          const pruned = new Set([...prev].filter((id) => ids.has(id)));
+          saveSeen(pruned);
+          return pruned;
+        });
+      } catch { /* keep last feed on transient error */ }
+    };
+    load();
+    const timer = setInterval(load, POLL_MS);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
+
+  const unreadCount = items.filter((n) => !seen.has(n.id)).length;
 
   const cancelClose = () => {
     if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
@@ -22,6 +57,16 @@ export default function AdminNotificationBell() {
     cancelClose();
     closeTimerRef.current = setTimeout(() => setOpen(false), 200);
   };
+  const openPanel = () => { cancelClose(); setOpen(true); };
+  const markSeen = (id) => {
+    setSeen((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      saveSeen(next);
+      return next;
+    });
+  };
 
   useEffect(() => () => cancelClose(), []);
 
@@ -29,12 +74,13 @@ export default function AdminNotificationBell() {
     <div
       ref={wrapRef}
       className="relative hidden sm:block"
-      onMouseEnter={() => { cancelClose(); setOpen(true); }}
+      onMouseEnter={openPanel}
       onMouseLeave={scheduleClose}
     >
       <button
         type="button"
         aria-label="Admin notifications"
+        title="Notifications · Refreshes every minute"
         className="relative text-black/70 hover:text-[#E83354] transition-all hover:-translate-y-0.5 block"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -52,49 +98,68 @@ export default function AdminNotificationBell() {
         <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-black/10 shadow-xl z-50 max-h-[480px] flex flex-col">
           <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between flex-shrink-0">
             <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">Notifications</p>
-            <span className="text-[10px] font-bold tracking-wider uppercase bg-black text-white px-2 py-0.5">
-              {unreadCount} new
+            <span className="flex items-center gap-1.5">
+              {unreadCount > 0 && (
+                <span className="text-[10px] font-bold tracking-wider uppercase bg-[#E83354] text-white px-2 py-0.5">
+                  {unreadCount} new
+                </span>
+              )}
+              <span className="text-[10px] font-bold tracking-wider uppercase bg-black text-white px-2 py-0.5">
+                {items.length}
+              </span>
             </span>
           </div>
 
-          <ul className="overflow-y-auto divide-y divide-black/5 flex-1">
-            {ADMIN_NOTIFICATIONS.map((n) => {
-              const meta = TYPE_META[n.type] ?? { label: n.type, cls: 'text-black/60 bg-black/5 border-black/15', icon: IconBox };
-              const Icon = meta.icon;
-              return (
-                <li key={n.id}>
-                  <Link
-                    to={n.href}
-                    onClick={() => setOpen(false)}
-                    className={`flex gap-3 px-4 py-3 hover:bg-black/5 transition-colors ${n.unread ? '' : 'opacity-60'}`}
-                  >
-                    <span className={`w-7 h-7 flex-shrink-0 border flex items-center justify-center ${meta.cls}`}>
-                      <Icon />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 border ${meta.cls}`}>
-                          {meta.label}
-                        </span>
-                        {n.unread && <span className="w-1.5 h-1.5 rounded-full bg-[#E83354]" />}
-                      </div>
-                      <p className="text-xs text-black/80 leading-snug">{n.message}</p>
-                      <p className="text-[10px] text-black/40 mt-1 tracking-wider">{timeAgo(n.at)}</p>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="px-4 py-2 border-t border-black/5 text-center flex-shrink-0">
-            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/30">
-              Demo feed
-            </span>
-          </div>
+          {items.length === 0 ? (
+            <p className="px-4 py-8 text-center text-xs text-black/40 tracking-wide flex-1">
+              You're all caught up.
+            </p>
+          ) : (
+            <NotificationList
+              items={items}
+              seen={seen}
+              onItemClick={(id) => { markSeen(id); setOpen(false); }}
+            />
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function NotificationList({ items, seen, onItemClick }) {
+  const listRef = useAutoHideScrollbar();
+  return (
+    <ul ref={listRef} className="overflow-y-auto divide-y divide-black/5 flex-1 scrollbar-subtle">
+      {items.map((n) => {
+        const meta = TYPE_META[n.type] ?? { label: n.type, cls: 'text-black/60 bg-black/5 border-black/15', icon: IconBox };
+        const Icon = meta.icon;
+        const isUnread = !seen.has(n.id);
+        return (
+          <li key={n.id}>
+            <Link
+              to={n.href}
+              onClick={() => onItemClick(n.id)}
+              className={`flex gap-3 px-4 py-3 hover:bg-black/5 transition-colors ${isUnread ? '' : 'opacity-60'}`}
+            >
+              <span className={`w-7 h-7 flex-shrink-0 border flex items-center justify-center ${meta.cls}`}>
+                <Icon />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className={`text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 border ${meta.cls}`}>
+                    {meta.label}
+                  </span>
+                  {isUnread && <span className="w-1.5 h-1.5 rounded-full bg-[#E83354]" />}
+                </div>
+                <p className="text-xs text-black/80 leading-snug">{n.message}</p>
+                {n.at && <p className="text-[10px] text-black/40 mt-1 tracking-wider">{timeAgo(n.at)}</p>}
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

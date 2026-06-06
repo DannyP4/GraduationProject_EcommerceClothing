@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import StarRating from '../../components/StarRating';
 import ReviewStatusBadge from '../../components/admin/ReviewStatusBadge';
+import ReviewDetailModal from '../../components/admin/ReviewDetailModal';
 import AdminPagination from '../../components/admin/AdminPagination';
 import { useToast } from '../../components/Toast';
 import useScrollRestore from '../../lib/useScrollRestore';
@@ -33,6 +34,7 @@ export default function AdminReviewsPage() {
   const [confirmReject, setConfirmReject] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [detail, setDetail] = useState(null);
 
   useScrollRestore(!loading);
 
@@ -52,6 +54,8 @@ export default function AdminReviewsPage() {
     if (pageIndex > 0) next.set('page', String(pageIndex + 1));
     if (status) next.set('status', status);
     if (search) next.set('q', search);
+    const review = searchParams.get('review');
+    if (review) next.set('review', review);
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
@@ -127,6 +131,37 @@ export default function AdminReviewsPage() {
     }
   };
 
+  const reviewParam = searchParams.get('review');
+  useEffect(() => {
+    if (!reviewParam) return;
+    let cancelled = false;
+    reviewSvc.getReview(reviewParam).then((r) => { if (!cancelled) setDetail(r); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [reviewParam]);
+
+  const closeDetail = () => {
+    setDetail(null);
+    if (searchParams.get('review')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('review');
+      setSearchParams(next, { replace: true });
+    }
+  };
+
+  const detailApprove = async () => {
+    if (!detail) return;
+    try {
+      await reviewSvc.approveReview(detail.id);
+      toast.success('Review approved');
+      await load(true);
+      closeDetail();
+    } catch (err) {
+      toast.error(err.message || 'Approve failed');
+    }
+  };
+  const detailReject = () => { const r = detail; closeDetail(); setConfirmReject(r); };
+  const detailDelete = () => { const r = detail; closeDetail(); setConfirmDelete(r); };
+
   const content = page?.content ?? [];
   const totalPages = page?.totalPages ?? 0;
   const totalElements = page?.totalElements ?? 0;
@@ -201,6 +236,7 @@ export default function AdminReviewsPage() {
               <ReviewRow
                 key={r.id}
                 review={r}
+                onOpen={() => setDetail(r)}
                 onApprove={() => handleApprove(r)}
                 onReject={() => setConfirmReject(r)}
                 onDelete={() => setConfirmDelete(r)}
@@ -237,16 +273,28 @@ export default function AdminReviewsPage() {
         onCancel={() => setConfirmDelete(null)}
         onConfirm={handleDelete}
       />
+
+      {detail && (
+        <ReviewDetailModal
+          review={detail}
+          onClose={closeDetail}
+          onApprove={detailApprove}
+          onReject={detailReject}
+          onDelete={detailDelete}
+        />
+      )}
     </div>
   );
 }
 
-function ReviewRow({ review, onApprove, onReject, onDelete }) {
+function ReviewRow({ review, onOpen, onApprove, onReject, onDelete }) {
   const excerpt = review.body && review.body.length > 140 ? `${review.body.slice(0, 140)}…` : review.body;
   return (
     <li className="grid grid-cols-1 lg:grid-cols-[1.4fr_1.4fr_2.4fr_0.8fr_0.6fr_0.9fr] gap-3 px-4 py-3 items-center text-sm">
       <div className="min-w-0">
-        <p className="font-bold truncate">{review.productName}</p>
+        <button onClick={onOpen} className="font-bold truncate block max-w-full text-left hover:text-[#E83354] transition-colors">
+          {review.productName}
+        </button>
         <p className="text-[11px] text-black/40">{formatDateShort(review.createdAt)}</p>
       </div>
       <div className="min-w-0">
@@ -264,7 +312,9 @@ function ReviewRow({ review, onApprove, onReject, onDelete }) {
           )}
         </div>
         {review.title && <p className="text-xs font-bold">{review.title}</p>}
-        <p className="text-xs text-black/60 break-words">{excerpt}</p>
+        {review.body
+          ? <button onClick={onOpen} className="text-xs text-black/60 break-words text-left hover:text-black transition-colors">{excerpt}</button>
+          : <p className="text-xs text-black/30 italic">No written review.</p>}
       </div>
       <div className="lg:pt-0.5">
         <ReviewStatusBadge status={review.status} />

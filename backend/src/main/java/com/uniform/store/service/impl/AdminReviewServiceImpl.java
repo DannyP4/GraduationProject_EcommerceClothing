@@ -39,6 +39,13 @@ public class AdminReviewServiceImpl implements AdminReviewService {
     }
 
     @Override
+    public AdminReviewDto getById(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review", "id", String.valueOf(reviewId)));
+        return reviewMapper.toAdminDto(review);
+    }
+
+    @Override
     @Transactional
     public AdminReviewDto approve(Long reviewId) {
         return setStatus(reviewId, ReviewStatus.APPROVED);

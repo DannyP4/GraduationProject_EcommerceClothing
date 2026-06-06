@@ -2,6 +2,7 @@ package com.uniform.store.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.uniform.store.enums.OrderStatus;
+import com.uniform.store.enums.ShippingRegion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,7 @@ public class OrderDetailDto {
     private String shippingCity;
     private String shippingCountry;
     private String shippingPostalCode;
+    private ShippingRegion shippingRegion;
 
     private String notes;
     private Instant placedAt;

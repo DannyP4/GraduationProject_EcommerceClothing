@@ -58,7 +58,7 @@ class KaggleCatalogMapperTest {
 
     @Test
     void isWearable_dropsNonGarmentArticleTypesMislabeledAsApparel() {
-        // Dataset quirk: these are tagged Apparel/Topwear|Bottomwear but are not wearable garments.
+        // Swimwear, Belts, Dupatta, Socks, Suspenders are not wearable garments
         assertThat(mapper.isWearable(row("Apparel", "Bottomwear", "Swimwear", "Blue"))).isFalse();
         assertThat(mapper.isWearable(row("Apparel", "Bottomwear", "Belts", "Black"))).isFalse();
         assertThat(mapper.isWearable(row("Apparel", "Topwear", "Dupatta", "Red"))).isFalse();

@@ -304,4 +304,27 @@ class ReviewIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements").value(0));
     }
+
+    @Test
+    void adminGetById_returnsFullReview_andGuards() throws Exception {
+        submitReview(buyerJwt, product.getId(), 4, "Detailed body for the modal view");
+        Long reviewId = reviewRepository.findAll().get(0).getId();
+
+        mockMvc.perform(get("/admin/reviews/" + reviewId)
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(reviewId))
+                .andExpect(jsonPath("$.data.rating").value(4))
+                .andExpect(jsonPath("$.data.body").value("Detailed body for the modal view"))
+                .andExpect(jsonPath("$.data.productName").exists())
+                .andExpect(jsonPath("$.data.userEmail").value("buyer@uniform.test"));
+
+        mockMvc.perform(get("/admin/reviews/999999")
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/admin/reviews/" + reviewId)
+                        .header("Authorization", "Bearer " + buyerJwt))
+                .andExpect(status().isForbidden());
+    }
 }

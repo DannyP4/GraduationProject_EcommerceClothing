@@ -57,6 +57,7 @@ public class AddressServiceImpl implements AddressService {
                 .city(req.getCity().trim())
                 .country(req.getCountry() != null ? req.getCountry() : DEFAULT_COUNTRY)
                 .postalCode(req.getPostalCode())
+                .region(req.getRegion())
                 .isDefault(shouldBeDefault)
                 .build();
 
@@ -79,6 +80,7 @@ public class AddressServiceImpl implements AddressService {
         if (req.getCity() != null) address.setCity(req.getCity().trim());
         if (req.getCountry() != null) address.setCountry(req.getCountry());
         if (req.getPostalCode() != null) address.setPostalCode(req.getPostalCode());
+        if (req.getRegion() != null) address.setRegion(req.getRegion());
 
         return toDto(addressRepository.save(address));
     }
@@ -139,6 +141,7 @@ public class AddressServiceImpl implements AddressService {
                 .city(a.getCity())
                 .country(a.getCountry())
                 .postalCode(a.getPostalCode())
+                .region(a.getRegion())
                 .isDefault(a.isDefault())
                 .build();
     }

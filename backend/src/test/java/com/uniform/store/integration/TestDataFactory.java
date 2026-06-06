@@ -17,6 +17,7 @@ import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.SaleType;
 import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
+import com.uniform.store.enums.ShippingRegion;
 import com.uniform.store.enums.UserStatus;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.BrandRepository;
@@ -120,6 +121,7 @@ public class TestDataFactory {
                 .district("Quan 1")
                 .city("HCM")
                 .country("VN")
+                .region(ShippingRegion.SOUTH)
                 .isDefault(true)
                 .build();
         return addressRepository.save(a);

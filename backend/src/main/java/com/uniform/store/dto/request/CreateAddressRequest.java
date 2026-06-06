@@ -1,5 +1,6 @@
 package com.uniform.store.dto.request;
 
+import com.uniform.store.enums.ShippingRegion;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -42,6 +43,9 @@ public class CreateAddressRequest {
 
     @Size(max = 20)
     private String postalCode;
+
+    // Region tier for shipping (NORTH/CENTRAL/SOUTH).
+    private ShippingRegion region;
 
     // If true (or this is the user's first address), set as default and un-flag others.
     private Boolean isDefault;

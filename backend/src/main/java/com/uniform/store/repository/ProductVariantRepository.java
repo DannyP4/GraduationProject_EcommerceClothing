@@ -24,6 +24,11 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     long countByIsActiveTrueAndStockQuantityLessThanEqual(int threshold);
 
+    @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product"
+            + " WHERE v.isActive = true AND v.stockQuantity <= :threshold"
+            + " ORDER BY v.stockQuantity ASC, v.id ASC")
+    List<ProductVariant> findLowStockWithProduct(@Param("threshold") int threshold);
+
     // Bulk fetch with product joined
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product WHERE v.id IN :ids")
     List<ProductVariant> findAllByIdInWithProduct(@Param("ids") Collection<Long> ids);

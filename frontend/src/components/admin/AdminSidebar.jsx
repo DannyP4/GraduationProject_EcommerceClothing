@@ -7,9 +7,9 @@ const NAV = [
   { to: '/admin/categories', label: 'Categories',            icon: IconFolder },
   { to: '/admin/brands',     label: 'Brands',                icon: IconAward },
   { to: '/admin/products',   label: 'Products',              icon: IconTag },
-  { to: '/admin/coupons',    label: 'Coupons',               icon: IconTicket },
   { to: '/admin/orders',     label: 'Orders',                icon: IconBox },
   { to: '/admin/reviews',    label: 'Reviews',               icon: IconStar },
+  { to: '/admin/coupons',    label: 'Coupons',               icon: IconTicket },
 ];
 
 export default function AdminSidebar() {

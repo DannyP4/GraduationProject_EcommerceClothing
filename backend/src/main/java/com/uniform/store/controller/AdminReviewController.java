@@ -43,6 +43,12 @@ public class AdminReviewController {
         return ApiResponse.ok(adminReviewService.listReviews(status, search, pageable));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Fetch a single review by id")
+    public ApiResponse<AdminReviewDto> getOne(@PathVariable Long id) {
+        return ApiResponse.ok(adminReviewService.getById(id));
+    }
+
     @PostMapping("/{id}/approve")
     @Operation(summary = "Approve a review (make it public)")
     public ApiResponse<AdminReviewDto> approve(@PathVariable Long id) {

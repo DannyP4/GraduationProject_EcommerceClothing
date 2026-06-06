@@ -29,4 +29,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     boolean existsByOrderNumber(String orderNumber);
 
     long countByStatusIn(Collection<OrderStatus> statuses);
+
+    List<Order> findByStatusInOrderByPlacedAtDescIdDesc(Collection<OrderStatus> statuses, Pageable pageable);
 }

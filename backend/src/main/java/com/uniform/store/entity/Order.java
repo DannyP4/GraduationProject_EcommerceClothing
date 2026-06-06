@@ -1,6 +1,7 @@
 package com.uniform.store.entity;
 
 import com.uniform.store.enums.OrderStatus;
+import com.uniform.store.enums.ShippingRegion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -87,6 +88,10 @@ public class Order extends BaseEntity {
 
     @Column(name = "shipping_postal_code", length = 20)
     private String shippingPostalCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_region", length = 10)
+    private ShippingRegion shippingRegion;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;

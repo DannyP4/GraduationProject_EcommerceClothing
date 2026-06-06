@@ -25,6 +25,7 @@ import org.springframework.http.MediaType;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -209,5 +210,43 @@ class CartOrderFlowIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(direct)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void placeCodOrder_belowFreeThreshold_chargesRegionShipping() throws Exception {
+        // 1 unit = 250000 < 500000 free-ship threshold; default address region SOUTH -> 35000
+        AddCartItemRequest addReq = new AddCartItemRequest(variant.getId(), 1);
+        mockMvc.perform(post("/cart/items")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(addReq)))
+                .andExpect(status().isOk());
+
+        PlaceOrderRequest order = new PlaceOrderRequest();
+        order.setAddressId(address.getId());
+        order.setPaymentMethod("COD");
+
+        mockMvc.perform(post("/orders")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.order.shippingCost").value(35000))
+                .andExpect(jsonPath("$.data.order.grandTotal").value(285000))
+                .andExpect(jsonPath("$.data.order.shippingRegion").value("SOUTH"));
+    }
+
+    @Test
+    void shippingQuote_returnsRegionFeeAndThreshold() throws Exception {
+        mockMvc.perform(get("/shipping/quote?region=NORTH&subtotal=100000")
+                        .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.fee").value(25000))
+                .andExpect(jsonPath("$.data.freeThreshold").value(500000));
+
+        mockMvc.perform(get("/shipping/quote?region=NORTH&subtotal=500000")
+                        .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.fee").value(0));
     }
 }

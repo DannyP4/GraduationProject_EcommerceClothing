@@ -9,6 +9,8 @@ public interface AdminReviewService {
 
     PageResponse<AdminReviewDto> listReviews(ReviewStatus status, String search, Pageable pageable);
 
+    AdminReviewDto getById(Long reviewId);
+
     AdminReviewDto approve(Long reviewId);
 
     AdminReviewDto reject(Long reviewId);

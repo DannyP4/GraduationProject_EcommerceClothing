@@ -34,6 +34,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Object[]> aggregateRatingByProductIds(@Param("productIds") Collection<Long> productIds,
                                                @Param("status") ReviewStatus status);
 
+    @EntityGraph(attributePaths = {"product"})
+    List<Review> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
+
     boolean existsByUserIdAndProductId(Long userId, Long productId);
 
     Optional<Review> findFirstByUserIdAndProductId(Long userId, Long productId);

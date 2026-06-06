@@ -23,6 +23,10 @@ export async function listReviews({ status, search, page = 0, size = 20 } = {}) 
   return unwrap(resp);
 }
 
+export async function getReview(id) {
+  return unwrap(await apiClient.get(`/admin/reviews/${id}`));
+}
+
 export async function approveReview(id) {
   return unwrap(await apiClient.post(`/admin/reviews/${id}/approve`));
 }

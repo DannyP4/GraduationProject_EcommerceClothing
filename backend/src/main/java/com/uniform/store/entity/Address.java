@@ -1,5 +1,6 @@
 package com.uniform.store.entity;
 
+import com.uniform.store.enums.ShippingRegion;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,6 +49,10 @@ public class Address extends BaseEntity {
 
     @Column(name = "postal_code", length = 20)
     private String postalCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "region", length = 10)
+    private ShippingRegion region;
 
     @Column(name = "is_default", nullable = false)
     @Builder.Default

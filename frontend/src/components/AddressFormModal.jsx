@@ -10,6 +10,7 @@ const EMPTY = {
   city: '',
   country: 'VN',
   postalCode: '',
+  region: '',
   isDefault: false,
 };
 
@@ -31,6 +32,7 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
         city: initial.city ?? '',
         country: initial.country ?? 'VN',
         postalCode: initial.postalCode ?? '',
+        region: initial.region ?? '',
         // Default flag is changed via the dedicated /default endpoint, not via PATCH.
         isDefault: false,
       });
@@ -67,6 +69,7 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
         city: form.city.trim(),
         country: form.country?.trim().toUpperCase() || 'VN',
         postalCode: form.postalCode?.trim() || null,
+        region: form.region || null,
       };
       // Only the create flow can set isDefault inline (PATCH ignores it intentionally).
       if (mode !== 'edit') payload.isDefault = !!form.isDefault;
@@ -116,6 +119,24 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
             <FieldText label="City" required value={form.city} onChange={handleChange('city')} maxLength={100} />
             <FieldText label="Country" placeholder="VN" value={form.country} onChange={handleChange('country')} maxLength={2} />
           </FieldRow>
+
+          <div>
+            <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
+              Region<span className="text-[#E83354]"> *</span>
+            </label>
+            <select
+              required
+              value={form.region}
+              onChange={handleChange('region')}
+              className="w-full border border-black/15 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-black transition-colors"
+            >
+              <option value="">Select region…</option>
+              <option value="NORTH">Northern Vietnam</option>
+              <option value="CENTRAL">Central Vietnam</option>
+              <option value="SOUTH">Southern Vietnam</option>
+            </select>
+            <p className="text-[10px] text-black/40 mt-1">Determines the shipping fee.</p>
+          </div>
 
           <FieldText label="Postal Code" value={form.postalCode} onChange={handleChange('postalCode')} maxLength={20} />
 
