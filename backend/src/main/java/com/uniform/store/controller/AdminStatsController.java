@@ -1,6 +1,7 @@
 package com.uniform.store.controller;
 
 import com.uniform.store.dto.response.ApiResponse;
+import com.uniform.store.dto.response.DashboardOpsDto;
 import com.uniform.store.dto.response.OrdersByStatusDto;
 import com.uniform.store.dto.response.PaymentBreakdownDto;
 import com.uniform.store.dto.response.RevenueBucketDto;
@@ -80,5 +81,11 @@ public class AdminStatsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false, defaultValue = "5") int limit) {
         return ApiResponse.ok(adminStatsService.topCustomers(from, to, limit));
+    }
+
+    @GetMapping("/ops")
+    @Operation(summary = "Operational snapshot for the dashboard: open-order and low-stock variant counts")
+    public ApiResponse<DashboardOpsDto> ops() {
+        return ApiResponse.ok(adminStatsService.ops());
     }
 }

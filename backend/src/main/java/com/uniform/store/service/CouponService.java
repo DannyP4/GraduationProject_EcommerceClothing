@@ -10,6 +10,8 @@ public interface CouponService {
 
     CouponValidationResponse validate(String email, String code);
 
+    CouponValidationResponse validateDirect(String email, String code, Long variantId, int quantity);
+
     CouponApplication applyToOrder(String code, Long userId, List<CartLine> lines, BigDecimal subtotal);
 
     void releaseForOrder(Long orderId);

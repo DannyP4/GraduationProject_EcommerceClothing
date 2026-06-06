@@ -1,6 +1,7 @@
 package com.uniform.store.integration;
 
 import com.uniform.store.dto.request.AddCartItemRequest;
+import com.uniform.store.dto.request.DirectOrderRequest;
 import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Brand;
@@ -11,6 +12,8 @@ import com.uniform.store.entity.User;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
+import com.uniform.store.repository.CartItemRepository;
+import com.uniform.store.repository.CartRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductVariantRepository;
@@ -31,6 +34,8 @@ class CartOrderFlowIntegrationTest extends BaseIntegrationTest {
     @Autowired ProductVariantRepository variantRepository;
     @Autowired OrderRepository orderRepository;
     @Autowired PaymentRepository paymentRepository;
+    @Autowired CartRepository cartRepository;
+    @Autowired CartItemRepository cartItemRepository;
 
     User buyer;
     String jwt;
@@ -132,5 +137,77 @@ class CartOrderFlowIntegrationTest extends BaseIntegrationTest {
 
         assertThat(variantRepository.findById(variant.getId()).orElseThrow().getStockQuantity())
                 .as("stock restored to 20 after cancel").isEqualTo(20);
+    }
+
+    @Test
+    void buyNow_cod_createsOrderAndLeavesCartUntouched() throws Exception {
+        AddCartItemRequest addReq = new AddCartItemRequest(variant.getId(), 2);
+        mockMvc.perform(post("/cart/items")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(addReq)))
+                .andExpect(status().isOk());
+
+        DirectOrderRequest direct = new DirectOrderRequest();
+        direct.setVariantId(variant.getId());
+        direct.setQuantity(3);
+        direct.setAddressId(address.getId());
+        direct.setPaymentMethod("COD");
+
+        String resp = mockMvc.perform(post("/orders/direct")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(direct)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.order.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.order.grandTotal").value(750000))
+                .andReturn().getResponse().getContentAsString();
+
+        String orderNumber = objectMapper.readTree(resp)
+                .path("data").path("order").path("orderNumber").asText();
+
+        assertThat(variantRepository.findById(variant.getId()).orElseThrow().getStockQuantity())
+                .as("20 - 3 = 17 after Buy Now").isEqualTo(17);
+
+        var savedOrder = orderRepository.findByOrderNumber(orderNumber).orElseThrow();
+        var payment = paymentRepository.findFirstByOrderIdOrderByIdDesc(savedOrder.getId()).orElseThrow();
+        assertThat(payment.getProvider()).isEqualTo(PaymentProvider.COD);
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+
+        var cart = cartRepository.findByUserId(buyer.getId()).orElseThrow();
+        assertThat(cartItemRepository.findByCartIdOrderByIdAsc(cart.getId()))
+                .as("cart still holds the original item; Buy Now did not clear it").hasSize(1);
+    }
+
+    @Test
+    void buyNow_insufficientStock_returns400() throws Exception {
+        DirectOrderRequest direct = new DirectOrderRequest();
+        direct.setVariantId(variant.getId());
+        direct.setQuantity(999);
+        direct.setAddressId(address.getId());
+        direct.setPaymentMethod("COD");
+
+        mockMvc.perform(post("/orders/direct")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(direct)))
+                .andExpect(status().isBadRequest());
+
+        assertThat(variantRepository.findById(variant.getId()).orElseThrow().getStockQuantity())
+                .as("stock untouched on failure").isEqualTo(20);
+    }
+
+    @Test
+    void buyNow_withoutAuth_returns401() throws Exception {
+        DirectOrderRequest direct = new DirectOrderRequest();
+        direct.setVariantId(variant.getId());
+        direct.setQuantity(1);
+        direct.setAddressId(address.getId());
+        direct.setPaymentMethod("COD");
+
+        mockMvc.perform(post("/orders/direct")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(direct)))
+                .andExpect(status().isUnauthorized());
     }
 }

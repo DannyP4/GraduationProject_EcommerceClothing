@@ -178,16 +178,24 @@ function DateRangeBar({ from, to, granularity, onFromChange, onToChange, onGranu
           />
         </div>
         <div className="flex gap-1">
-          {PRESETS.map((p) => (
-            <button
-              key={p.label}
-              type="button"
-              onClick={() => onPreset(p.days)}
-              className="text-[10px] font-bold tracking-[0.15em] uppercase border border-black/15 px-3 py-1.5 hover:border-black hover:bg-black hover:text-white transition-colors"
-            >
-              {p.label}
-            </button>
-          ))}
+          {PRESETS.map((p) => {
+            const active = from === daysAgoISO(p.days) && to === todayISO();
+            return (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => onPreset(p.days)}
+                aria-pressed={active}
+                className={`text-[10px] font-bold tracking-[0.15em] uppercase border px-3 py-1.5 transition-colors ${
+                  active
+                    ? 'border-black bg-black text-white'
+                    : 'border-black/15 hover:border-black hover:bg-black hover:text-white'
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
         </div>
         <div className="flex items-center gap-2 md:ml-auto">
           <label className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">Granularity</label>

@@ -1,5 +1,7 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.CartProperties;
+import com.uniform.store.dto.response.DashboardOpsDto;
 import com.uniform.store.dto.response.OrdersByStatusDto;
 import com.uniform.store.dto.response.PaymentBreakdownDto;
 import com.uniform.store.dto.response.RevenueBucketDto;
@@ -9,6 +11,8 @@ import com.uniform.store.dto.response.TopProductDto;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.StatsGranularity;
 import com.uniform.store.exception.BadRequestException;
+import com.uniform.store.repository.OrderRepository;
+import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.StatsRepository;
 import com.uniform.store.repository.StatsRepository.RevenueTotals;
 import com.uniform.store.service.AdminStatsService;
@@ -33,8 +37,13 @@ public class AdminStatsServiceImpl implements AdminStatsService {
     static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     static final int DEFAULT_RANGE_DAYS = 30;
     static final int MAX_RANGE_DAYS = 366;
+    static final List<OrderStatus> OPEN_ORDER_STATUSES =
+            List.of(OrderStatus.PENDING, OrderStatus.PAID, OrderStatus.PROCESSING);
 
     private final StatsRepository statsRepository;
+    private final OrderRepository orderRepository;
+    private final ProductVariantRepository productVariantRepository;
+    private final CartProperties cartProperties;
 
     @Override
     public StatsSummaryDto summary(LocalDate from, LocalDate to) {
@@ -113,6 +122,16 @@ public class AdminStatsServiceImpl implements AdminStatsService {
     public List<TopCustomerDto> topCustomers(LocalDate from, LocalDate to, int limit) {
         Range r = resolveRange(from, to);
         return statsRepository.topCustomers(r.fromInst, r.toInst, clampLimit(limit, 5, 50));
+    }
+
+    @Override
+    public DashboardOpsDto ops() {
+        int threshold = cartProperties.getLowStockThreshold();
+        return DashboardOpsDto.builder()
+                .openOrders(orderRepository.countByStatusIn(OPEN_ORDER_STATUSES))
+                .lowStock(productVariantRepository.countByIsActiveTrueAndStockQuantityLessThanEqual(threshold))
+                .lowStockThreshold(threshold)
+                .build();
     }
 
     static Range resolveRange(LocalDate from, LocalDate to) {

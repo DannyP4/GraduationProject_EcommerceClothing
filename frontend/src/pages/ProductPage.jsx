@@ -7,6 +7,7 @@ import QuantityStepper from '../components/QuantityStepper';
 import { useToast } from '../components/Toast';
 import { getProductByIdOrSlug } from '../services/productService';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import ReviewsSection from '../components/ReviewsSection';
 import { goBack } from '../lib/historyBack';
@@ -17,6 +18,7 @@ export default function ProductPage() {
   const location = useLocation();
   const backToShop = location.state?.backTo || '/shop';
   const { addItem } = useCart();
+  const { status: authStatus } = useAuth();
   const toast = useToast();
 
   const [product, setProduct] = useState(null);
@@ -70,6 +72,16 @@ export default function ProductPage() {
     [product, selectedColor, selectedSize]
   );
 
+  const availableCombos = useMemo(() => {
+    const set = new Set();
+    for (const v of product?.variants ?? []) {
+      if (v.isActive !== false && (v.stockQuantity ?? 0) > 0) {
+        set.add(`${v.color ?? ''}|${v.size ?? ''}`);
+      }
+    }
+    return set;
+  }, [product]);
+
   if (loading) {
     return (
       <PageShell>
@@ -101,19 +113,49 @@ export default function ProductPage() {
   const displaySale = selectedVariant ? selectedVariant.salePrice : product.salePrice;
   const displayPct = selectedVariant ? selectedVariant.discountPercent : product.discountPercent;
 
-  const handleAddToCart = async () => {
+  const validateSelection = () => {
     if (!selectedSize) {
       toast.error('Please select a size');
-      return;
+      return false;
     }
     if (!selectedVariant) {
       toast.error('This size/color combination is not available');
-      return;
+      return false;
     }
     if (selectedVariant.stockQuantity != null && quantity > selectedVariant.stockQuantity) {
       toast.error(`Only ${selectedVariant.stockQuantity} in stock`);
+      return false;
+    }
+    return true;
+  };
+
+  const handleBuyNow = () => {
+    if (!validateSelection()) return;
+    if (authStatus !== 'authenticated') {
+      toast.error('Please sign in to continue');
+      navigate('/login', { state: { from: `/product/${id}` } });
       return;
     }
+    navigate('/checkout', {
+      state: {
+        buyNow: {
+          variantId: selectedVariant.id,
+          quantity,
+          productId: product.id,
+          productName: product.name,
+          size: selectedVariant.size,
+          color: selectedVariant.color,
+          colorHex: selectedVariant.colorHex,
+          imageUrl: images[0]?.url,
+          unitPrice: Number(selectedVariant.salePrice ?? selectedVariant.price ?? product.basePrice),
+          currency: product.currency,
+        },
+      },
+    });
+  };
+
+  const handleAddToCart = async () => {
+    if (!validateSelection()) return;
     setAdding(true);
     try {
       await addItem({
@@ -136,6 +178,21 @@ export default function ProductPage() {
     } finally {
       setAdding(false);
     }
+  };
+
+  const comboAvailable = (c, s) => availableCombos.has(`${c}|${s}`);
+  const colorEnabled = (c) => (selectedSize ? comboAvailable(c, selectedSize) : sizes.some((s) => comboAvailable(c, s)));
+  const sizeEnabled = (s) => (selectedColor ? comboAvailable(selectedColor, s) : colors.some((c) => comboAvailable(c, s)));
+
+  const chooseColor = (c) => {
+    const next = selectedColor === c ? '' : c;
+    setSelectedColor(next);
+    if (next && selectedSize && !comboAvailable(next, selectedSize)) setSelectedSize('');
+  };
+  const chooseSize = (s) => {
+    const next = selectedSize === s ? '' : s;
+    setSelectedSize(next);
+    if (next && selectedColor && !comboAvailable(selectedColor, next)) setSelectedColor('');
   };
 
   return (
@@ -232,18 +289,27 @@ export default function ProductPage() {
                 <span className="text-xs text-black/60 normal-case tracking-normal">{selectedColor}</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {colors.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setSelectedColor((prev) => (prev === c ? '' : c))}
-                    className={`px-3 py-2 text-[11px] font-bold tracking-wider border transition-all ${selectedColor === c
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-black border-black/20 hover:border-black'
-                      }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+                {colors.map((c) => {
+                  const enabled = colorEnabled(c);
+                  const active = selectedColor === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => chooseColor(c)}
+                      disabled={!enabled && !active}
+                      title={!enabled ? 'Out of stock' : undefined}
+                      className={`px-3 py-2 text-[11px] font-bold tracking-wider border transition-all ${active
+                        ? 'bg-black text-white border-black'
+                        : enabled
+                          ? 'bg-white text-black border-black/20 hover:border-black'
+                          : 'bg-black/5 text-black/30 border-black/10 line-through cursor-not-allowed'
+                        }`}
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -255,18 +321,27 @@ export default function ProductPage() {
                 <span className="text-sm font-bold tracking-[0.12em] uppercase">Size</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {sizes.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSelectedSize((prev) => (prev === s ? '' : s))}
-                    className={`w-12 h-12 text-[12px] font-bold border transition-all ${selectedSize === s
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-black border-black/20 hover:border-black'
-                      }`}
-                  >
-                    {s}
-                  </button>
-                ))}
+                {sizes.map((s) => {
+                  const enabled = sizeEnabled(s);
+                  const active = selectedSize === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => chooseSize(s)}
+                      disabled={!enabled && !active}
+                      title={!enabled ? 'Out of stock' : undefined}
+                      className={`w-12 h-12 text-[12px] font-bold border transition-all ${active
+                        ? 'bg-black text-white border-black'
+                        : enabled
+                          ? 'bg-white text-black border-black/20 hover:border-black'
+                          : 'bg-black/5 text-black/30 border-black/10 line-through cursor-not-allowed'
+                        }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -297,6 +372,13 @@ export default function ProductPage() {
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-black text-white hover:bg-[#E83354] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {adding ? 'Adding…' : '+ Add to Cart'}
+            </button>
+            <button
+              onClick={handleBuyNow}
+              disabled={adding}
+              className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-[#E83354] text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Buy Now
             </button>
             <button
               onClick={() => navigate('/try-on')}

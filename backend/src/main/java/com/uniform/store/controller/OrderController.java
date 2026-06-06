@@ -1,5 +1,6 @@
 package com.uniform.store.controller;
 
+import com.uniform.store.dto.request.DirectOrderRequest;
 import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.dto.response.ApiResponse;
 import com.uniform.store.dto.response.OrderDetailDto;
@@ -43,6 +44,16 @@ public class OrderController {
                                                       HttpServletRequest http) {
         return ApiResponse.ok("Order placed",
                 orderService.placeOrder(authentication.getName(), req, resolveClientIp(http)));
+    }
+
+    @PostMapping("/direct")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Buy Now: place an order for a single variant, bypassing the cart")
+    public ApiResponse<PlaceOrderResponse> placeDirectOrder(Authentication authentication,
+                                                            @Valid @RequestBody DirectOrderRequest req,
+                                                            HttpServletRequest http) {
+        return ApiResponse.ok("Order placed",
+                orderService.placeDirectOrder(authentication.getName(), req, resolveClientIp(http)));
     }
 
     @GetMapping

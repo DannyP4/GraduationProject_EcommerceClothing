@@ -1,6 +1,7 @@
 package com.uniform.store.service.impl;
 
 import com.uniform.store.dto.fx.FxQuote;
+import com.uniform.store.dto.request.DirectOrderRequest;
 import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.dto.response.PlaceOrderResponse;
 import com.uniform.store.entity.Address;
@@ -363,11 +364,64 @@ class OrderServiceImplTest {
         verify(variantRepository, never()).findAllByIdInWithProductForUpdate(anyCollection());
     }
 
+    @Test
+    void placeDirectOrder_cod_decrementsStockAndCreatesOrderWithoutTouchingCart() {
+        when(userRepository.findByEmail("buyer@uniform.test")).thenReturn(Optional.of(user));
+        when(addressRepository.findByIdAndUserId(2L, 1L)).thenReturn(Optional.of(address));
+        when(variantRepository.findAllByIdInWithProductForUpdate(anyCollection())).thenReturn(List.of(variant));
+        when(orderNumberGenerator.next()).thenReturn("ORD-20260606-DIR001");
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+            Order o = inv.getArgument(0);
+            if (o.getId() == null) o.setId(710L);
+            return o;
+        });
+
+        PlaceOrderResponse response = orderService.placeDirectOrder(
+                "buyer@uniform.test", buildDirectRequest(3, "COD"), "127.0.0.1");
+
+        assertThat(variant.getStockQuantity()).as("stock 20 - 3 = 17").isEqualTo(17);
+
+        ArgumentCaptor<Order> orderCap = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCap.capture());
+        assertThat(orderCap.getValue().getGrandTotal()).as("250k * 3 = 750k").isEqualByComparingTo("750000");
+        assertThat(orderCap.getValue().getStatus()).isEqualTo(OrderStatus.PENDING);
+
+        verify(paymentRepository).save(any(Payment.class));
+        verify(cartRepository, never()).findByUserId(any());
+        verify(cartItemRepository, never()).deleteAllByCartId(any());
+        assertThat(response.getRedirectUrl()).isNull();
+    }
+
+    @Test
+    void placeDirectOrder_insufficientStock_throwsBadRequest() {
+        variant.setStockQuantity(1);
+        when(userRepository.findByEmail("buyer@uniform.test")).thenReturn(Optional.of(user));
+        when(addressRepository.findByIdAndUserId(2L, 1L)).thenReturn(Optional.of(address));
+        when(variantRepository.findAllByIdInWithProductForUpdate(anyCollection())).thenReturn(List.of(variant));
+
+        assertThatThrownBy(() -> orderService.placeDirectOrder(
+                "buyer@uniform.test", buildDirectRequest(5, "COD"), "127.0.0.1"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Items unavailable");
+
+        assertThat(variant.getStockQuantity()).as("stock untouched on failure").isEqualTo(1);
+        verify(orderRepository, never()).save(any());
+    }
+
     private static PlaceOrderRequest buildRequest(String method) {
         PlaceOrderRequest req = new PlaceOrderRequest();
         req.setAddressId(2L);
         req.setPaymentMethod(method);
         req.setNotes(null);
+        return req;
+    }
+
+    private static DirectOrderRequest buildDirectRequest(int quantity, String method) {
+        DirectOrderRequest req = new DirectOrderRequest();
+        req.setVariantId(400L);
+        req.setQuantity(quantity);
+        req.setAddressId(2L);
+        req.setPaymentMethod(method);
         return req;
     }
 }

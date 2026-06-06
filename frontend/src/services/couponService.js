@@ -8,7 +8,7 @@ function unwrap(response) {
   return body?.data;
 }
 
-export async function validateCoupon(code) {
-  const resp = await apiClient.post('/coupons/validate', { code });
+export async function validateCoupon(code, { variantId, quantity } = {}) {
+  const resp = await apiClient.post('/coupons/validate', { code, variantId, quantity });
   return unwrap(resp);
 }

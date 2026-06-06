@@ -57,3 +57,8 @@ export async function getTopCustomers({ from, to, limit = 5 } = {}) {
   });
   return unwrap(resp);
 }
+
+export async function getOps() {
+  const resp = await apiClient.get('/admin/stats/ops');
+  return unwrap(resp);
+}

@@ -13,6 +13,13 @@ export async function placeOrder({ addressId, paymentMethod, notes, couponCode }
   return unwrap(resp);
 }
 
+export async function placeDirectOrder({ variantId, quantity, addressId, paymentMethod, notes, couponCode }) {
+  const resp = await apiClient.post('/orders/direct', {
+    variantId, quantity, addressId, paymentMethod, notes, couponCode,
+  });
+  return unwrap(resp);
+}
+
 export async function listOrders({ page = 0, size = 10 } = {}) {
   const resp = await apiClient.get('/orders', { params: { page, size } });
   return unwrap(resp);

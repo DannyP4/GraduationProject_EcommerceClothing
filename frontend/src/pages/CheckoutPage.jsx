@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
@@ -12,8 +12,21 @@ import * as couponService from '../services/couponService';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
-  const { items, cartCount, subtotal, currency, isLoading: cartLoading, clearCart } = useCart();
+
+  const buyNow = location.state?.buyNow || null;
+  const isBuyNow = !!buyNow;
+
+  const {
+    items: cartItems, cartCount: cartItemCount, subtotal: cartSubtotal,
+    currency: cartCurrency, isLoading: cartLoading, clearCart,
+  } = useCart();
+
+  const items = isBuyNow ? [buyNowItem(buyNow)] : cartItems;
+  const cartCount = isBuyNow ? Number(buyNow.quantity ?? 1) : cartItemCount;
+  const subtotal = isBuyNow ? Number(buyNow.unitPrice ?? 0) * Number(buyNow.quantity ?? 1) : cartSubtotal;
+  const currency = isBuyNow ? (buyNow.currency ?? 'VND') : cartCurrency;
 
   const [addresses, setAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(true);
@@ -46,7 +59,10 @@ export default function CheckoutPage() {
     setCouponLoading(true);
     setCouponError(null);
     try {
-      const result = await couponService.validateCoupon(code);
+      const result = await couponService.validateCoupon(
+        code,
+        isBuyNow ? { variantId: buyNow.variantId, quantity: buyNow.quantity } : undefined,
+      );
       setAppliedCoupon(result);
       setCouponInput('');
     } catch (err) {
@@ -98,12 +114,15 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const result = await orderService.placeOrder({
+      const payload = {
         addressId: selectedAddressId,
         paymentMethod,
         notes: notes.trim() || undefined,
         couponCode: appliedCoupon?.code,
-      });
+      };
+      const result = isBuyNow
+        ? await orderService.placeDirectOrder({ variantId: buyNow.variantId, quantity: buyNow.quantity, ...payload })
+        : await orderService.placeOrder(payload);
       const order = result?.order ?? result;
       const redirectUrl = result?.redirectUrl;
 
@@ -113,7 +132,7 @@ export default function CheckoutPage() {
         return;
       }
 
-      await clearCart();
+      if (!isBuyNow) await clearCart();
       toast.success(`Order ${order.orderNumber} placed successfully`);
       navigate(`/account/orders/${order.orderNumber}`, { replace: true });
     } catch (err) {
@@ -132,7 +151,7 @@ export default function CheckoutPage() {
       <div className="max-w-[1440px] mx-auto px-6 py-10">
         <div className="mb-8">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">
-            Step 2 of 2 · Review &amp; Confirm
+            {isBuyNow ? 'Buy Now · Review & Confirm' : 'Step 2 of 2 · Review & Confirm'}
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">Checkout</h1>
         </div>
@@ -158,7 +177,11 @@ export default function CheckoutPage() {
                 <CartReview items={items} currency={currency} />
                 <div className="mt-3 text-[11px] text-black/50">
                   Need changes?{' '}
-                  <Link to="/cart" className="underline hover:text-[#E83354]">Back to cart</Link>
+                  {isBuyNow ? (
+                    <Link to={`/product/${buyNow.productId}`} className="underline hover:text-[#E83354]">Back to product</Link>
+                  ) : (
+                    <Link to="/cart" className="underline hover:text-[#E83354]">Back to cart</Link>
+                  )}
                 </div>
               </Section>
 
@@ -261,10 +284,10 @@ export default function CheckoutPage() {
                 </button>
 
                 <Link
-                  to="/cart"
+                  to={isBuyNow ? '/shop' : '/cart'}
                   className="block text-center w-full border border-white/20 text-white text-[11px] font-bold tracking-[0.1em] uppercase py-3 hover:border-white/50 transition-all"
                 >
-                  Back to Cart
+                  {isBuyNow ? 'Continue Shopping' : 'Back to Cart'}
                 </Link>
 
                 <p className="mt-5 text-[10px] text-white/30 text-center leading-relaxed">
@@ -452,6 +475,21 @@ function Row({ label, value, note }) {
       </span>
     </div>
   );
+}
+
+function buyNowItem(b) {
+  return {
+    id: `buynow-${b.variantId}`,
+    variantId: b.variantId,
+    productName: b.productName,
+    size: b.size,
+    color: b.color,
+    quantity: b.quantity,
+    imageUrl: b.imageUrl,
+    lineTotal: Number(b.unitPrice ?? 0) * Number(b.quantity ?? 1),
+    currency: b.currency ?? 'VND',
+    stockStatus: 'IN_STOCK',
+  };
 }
 
 function formatPrice(value, currency) {

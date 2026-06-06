@@ -25,9 +25,13 @@ public class CouponController {
     private final CouponService couponService;
 
     @PostMapping("/validate")
-    @Operation(summary = "Validate a coupon code against the current cart and preview the discount")
+    @Operation(summary = "Validate a coupon and preview the discount against the cart (or a Buy Now line)")
     public ApiResponse<CouponValidationResponse> validate(Authentication authentication,
                                                           @Valid @RequestBody CouponValidateRequest req) {
-        return ApiResponse.ok(couponService.validate(authentication.getName(), req.getCode()));
+        CouponValidationResponse resp = req.getVariantId() != null
+                ? couponService.validateDirect(authentication.getName(), req.getCode(),
+                        req.getVariantId(), req.getQuantity() == null ? 1 : req.getQuantity())
+                : couponService.validate(authentication.getName(), req.getCode());
+        return ApiResponse.ok(resp);
     }
 }

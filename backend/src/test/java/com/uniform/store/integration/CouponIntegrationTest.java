@@ -86,6 +86,23 @@ class CouponIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void validateDirect_buyNowLine_returnsDiscountWithoutCart() throws Exception {
+        data.saveCoupon(coupon("SAVE10", CouponType.PERCENT, "10", CouponScope.ALL));
+
+        mockMvc.perform(post("/coupons/validate")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "code", "save10",
+                                "variantId", variant.getId(),
+                                "quantity", 2))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.discountAmount").value(50000))
+                .andExpect(jsonPath("$.data.subtotal").value(500000))
+                .andExpect(jsonPath("$.data.totalAfterDiscount").value(450000));
+    }
+
+    @Test
     void validate_invalidCode_returns400() throws Exception {
         addToCart(variant.getId(), 1);
 

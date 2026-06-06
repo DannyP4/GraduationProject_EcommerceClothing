@@ -1,5 +1,7 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.CartProperties;
+import com.uniform.store.dto.response.DashboardOpsDto;
 import com.uniform.store.dto.response.OrdersByStatusDto;
 import com.uniform.store.dto.response.RevenueBucketDto;
 import com.uniform.store.dto.response.StatsSummaryDto;
@@ -8,6 +10,8 @@ import com.uniform.store.dto.response.TopProductDto;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.StatsGranularity;
 import com.uniform.store.exception.BadRequestException;
+import com.uniform.store.repository.OrderRepository;
+import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.StatsRepository;
 import com.uniform.store.repository.StatsRepository.RevenueTotals;
 import com.uniform.store.service.impl.AdminStatsServiceImpl.Range;
@@ -39,12 +43,16 @@ class AdminStatsServiceImplTest {
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     @Mock StatsRepository statsRepository;
+    @Mock OrderRepository orderRepository;
+    @Mock ProductVariantRepository productVariantRepository;
+    CartProperties cartProperties;
 
     AdminStatsServiceImpl service;
 
     @BeforeEach
     void setup() {
-        service = new AdminStatsServiceImpl(statsRepository);
+        cartProperties = new CartProperties();
+        service = new AdminStatsServiceImpl(statsRepository, orderRepository, productVariantRepository, cartProperties);
     }
 
     @Test
@@ -242,5 +250,44 @@ class AdminStatsServiceImplTest {
         ArgumentCaptor<Integer> cap = ArgumentCaptor.forClass(Integer.class);
         verify(statsRepository).topCustomers(any(), any(), cap.capture());
         assertThat(cap.getValue()).isEqualTo(5);
+    }
+
+    @Test
+    void ops_returnsOpenOrdersAndLowStockWithConfiguredThreshold() {
+        when(orderRepository.countByStatusIn(any())).thenReturn(7L);
+        when(productVariantRepository.countByIsActiveTrueAndStockQuantityLessThanEqual(anyInt())).thenReturn(3L);
+
+        DashboardOpsDto ops = service.ops();
+
+        assertThat(ops.getOpenOrders()).isEqualTo(7);
+        assertThat(ops.getLowStock()).isEqualTo(3);
+        assertThat(ops.getLowStockThreshold()).isEqualTo(5); // CartProperties default
+    }
+
+    @Test
+    void ops_passesConfiguredThresholdToVariantQuery() {
+        cartProperties.setLowStockThreshold(12);
+        when(orderRepository.countByStatusIn(any())).thenReturn(0L);
+        when(productVariantRepository.countByIsActiveTrueAndStockQuantityLessThanEqual(anyInt())).thenReturn(0L);
+
+        service.ops();
+
+        ArgumentCaptor<Integer> cap = ArgumentCaptor.forClass(Integer.class);
+        verify(productVariantRepository).countByIsActiveTrueAndStockQuantityLessThanEqual(cap.capture());
+        assertThat(cap.getValue()).isEqualTo(12);
+    }
+
+    @Test
+    void ops_countsOnlyOpenStatuses() {
+        when(orderRepository.countByStatusIn(any())).thenReturn(0L);
+        when(productVariantRepository.countByIsActiveTrueAndStockQuantityLessThanEqual(anyInt())).thenReturn(0L);
+
+        service.ops();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Collection<OrderStatus>> cap = ArgumentCaptor.forClass(java.util.Collection.class);
+        verify(orderRepository).countByStatusIn(cap.capture());
+        assertThat(cap.getValue())
+                .containsExactlyInAnyOrder(OrderStatus.PENDING, OrderStatus.PAID, OrderStatus.PROCESSING);
     }
 }

@@ -221,6 +221,25 @@ class AdminStatsIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void ops_returnsOpenOrdersAndLowStockCounts() throws Exception {
+        Product lowStock = data.createProduct(data.createBrand(), data.createCategory(), new BigDecimal("100000"));
+        data.createVariant(lowStock, 2);
+
+        mockMvc.perform(get("/admin/stats/ops")
+                        .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.openOrders").value(2))
+                .andExpect(jsonPath("$.data.lowStock").value(1))
+                .andExpect(jsonPath("$.data.lowStockThreshold").value(5));
+    }
+
+    @Test
+    void ops_withoutJwt_returns401() throws Exception {
+        mockMvc.perform(get("/admin/stats/ops"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void allEndpoints_rejectCustomerJwt() throws Exception {
         String[] paths = {
                 "/admin/stats/summary",
@@ -228,7 +247,8 @@ class AdminStatsIntegrationTest extends BaseIntegrationTest {
                 "/admin/stats/payment-breakdown",
                 "/admin/stats/orders-by-status",
                 "/admin/stats/top-products",
-                "/admin/stats/top-customers"
+                "/admin/stats/top-customers",
+                "/admin/stats/ops"
         };
         for (String path : paths) {
             mockMvc.perform(get(path).header("Authorization", "Bearer " + customerJwt))

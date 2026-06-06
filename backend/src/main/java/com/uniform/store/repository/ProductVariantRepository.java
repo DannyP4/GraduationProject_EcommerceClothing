@@ -22,6 +22,8 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     boolean existsByProductIdAndSizeAndColor(Long productId, String size, String color);
 
+    long countByIsActiveTrueAndStockQuantityLessThanEqual(int threshold);
+
     // Bulk fetch with product joined
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product WHERE v.id IN :ids")
     List<ProductVariant> findAllByIdInWithProduct(@Param("ids") Collection<Long> ids);

@@ -1,5 +1,6 @@
 package com.uniform.store.service;
 
+import com.uniform.store.dto.response.DashboardOpsDto;
 import com.uniform.store.dto.response.OrdersByStatusDto;
 import com.uniform.store.dto.response.PaymentBreakdownDto;
 import com.uniform.store.dto.response.RevenueBucketDto;
@@ -24,4 +25,6 @@ public interface AdminStatsService {
     List<TopProductDto> topProducts(LocalDate from, LocalDate to, int limit);
 
     List<TopCustomerDto> topCustomers(LocalDate from, LocalDate to, int limit);
+
+    DashboardOpsDto ops();
 }

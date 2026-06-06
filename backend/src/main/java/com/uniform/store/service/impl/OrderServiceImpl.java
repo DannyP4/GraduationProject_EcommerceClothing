@@ -1,6 +1,7 @@
 package com.uniform.store.service.impl;
 
 import com.uniform.store.dto.fx.FxQuote;
+import com.uniform.store.dto.request.DirectOrderRequest;
 import com.uniform.store.dto.request.PlaceOrderRequest;
 import com.uniform.store.dto.response.OrderDetailDto;
 import com.uniform.store.dto.response.OrderSummaryDto;
@@ -85,57 +86,82 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public PlaceOrderResponse placeOrder(String email, PlaceOrderRequest req, String clientIp) {
         PaymentProvider provider = parseProvider(req.getPaymentMethod());
-        if (provider == PaymentProvider.BANK_TRANSFER) {
-            throw new BadRequestException("BANK_TRANSFER is not supported yet.");
-        }
-
         User user = loadUser(email);
-        Address address = addressRepository.findByIdAndUserId(req.getAddressId(), user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Address", req.getAddressId()));
+        Address address = loadAddress(user, req.getAddressId());
 
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new BadRequestException("Cart is empty"));
-
         List<CartItem> items = cartItemRepository.findByCartIdOrderByIdAsc(cart.getId());
         if (items.isEmpty()) {
             throw new BadRequestException("Cart is empty");
         }
 
-        List<Long> variantIds = items.stream().map(ci -> ci.getVariant().getId()).toList();
+        List<LineRequest> lines = items.stream()
+                .map(ci -> new LineRequest(ci.getVariant().getId(), ci.getQuantity()))
+                .toList();
+
+        PlaceOrderResponse response = createOrder(user, address, lines,
+                req.getCouponCode(), req.getNotes(), provider, clientIp);
+        cartItemRepository.deleteAllByCartId(cart.getId());
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public PlaceOrderResponse placeDirectOrder(String email, DirectOrderRequest req, String clientIp) {
+        PaymentProvider provider = parseProvider(req.getPaymentMethod());
+        User user = loadUser(email);
+        Address address = loadAddress(user, req.getAddressId());
+
+        List<LineRequest> lines = List.of(new LineRequest(req.getVariantId(), req.getQuantity()));
+        return createOrder(user, address, lines, req.getCouponCode(), req.getNotes(), provider, clientIp);
+    }
+
+    private PlaceOrderResponse createOrder(User user, Address address, List<LineRequest> lines,
+                                           String couponCode, String notes,
+                                           PaymentProvider provider, String clientIp) {
+        if (provider == PaymentProvider.BANK_TRANSFER) {
+            throw new BadRequestException("BANK_TRANSFER is not supported yet.");
+        }
+        if (lines.isEmpty()) {
+            throw new BadRequestException("No items to order");
+        }
+
+        List<Long> variantIds = lines.stream().map(LineRequest::variantId).toList();
         // pessimistic lock against concurrent placeOrder/cancelOrder on the same variant.
         Map<Long, ProductVariant> variants = variantRepository
                 .findAllByIdInWithProductForUpdate(variantIds).stream()
                 .collect(Collectors.toMap(ProductVariant::getId, Function.identity()));
 
         List<String> blocked = new ArrayList<>();
-        for (CartItem ci : items) {
-            ProductVariant v = variants.get(ci.getVariant().getId());
+        for (LineRequest line : lines) {
+            ProductVariant v = variants.get(line.variantId());
             if (v == null || !isVariantAvailable(v)) {
-                blocked.add(skuOrId(v, ci));
+                blocked.add(v != null ? v.getSku() : "variant#" + line.variantId());
                 continue;
             }
             int stock = safeStock(v);
-            if (stock < ci.getQuantity()) {
-                blocked.add(v.getSku() + " (need " + ci.getQuantity() + ", left " + stock + ")");
+            if (stock < line.quantity()) {
+                blocked.add(v.getSku() + " (need " + line.quantity() + ", left " + stock + ")");
             }
         }
         if (!blocked.isEmpty()) {
             throw new BadRequestException(
-                    "Items unavailable: " + String.join(", ", blocked) + ". Please update your cart.");
+                    "Items unavailable: " + String.join(", ", blocked) + ". Please update your selection.");
         }
 
         BigDecimal subtotal = BigDecimal.ZERO;
         String currency = DEFAULT_CURRENCY;
-        List<OrderItem> orderItems = new ArrayList<>(items.size());
-        List<CouponService.CartLine> couponLines = new ArrayList<>(items.size());
+        List<OrderItem> orderItems = new ArrayList<>(lines.size());
+        List<CouponService.CartLine> couponLines = new ArrayList<>(lines.size());
         Instant now = Instant.now();
 
-        for (CartItem ci : items) {
-            ProductVariant v = variants.get(ci.getVariant().getId());
+        for (LineRequest line : lines) {
+            ProductVariant v = variants.get(line.variantId());
             Product p = v.getProduct();
             PricingService.EffectivePrice ep = pricingService.resolve(p, v, now);
             BigDecimal unitPrice = ep.effectivePrice();
-            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(ci.getQuantity()));
+            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(line.quantity()));
             currency = p.getCurrency();
 
             orderItems.add(OrderItem.builder()
@@ -145,12 +171,12 @@ public class OrderServiceImpl implements OrderService {
                     .sku(v.getSku())
                     .unitPrice(unitPrice)
                     .originalUnitPrice(ep.onSale() ? ep.originalPrice() : null)
-                    .quantity(ci.getQuantity())
+                    .quantity(line.quantity())
                     .lineTotal(lineTotal)
                     .build());
             couponLines.add(new CouponService.CartLine(p.getId(), p.getCategory().getId(), lineTotal));
 
-            v.setStockQuantity(v.getStockQuantity() - ci.getQuantity());
+            v.setStockQuantity(v.getStockQuantity() - line.quantity());
             subtotal = subtotal.add(lineTotal);
         }
 
@@ -158,8 +184,8 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal taxTotal = BigDecimal.ZERO;
         BigDecimal discountTotal = BigDecimal.ZERO;
         CouponService.CouponApplication couponApp = null;
-        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
-            couponApp = couponService.applyToOrder(req.getCouponCode(), user.getId(), couponLines, subtotal);
+        if (couponCode != null && !couponCode.isBlank()) {
+            couponApp = couponService.applyToOrder(couponCode, user.getId(), couponLines, subtotal);
             discountTotal = couponApp.discountAmount();
         }
         BigDecimal grandTotal = subtotal.add(shippingCost).add(taxTotal).subtract(discountTotal);
@@ -182,7 +208,7 @@ public class OrderServiceImpl implements OrderService {
                 .shippingCity(address.getCity())
                 .shippingCountry(address.getCountry())
                 .shippingPostalCode(address.getPostalCode())
-                .notes(req.getNotes())
+                .notes(notes)
                 .placedAt(Instant.now())
                 .build();
         orderRepository.save(order);
@@ -206,8 +232,6 @@ public class OrderServiceImpl implements OrderService {
                 .note("Order placed (" + provider + ")")
                 .changedByUserId(user.getId())
                 .build());
-
-        cartItemRepository.deleteAllByCartId(cart.getId());
 
         return switch (provider) {
             case COD -> finalizeCodPlacement(order, grandTotal, currency, orderItems);
@@ -351,6 +375,11 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 
+    private Address loadAddress(User user, Long addressId) {
+        return addressRepository.findByIdAndUserId(addressId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Address", addressId));
+    }
+
     private PaymentProvider parseProvider(String raw) {
         try {
             return PaymentProvider.valueOf(raw.trim().toUpperCase(Locale.ROOT));
@@ -371,11 +400,9 @@ public class OrderServiceImpl implements OrderService {
         return variant.getStockQuantity() == null ? 0 : variant.getStockQuantity();
     }
 
-    private String skuOrId(ProductVariant v, CartItem ci) {
-        return v != null ? v.getSku() : "variant#" + ci.getVariant().getId();
-    }
-
     private String formatVariantLabel(ProductVariant v) {
         return v.getSize() + " / " + v.getColor();
     }
+
+    private record LineRequest(Long variantId, int quantity) {}
 }

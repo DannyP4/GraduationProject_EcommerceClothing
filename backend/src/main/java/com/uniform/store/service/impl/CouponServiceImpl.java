@@ -71,6 +71,28 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
+    public CouponValidationResponse validateDirect(String email, String code, Long variantId, int quantity) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+        Coupon coupon = loadActiveLookup(code);
+
+        Instant now = Instant.now();
+        CartContext ctx = loadDirectLine(variantId, quantity, now);
+        BigDecimal discount = evaluate(coupon, ctx.lines, ctx.subtotal, user.getId(), now);
+
+        return CouponValidationResponse.builder()
+                .code(coupon.getCode())
+                .type(coupon.getType())
+                .scope(coupon.getScope())
+                .value(coupon.getValue())
+                .discountAmount(discount)
+                .subtotal(ctx.subtotal)
+                .totalAfterDiscount(ctx.subtotal.subtract(discount))
+                .message("Coupon applied")
+                .build();
+    }
+
+    @Override
     @Transactional
     public CouponApplication applyToOrder(String code, Long userId, List<CartLine> lines, BigDecimal subtotal) {
         Coupon coupon = loadActiveLookup(code);
@@ -172,6 +194,16 @@ public class CouponServiceImpl implements CouponService {
             subtotal = subtotal.add(lineTotal);
         }
         return new CartContext(lines, subtotal);
+    }
+
+    private CartContext loadDirectLine(Long variantId, int quantity, Instant now) {
+        ProductVariant v = variantRepository.findAllByIdInWithProduct(List.of(variantId)).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("ProductVariant", variantId));
+        Product p = v.getProduct();
+        PricingService.EffectivePrice ep = pricingService.resolve(p, v, now);
+        BigDecimal lineTotal = ep.effectivePrice().multiply(BigDecimal.valueOf(quantity));
+        return new CartContext(List.of(new CartLine(p.getId(), p.getCategory().getId(), lineTotal)), lineTotal);
     }
 
     private record CartContext(List<CartLine> lines, BigDecimal subtotal) {}
