@@ -92,6 +92,17 @@ app:
     api-key: ${CLOUDINARY_API_KEY:}
     api-secret: ${CLOUDINARY_API_SECRET:}
     upload-folder: uniform/products
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
+      embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+      chat-model: ${GEMINI_CHAT_MODEL:gemini-2.5-flash}
+      embedding-dim: 3072
+      batch-size: 100
+      timeout-seconds: 30
+    embeddings:
+      backfill-on-startup: ${AI_EMBEDDINGS_BACKFILL_ON_STARTUP:false}
   seed:
     enabled: true
     products-count: 50

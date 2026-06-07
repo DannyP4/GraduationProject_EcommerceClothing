@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +25,19 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     long countByBrandIdAndDeletedAtIsNull(Long brandId);
 
     boolean existsBySlug(String slug);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.isActive = true AND p.deletedAt IS NULL "
+            + "AND EXISTS (SELECT 1 FROM ProductImage img WHERE img.product = p AND img.publicId IS NOT NULL)")
+    long countEmbeddable();
+
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.brand LEFT JOIN FETCH p.category "
+            + "WHERE p.isActive = true AND p.deletedAt IS NULL "
+            + "AND EXISTS (SELECT 1 FROM ProductImage img WHERE img.product = p AND img.publicId IS NOT NULL)")
+    List<Product> findAllEmbeddable();
+
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.brand LEFT JOIN FETCH p.category "
+            + "WHERE p.id IN :ids")
+    List<Product> findAllByIdInWithBrandAndCategory(@Param("ids") Collection<Long> ids);
 
     @Query(value = """
         SELECT DISTINCT p FROM Product p

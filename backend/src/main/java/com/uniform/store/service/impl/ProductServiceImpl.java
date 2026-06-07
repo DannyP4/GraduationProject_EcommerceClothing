@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -79,9 +80,24 @@ public class ProductServiceImpl implements ProductService {
                 searchTerm,
                 effective);
 
-        List<Product> products = page.getContent();
+        List<ProductSummaryDto> mapped = buildSummaries(page.getContent(), locale);
+        return PageResponse.from(page, mapped);
+    }
+
+    @Override
+    public List<ProductSummaryDto> getSummariesByIds(List<Long> ids, String locale) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Product> byId = productRepository.findAllByIdInWithBrandAndCategory(ids).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity(), (a, b) -> a));
+        List<Product> ordered = ids.stream().map(byId::get).filter(Objects::nonNull).toList();
+        return buildSummaries(ordered, locale);
+    }
+
+    private List<ProductSummaryDto> buildSummaries(List<Product> products, String locale) {
         if (products.isEmpty()) {
-            return PageResponse.from(page, List.of());
+            return List.of();
         }
 
         List<Long> productIds = products.stream().map(Product::getId).toList();
@@ -115,7 +131,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Instant now = Instant.now();
-        List<ProductSummaryDto> mapped = products.stream()
+        return products.stream()
                 .map(p -> {
                     PricingService.EffectivePrice ep = pricingService.resolve(p, null, now);
                     return ProductSummaryDto.builder()
@@ -139,8 +155,6 @@ public class ProductServiceImpl implements ProductService {
                         .build();
                 })
                 .toList();
-
-        return PageResponse.from(page, mapped);
     }
 
     @Override

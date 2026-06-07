@@ -38,4 +38,12 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product WHERE v.id IN :ids")
     List<ProductVariant> findAllByIdInWithProductForUpdate(@Param("ids") Collection<Long> ids);
+
+    @Query("SELECT v.product.id AS productId, v.color AS color FROM ProductVariant v WHERE v.isActive = true")
+    List<ProductColorView> findActiveProductColors();
+
+    interface ProductColorView {
+        Long getProductId();
+        String getColor();
+    }
 }

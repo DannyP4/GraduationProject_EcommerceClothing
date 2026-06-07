@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/payments/vnpay/verify").permitAll()
                 .requestMatchers(HttpMethod.POST, "/payments/stripe/webhook").permitAll()
+                .requestMatchers(HttpMethod.POST, "/chat").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

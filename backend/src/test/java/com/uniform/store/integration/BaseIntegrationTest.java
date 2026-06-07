@@ -17,6 +17,7 @@ import java.util.List;
 public abstract class BaseIntegrationTest {
 
     private static final List<String> TABLES_TO_TRUNCATE = List.of(
+            "product_embeddings",
             "coupon_products",
             "coupon_categories",
             "order_coupons",
