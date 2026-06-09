@@ -10,6 +10,28 @@ function formatPrice(value, currency) {
   return `${num.toLocaleString('vi-VN')} ₫`;
 }
 
+function renderInline(text) {
+  return text.split('**').map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>
+  );
+}
+
+function renderRich(text) {
+  return (text || '').split('\n').map((line, i) => {
+    const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+    if (bullet) {
+      return (
+        <div key={i} className="flex gap-1.5">
+          <span className="text-[#E83354] leading-5">•</span>
+          <span className="flex-1">{renderInline(bullet[1])}</span>
+        </div>
+      );
+    }
+    if (line.trim() === '') return <div key={i} className="h-1.5" />;
+    return <p key={i}>{renderInline(line)}</p>;
+  });
+}
+
 function Bubble({ role, error, children }) {
   const isUser = role === 'user';
   const tone = isUser
@@ -96,8 +118,10 @@ export default function ChatWidget() {
 
   return (
     <>
-      {open && (
-        <div className="fixed bottom-24 right-6 z-[95] w-[360px] max-w-[calc(100vw-3rem)] max-h-[70vh] flex flex-col bg-white border border-black/10 shadow-2xl">
+      <div
+        aria-hidden={!open}
+        className={`fixed bottom-24 right-6 z-[95] w-[384px] max-w-[calc(100vw-3rem)] h-[600px] max-h-[calc(100vh-7rem)] flex flex-col bg-white border border-black/10 shadow-2xl origin-bottom-right transition-all duration-200 ease-out ${open ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none'}`}
+      >
           <div className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] text-white">
             <div>
               <p className="text-[11px] font-bold tracking-[0.18em] uppercase">Vesta Assistant</p>
@@ -119,13 +143,12 @@ export default function ChatWidget() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close chat"
-                title="Close"
+                aria-label="Minimize chat"
+                title="Minimize"
                 className="text-white/60 hover:text-white transition-colors"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </button>
             </div>
@@ -139,7 +162,7 @@ export default function ChatWidget() {
             )}
             {messages.map((m) => (
               <div key={m.id} className="space-y-2">
-                <Bubble role={m.role} error={m.error}>{m.content}</Bubble>
+                <Bubble role={m.role} error={m.error}>{renderRich(m.content)}</Bubble>
                 {m.role === 'assistant' && m.products && m.products.length > 0 && (
                   <div className="space-y-2">
                     {m.products.map((p) => (
@@ -186,7 +209,6 @@ export default function ChatWidget() {
             </button>
           </div>
         </div>
-      )}
 
       <button
         type="button"

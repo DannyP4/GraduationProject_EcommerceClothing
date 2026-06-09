@@ -28,6 +28,7 @@ public class ProductDetailDto {
     private Integer discountPercent;
     private Instant saleEndsAt;
     private String currency;
+    private Long brandId;
     private String brandName;
     private String brandSlug;
     private String categoryName;

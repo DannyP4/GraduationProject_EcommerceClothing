@@ -30,3 +30,8 @@ export async function getBrands() {
   const resp = await apiClient.get('/brands', { _skipAuth: true });
   return unwrap(resp);
 }
+
+export async function getBrandSummary(id) {
+  const resp = await apiClient.get(`/brands/${encodeURIComponent(id)}`, { _skipAuth: true });
+  return unwrap(resp);
+}

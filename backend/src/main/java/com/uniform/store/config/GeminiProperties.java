@@ -24,6 +24,7 @@ public class GeminiProperties {
     private int maxOutputTokens = 1024;
     private int thinkingBudget = 0;
     private int retrievalTopK = 6;
-    private double scoreThreshold = 0.4;
+    private double scoreThreshold = 0.63;
     private int historyMaxTurns = 3;
+    private int trendingFallbackSize = 6;
 }

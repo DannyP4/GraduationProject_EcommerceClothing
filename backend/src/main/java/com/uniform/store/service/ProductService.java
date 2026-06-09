@@ -15,4 +15,6 @@ public interface ProductService {
     ProductDetailDto getProduct(String idOrSlug, String locale);
 
     List<ProductSummaryDto> getSummariesByIds(List<Long> ids, String locale);
+
+    List<ProductSummaryDto> getTrendingSummaries(int limit, String locale);
 }

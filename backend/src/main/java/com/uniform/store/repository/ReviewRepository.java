@@ -34,6 +34,15 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Object[]> aggregateRatingByProductIds(@Param("productIds") Collection<Long> productIds,
                                                @Param("status") ReviewStatus status);
 
+    // Pooled rating across all of a brand's products: one row of [avg, count].
+    @Query("""
+            SELECT AVG(r.rating), COUNT(r)
+            FROM Review r
+            WHERE r.product.brand.id = :brandId AND r.status = :status
+            """)
+    List<Object[]> aggregateRatingByBrandId(@Param("brandId") Long brandId,
+                                            @Param("status") ReviewStatus status);
+
     @EntityGraph(attributePaths = {"product"})
     List<Review> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
 

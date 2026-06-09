@@ -76,17 +76,22 @@ class ChatServiceImplTest {
     }
 
     @Test
-    void chat_belowThreshold_noProductsAttached_andSummariesNotFetched() {
+    void chat_belowThreshold_usesTrendingFallback_notSummaries() {
         when(retrievalService.search(any(), anyInt())).thenReturn(List.of(
                 new ScoredProduct(1L, 0.1), new ScoredProduct(2L, 0.2)));
-        when(chatClient.generate(anyString(), anyList())).thenReturn("Sorry, no good match.");
+        when(productService.getTrendingSummaries(anyInt(), anyString()))
+                .thenReturn(List.of(summary(9L, "Best Seller Tee")));
+        ArgumentCaptor<String> sys = ArgumentCaptor.forClass(String.class);
+        when(chatClient.generate(sys.capture(), anyList())).thenReturn("No exact match, but check these out.");
 
         ChatRequest req = new ChatRequest();
         req.setMessage("weather today?");
         ChatResponse resp = service.chat(req, "en");
 
-        assertThat(resp.getProducts()).isEmpty();
+        assertThat(resp.getProducts()).extracting(ProductSummaryDto::getName).containsExactly("Best Seller Tee");
+        assertThat(sys.getValue()).contains("TRENDING NOW");
         verify(productService, never()).getSummariesByIds(anyList(), anyString());
+        verify(productService).getTrendingSummaries(anyInt(), anyString());
     }
 
     @Test

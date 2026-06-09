@@ -127,7 +127,7 @@ export default function ReviewsSection({ product, onChanged }) {
   const count = product.reviewCount ?? 0;
 
   return (
-    <section id="reviews" className="mt-16 pt-10 border-t border-black/10">
+    <section id="reviews" className="mt-6 pt-8 border-t border-black/10">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Customer Voices</p>

@@ -9,6 +9,7 @@ import { getProductByIdOrSlug } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
+import BrandCard from '../components/BrandCard';
 import ReviewsSection from '../components/ReviewsSection';
 import { goBack } from '../lib/historyBack';
 
@@ -403,6 +404,8 @@ export default function ProductPage() {
           )}
         </div>
       </div>
+
+      <BrandCard brandId={product.brandId} brandName={product.brandName} />
 
       <ReviewsSection product={product} onChanged={reloadProduct} />
     </PageShell>

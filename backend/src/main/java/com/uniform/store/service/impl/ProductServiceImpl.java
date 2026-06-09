@@ -34,12 +34,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -93,6 +96,22 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toMap(Product::getId, Function.identity(), (a, b) -> a));
         List<Product> ordered = ids.stream().map(byId::get).filter(Objects::nonNull).toList();
         return buildSummaries(ordered, locale);
+    }
+
+    @Override
+    public List<ProductSummaryDto> getTrendingSummaries(int limit, String locale) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        List<Long> ids = new ArrayList<>(orderItemRepository.findTopSellingProductIds(SOLD_STATUSES, PageRequest.of(0, limit)));
+        if (ids.size() < limit) {
+            Set<Long> seen = new HashSet<>(ids);
+            for (Long id : productRepository.findNewestActiveProductIds(PageRequest.of(0, limit * 2))) {
+                if (ids.size() >= limit) break;
+                if (seen.add(id)) ids.add(id);
+            }
+        }
+        return getSummariesByIds(ids, locale);
     }
 
     private List<ProductSummaryDto> buildSummaries(List<Product> products, String locale) {
@@ -213,6 +232,7 @@ public class ProductServiceImpl implements ProductService {
                 .discountPercent(headline.discountPercent())
                 .saleEndsAt(headline.onSale() ? product.getSaleEndsAt() : null)
                 .currency(product.getCurrency())
+                .brandId(product.getBrand().getId())
                 .brandName(product.getBrand().getName())
                 .brandSlug(product.getBrand().getSlug())
                 .categoryName(translatedCategoryName(product, cTranslation))

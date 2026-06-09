@@ -24,6 +24,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     long countByBrandIdAndDeletedAtIsNull(Long brandId);
 
+    long countByBrandIdAndIsActiveTrueAndDeletedAtIsNull(Long brandId);
+
     boolean existsBySlug(String slug);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.isActive = true AND p.deletedAt IS NULL "
@@ -38,6 +40,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.brand LEFT JOIN FETCH p.category "
             + "WHERE p.id IN :ids")
     List<Product> findAllByIdInWithBrandAndCategory(@Param("ids") Collection<Long> ids);
+
+    // Cold-start filler for trending when sales data is thin: newest active products.
+    @Query("SELECT p.id FROM Product p WHERE p.isActive = true AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    List<Long> findNewestActiveProductIds(Pageable pageable);
 
     @Query(value = """
         SELECT DISTINCT p FROM Product p

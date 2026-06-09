@@ -2,6 +2,7 @@ package com.uniform.store.repository;
 
 import com.uniform.store.entity.OrderItem;
 import com.uniform.store.enums.OrderStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -43,4 +44,24 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
         """)
     List<Object[]> aggregateSoldByProductIds(@Param("productIds") Collection<Long> productIds,
                                              @Param("statuses") Collection<OrderStatus> statuses);
+
+    // Total units sold across all products of a brand, over real-sale orders.
+    @Query("""
+        SELECT COALESCE(SUM(oi.quantity), 0)
+        FROM OrderItem oi
+        WHERE oi.variant.product.brand.id = :brandId AND oi.order.status IN :statuses
+        """)
+    long sumSoldByBrandId(@Param("brandId") Long brandId, @Param("statuses") Collection<OrderStatus> statuses);
+
+    // Trending = best-selling active products, by units sold over sale-bearing orders.
+    @Query("""
+        SELECT oi.variant.product.id
+        FROM OrderItem oi
+        WHERE oi.order.status IN :statuses
+          AND oi.variant.product.isActive = true
+          AND oi.variant.product.deletedAt IS NULL
+        GROUP BY oi.variant.product.id
+        ORDER BY SUM(oi.quantity) DESC
+        """)
+    List<Long> findTopSellingProductIds(@Param("statuses") Collection<OrderStatus> statuses, Pageable pageable);
 }

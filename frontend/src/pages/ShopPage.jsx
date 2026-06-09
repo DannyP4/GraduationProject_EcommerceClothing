@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
-import { getProducts, getCategories } from '../services/productService';
+import { getProducts, getCategories, getBrands } from '../services/productService';
 import useScrollRestore from '../lib/useScrollRestore';
 import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
 
@@ -29,6 +29,11 @@ export default function ShopPage() {
     const n = Number(searchParams.get('category'));
     return Number.isFinite(n) && n > 0 ? n : null;
   });
+  const [activeBrandId, setActiveBrandId] = useState(() => {
+    const n = Number(searchParams.get('brand'));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
+  const [brands, setBrands] = useState([]);
   const [sort, setSort] = useState(() => searchParams.get('sort') ?? 'NEWEST');
   const [page, setPage] = useState(() => Math.max(0, Math.floor(Number(searchParams.get('page')) || 1) - 1));
 
@@ -51,17 +56,21 @@ export default function ShopPage() {
     const next = new URLSearchParams();
     if (query) next.set('q', query);
     if (activeCategoryId != null) next.set('category', String(activeCategoryId));
+    if (activeBrandId != null) next.set('brand', String(activeBrandId));
     if (sort !== 'NEWEST') next.set('sort', sort);
     if (page > 0) next.set('page', String(page + 1));
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
-  }, [query, activeCategoryId, sort, page, searchParams, setSearchParams]);
+  }, [query, activeCategoryId, activeBrandId, sort, page, searchParams, setSearchParams]);
 
   useEffect(() => {
     let cancelled = false;
     getCategories()
       .then((data) => { if (!cancelled) setCategories(data || []); })
+      .catch(() => { });
+    getBrands()
+      .then((data) => { if (!cancelled) setBrands(data || []); })
       .catch(() => { });
     return () => { cancelled = true; };
   }, []);
@@ -69,12 +78,13 @@ export default function ShopPage() {
   const loaded = useRef({ key: null, through: -1 });
   useEffect(() => {
     let cancelled = false;
-    const filterKey = `${activeCategoryId ?? ''}|${sort}|${query}`;
+    const filterKey = `${activeCategoryId ?? ''}|${activeBrandId ?? ''}|${sort}|${query}`;
     const fetchPage = (p) => getProducts({
       page: p,
       size: PAGE_SIZE,
       sort,
       categoryId: activeCategoryId ?? undefined,
+      brandId: activeBrandId ?? undefined,
       search: query || undefined,
     });
     const prev = loaded.current;
@@ -109,13 +119,17 @@ export default function ShopPage() {
     };
     run();
     return () => { cancelled = true; };
-  }, [page, sort, activeCategoryId, query, reloadNonce]);
+  }, [page, sort, activeCategoryId, activeBrandId, query, reloadNonce]);
 
   const clearQuery = () => {
     const next = new URLSearchParams(searchParams);
     next.delete('q');
     setSearchParams(next, { replace: true });
   };
+
+  const activeBrand = brands.find((b) => b.id === activeBrandId);
+  const brandName = activeBrand?.name;
+  const clearBrand = () => { setActiveBrandId(null); setPage(0); };
 
   const products = items;
   const totalElements = meta.totalElements;
@@ -134,19 +148,34 @@ export default function ShopPage() {
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40 mb-2">
             {query
               ? `Search · ${loading ? '…' : `${totalElements} result${totalElements === 1 ? '' : 's'}`}`
-              : `SS 2026 · ${loading ? '…' : `${totalElements} items`}`}
+              : activeBrandId
+                ? `Brand · ${loading ? '…' : `${totalElements} item${totalElements === 1 ? '' : 's'}`}`
+                : `SS 2026 · ${loading ? '…' : `${totalElements} items`}`}
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
-            {query ? <>Results for &ldquo;{query}&rdquo;</> : 'Shop All'}
+            {query ? <>Results for &ldquo;{query}&rdquo;</> : activeBrandId ? (brandName || 'Brand') : 'Shop All'}
           </h1>
-          {query && (
-            <button
-              onClick={clearQuery}
-              className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/60 hover:text-[#E83354] transition-colors"
-            >
-              <span>Clear search</span>
-              <span aria-hidden>×</span>
-            </button>
+          {(query || activeBrandId) && (
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              {query && (
+                <button
+                  onClick={clearQuery}
+                  className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/60 hover:text-[#E83354] transition-colors"
+                >
+                  <span>Clear search</span>
+                  <span aria-hidden>×</span>
+                </button>
+              )}
+              {activeBrandId && (
+                <button
+                  onClick={clearBrand}
+                  className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/60 hover:text-[#E83354] transition-colors"
+                >
+                  <span>Clear brand</span>
+                  <span aria-hidden>×</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

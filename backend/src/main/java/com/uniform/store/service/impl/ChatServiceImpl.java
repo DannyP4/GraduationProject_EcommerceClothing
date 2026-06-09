@@ -43,11 +43,12 @@ public class ChatServiceImpl implements ChatService {
                 .map(ScoredProduct::productId)
                 .toList();
 
-        List<ProductSummaryDto> products = relevantIds.isEmpty()
-                ? List.of()
-                : productService.getSummariesByIds(relevantIds, locale);
+        boolean hasMatch = !relevantIds.isEmpty();
+        List<ProductSummaryDto> products = hasMatch
+                ? productService.getSummariesByIds(relevantIds, locale)
+                : productService.getTrendingSummaries(props.getTrendingFallbackSize(), locale);
 
-        String systemInstruction = buildSystemInstruction(products);
+        String systemInstruction = buildSystemInstruction(products, hasMatch);
         List<GeminiChatClient.Msg> contents = buildContents(request.getHistory(), message);
 
         String reply = chatClient.generate(systemInstruction, contents);
@@ -79,15 +80,18 @@ public class ChatServiceImpl implements ChatService {
         return ("assistant".equalsIgnoreCase(role) || "model".equalsIgnoreCase(role)) ? "model" : "user";
     }
 
-    private String buildSystemInstruction(List<ProductSummaryDto> products) {
+    private String buildSystemInstruction(List<ProductSummaryDto> products, boolean hasMatch) {
         StringBuilder sb = new StringBuilder();
         sb.append("You are Vesta's shopping assistant for an online fashion store.\n")
                 .append("Rules:\n")
                 .append("- Answer ONLY using the PRODUCTS and STORE POLICY below. Never invent products, prices, or policies.\n")
                 .append("- If the question is unrelated to shopping at Vesta, politely decline and steer back to fashion.\n")
-                .append("- If no relevant products are listed, say you couldn't find a good match and suggest browsing categories; do not fabricate.\n")
                 .append("- Refer to products by their exact name. Be concise, friendly, and helpful.\n")
-                .append("- Reply in the SAME language as the user's latest message.\n\n");
+                .append("- If the user states a price limit (e.g. \"under 500k\"), only present products within it. ")
+                .append("If none of the products below qualify, say so honestly instead of suggesting pricier ones.\n")
+                .append("- Reply in the SAME language as the user's latest message.\n")
+                .append("- Format the reply as plain text. For lists, put each item on its own line starting with \"- \". ")
+                .append("Do NOT use Markdown emphasis such as ** or *, and do NOT use headings.\n\n");
 
         sb.append("STORE POLICY:\n")
                 .append("- Shipping (flat per region): North ").append(vnd(shippingProperties.getNorth()))
@@ -97,9 +101,16 @@ public class ChatServiceImpl implements ChatService {
                 .append("- Payment methods: COD, VNPAY, and Stripe (card).\n")
                 .append("- Returns: within 7 days of delivery if items are unused with tags; refunds go to the original payment method.\n\n");
 
-        sb.append("PRODUCTS (top matches for the user's latest question):\n");
+        if (hasMatch) {
+            sb.append("PRODUCTS (top matches for the user's latest question):\n");
+        } else {
+            sb.append("No product directly matches the user's question. ")
+                    .append("If the question is unrelated to Vesta shopping, briefly note you can only help with Vesta products. ")
+                    .append("Then warmly invite the user to explore these trending items. Do NOT claim they match the query.\n")
+                    .append("TRENDING NOW:\n");
+        }
         if (products.isEmpty()) {
-            sb.append("(No relevant products found.)\n");
+            sb.append("(No products available.)\n");
         } else {
             int i = 1;
             for (ProductSummaryDto p : products) {

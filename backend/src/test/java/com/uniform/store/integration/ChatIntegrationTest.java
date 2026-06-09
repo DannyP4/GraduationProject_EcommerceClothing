@@ -80,14 +80,15 @@ class ChatIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void chat_offTopicQuery_returnsReplyWithNoProducts() throws Exception {
-        when(embeddingService.embedQuery(anyString())).thenReturn(unit(2)); // orthogonal to all
+    void chat_offTopicQuery_fallsBackToTrendingProducts() throws Exception {
+        when(embeddingService.embedQuery(anyString())).thenReturn(unit(2)); // orthogonal to all -> no match
 
+        // no sales seeded, so trending falls back to newest active products
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"what is the weather today?\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.products.length()").value(0));
+                .andExpect(jsonPath("$.data.products.length()").value(2));
     }
 
     @Test
