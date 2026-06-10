@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/products")
@@ -46,5 +49,35 @@ public class ProductController {
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
         String locale = localeResolver.resolve(acceptLanguage);
         return ApiResponse.ok(productService.getProduct(idOrSlug, locale));
+    }
+
+    @GetMapping("/{id}/similar")
+    @Operation(summary = "Similar products (content-based, cached vectors)")
+    public ApiResponse<List<ProductSummaryDto>> similar(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
+        String locale = localeResolver.resolve(acceptLanguage);
+        return ApiResponse.ok(productService.getSimilarProducts(id, limit, locale));
+    }
+
+    @GetMapping("/{id}/frequently-bought-together")
+    @Operation(summary = "Frequently bought together (order co-occurrence)")
+    public ApiResponse<List<ProductSummaryDto>> frequentlyBoughtTogether(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
+        String locale = localeResolver.resolve(acceptLanguage);
+        return ApiResponse.ok(productService.getFrequentlyBoughtTogether(id, limit, locale));
+    }
+
+    @GetMapping("/similar")
+    @Operation(summary = "Aggregate similar products for a set (cart/order), excluding the set itself")
+    public ApiResponse<List<ProductSummaryDto>> similarToSet(
+            @RequestParam List<Long> ids,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
+        String locale = localeResolver.resolve(acceptLanguage);
+        return ApiResponse.ok(productService.getSimilarToProducts(ids, limit, locale));
     }
 }

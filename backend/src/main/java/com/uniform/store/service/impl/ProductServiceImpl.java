@@ -26,6 +26,7 @@ import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.repository.ReviewRepository;
 import com.uniform.store.service.PricingService;
 import com.uniform.store.service.ProductService;
+import com.uniform.store.service.RetrievalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_RECOMMENDATION_SIZE = 20;
     private static final List<OrderStatus> SOLD_STATUSES = List.of(
             OrderStatus.PAID, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED);
 
@@ -64,6 +66,7 @@ public class ProductServiceImpl implements ProductService {
     private final ReviewRepository reviewRepository;
     private final OrderItemRepository orderItemRepository;
     private final PricingService pricingService;
+    private final RetrievalService retrievalService;
 
     @Override
     public PageResponse<ProductSummaryDto> listProducts(ProductFilterRequest filter, Pageable pageable, String locale) {
@@ -112,6 +115,57 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return getSummariesByIds(ids, locale);
+    }
+
+    @Override
+    public List<ProductSummaryDto> getSimilarProducts(Long productId, int limit, String locale) {
+        int k = clampRecommendationLimit(limit);
+        if (k == 0) {
+            return List.of();
+        }
+        List<Long> ids = retrievalService.searchSimilarToProduct(productId, k).stream()
+                .map(RetrievalService.ScoredProduct::productId)
+                .toList();
+        return getSummariesByIds(ids, locale);
+    }
+
+    @Override
+    public List<ProductSummaryDto> getFrequentlyBoughtTogether(Long productId, int limit, String locale) {
+        int k = clampRecommendationLimit(limit);
+        if (k == 0) {
+            return List.of();
+        }
+        List<Long> ids = orderItemRepository.findFrequentlyBoughtTogether(productId, SOLD_STATUSES, PageRequest.of(0, k));
+        return getSummariesByIds(ids, locale);
+    }
+
+    @Override
+    public List<ProductSummaryDto> getSimilarToProducts(List<Long> seedIds, int limit, String locale) {
+        int k = clampRecommendationLimit(limit);
+        if (k == 0 || seedIds == null || seedIds.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> seeds = new HashSet<>(seedIds);
+        Map<Long, Double> bestScore = new HashMap<>();
+        for (Long seedId : seeds) {
+            for (RetrievalService.ScoredProduct sp : retrievalService.searchSimilarToProduct(seedId, k + seeds.size())) {
+                if (seeds.contains(sp.productId())) continue;
+                bestScore.merge(sp.productId(), sp.score(), Math::max);
+            }
+        }
+        List<Long> ranked = bestScore.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .limit(k)
+                .toList();
+        return getSummariesByIds(ranked, locale);
+    }
+
+    private static int clampRecommendationLimit(int limit) {
+        if (limit <= 0) {
+            return 0;
+        }
+        return Math.min(limit, MAX_RECOMMENDATION_SIZE);
     }
 
     private List<ProductSummaryDto> buildSummaries(List<Product> products, String locale) {

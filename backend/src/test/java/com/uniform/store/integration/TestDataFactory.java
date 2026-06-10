@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -234,6 +235,69 @@ public class TestDataFactory {
                     .order(order)
                     .provider(provider)
                     .providerTxnId(provider.name().toLowerCase() + "-test-" + n)
+                    .amount(grand)
+                    .currency("VND")
+                    .status(payStatus)
+                    .paidAt(payStatus == PaymentStatus.CAPTURED ? placedAt : null)
+                    .build());
+        }
+
+        return order;
+    }
+
+    @Transactional
+    public Order createOrderWithItems(User customer, List<ProductVariant> variants,
+                                      OrderStatus status, Instant placedAt, PaymentProvider provider) {
+        long n = COUNTER.incrementAndGet();
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (ProductVariant v : variants) {
+            subtotal = subtotal.add(v.getProduct().getBasePrice());
+        }
+        subtotal = subtotal.setScale(4, RoundingMode.HALF_UP);
+        BigDecimal shipping = new BigDecimal("30000").setScale(4, RoundingMode.HALF_UP);
+        BigDecimal grand = subtotal.add(shipping).setScale(4, RoundingMode.HALF_UP);
+
+        Order order = orderRepository.save(Order.builder()
+                .orderNumber(String.format("TESTM-%05d", 10000 + n))
+                .user(customer)
+                .status(status)
+                .subtotal(subtotal)
+                .discountTotal(BigDecimal.ZERO.setScale(4))
+                .shippingCost(shipping)
+                .taxTotal(BigDecimal.ZERO.setScale(4))
+                .grandTotal(grand)
+                .currency("VND")
+                .shippingRecipient(customer.getFullName())
+                .shippingPhone("0900000000")
+                .shippingLine1("1 Test St")
+                .shippingDistrict("Quan 1")
+                .shippingCity("HCM")
+                .shippingCountry("VN")
+                .placedAt(placedAt)
+                .build());
+
+        for (ProductVariant v : variants) {
+            BigDecimal unit = v.getProduct().getBasePrice();
+            orderItemRepository.save(OrderItem.builder()
+                    .order(order)
+                    .variant(v)
+                    .productName(v.getProduct().getName())
+                    .variantLabel(v.getSize() + " / " + v.getColor())
+                    .sku(v.getSku())
+                    .unitPrice(unit)
+                    .quantity(1)
+                    .lineTotal(unit.setScale(4, RoundingMode.HALF_UP))
+                    .build());
+        }
+
+        if (provider != null) {
+            PaymentStatus payStatus = status == OrderStatus.CANCELLED
+                    ? PaymentStatus.FAILED
+                    : PaymentStatus.CAPTURED;
+            paymentRepository.save(Payment.builder()
+                    .order(order)
+                    .provider(provider)
+                    .providerTxnId(provider.name().toLowerCase() + "-testm-" + n)
                     .amount(grand)
                     .currency("VND")
                     .status(payStatus)

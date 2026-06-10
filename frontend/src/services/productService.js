@@ -35,3 +35,29 @@ export async function getBrandSummary(id) {
   const resp = await apiClient.get(`/brands/${encodeURIComponent(id)}`, { _skipAuth: true });
   return unwrap(resp);
 }
+
+export async function getSimilarProducts(id, limit) {
+  const resp = await apiClient.get(`/products/${encodeURIComponent(id)}/similar`, {
+    params: limit ? { limit } : undefined,
+    _skipAuth: true,
+  });
+  return unwrap(resp);
+}
+
+export async function getFrequentlyBoughtTogether(id, limit) {
+  const resp = await apiClient.get(`/products/${encodeURIComponent(id)}/frequently-bought-together`, {
+    params: limit ? { limit } : undefined,
+    _skipAuth: true,
+  });
+  return unwrap(resp);
+}
+
+export async function getSimilarToProducts(ids, limit) {
+  const list = Array.isArray(ids) ? ids : [ids];
+  if (list.length === 0) return [];
+  const resp = await apiClient.get('/products/similar', {
+    params: { ids: list.join(','), ...(limit ? { limit } : {}) },
+    _skipAuth: true,
+  });
+  return unwrap(resp);
+}

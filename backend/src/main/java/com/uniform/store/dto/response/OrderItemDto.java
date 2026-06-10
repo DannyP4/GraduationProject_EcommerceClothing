@@ -28,6 +28,7 @@ public class OrderItemDto {
     private BigDecimal lineTotal;
 
     // Live lookup — null if product/variant is gone
+    private Long productId;
     private String productSlug;
     private String imageUrl;
 }

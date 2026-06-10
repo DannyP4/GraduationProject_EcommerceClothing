@@ -6,7 +6,8 @@ import FooterFull from '../components/FooterFull';
 import QuantityStepper from '../components/QuantityStepper';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useCart } from '../context/CartContext';
-import { getProducts } from '../services/productService';
+import { getProducts, getSimilarToProducts } from '../services/productService';
+import { Carousel } from '../components/RecommendationRow';
 
 export default function CartPage() {
   const {
@@ -25,23 +26,28 @@ export default function CartPage() {
 
   const [actionError, setActionError] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [picks, setPicks] = useState([]);
+  const [recs, setRecs] = useState([]);
+  const cartIdsKey = [...new Set(items.map((i) => i.productId).filter(Boolean))]
+    .sort((a, b) => a - b)
+    .join(',');
 
   useEffect(() => {
     let cancelled = false;
-    getProducts({ size: 8, sort: 'POPULAR' })
-      .then((data) => { if (!cancelled) setPicks(data?.content ?? []); })
-      .catch(() => { });
+    const ids = cartIdsKey ? cartIdsKey.split(',').map(Number) : [];
+    // Cart-based "you may also like"; fall back to popular when the cart is empty.
+    const load = ids.length
+      ? getSimilarToProducts(ids, 12)
+      : getProducts({ size: 12, sort: 'POPULAR' }).then((d) => d?.content ?? []);
+    Promise.resolve(load)
+      .then((data) => { if (!cancelled) setRecs(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!cancelled) setRecs([]); });
     return () => { cancelled = true; };
-  }, []);
+  }, [cartIdsKey]);
 
   const hasBlockedItems = items.some(
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'
   );
   const checkoutDisabled = items.length === 0 || hasBlockedItems;
-
-  const cartProductIds = new Set(items.map((i) => i.productId).filter(Boolean));
-  const suggestions = picks.filter((p) => !cartProductIds.has(p.id)).slice(0, 4);
 
   const handleQty = async (item, nextQty) => {
     setActionError(null);
@@ -221,56 +227,7 @@ export default function CartPage() {
           </div>
         )}
 
-        {suggestions.length > 0 && (
-          <section className="mt-20">
-            <div className="mb-8">
-              <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Suggested</p>
-              <h2 className="font-['Anton'] text-4xl uppercase tracking-tight">You May Also Like</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {suggestions.map((p) => (
-                <div
-                  key={p.id}
-                  className="group bg-white cursor-pointer"
-                  onClick={() => navigate(`/product/${p.slug || p.id}`)}
-                >
-                  <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
-                    {p.discountPercent != null && (
-                      <span className="absolute top-2 left-2 z-10 bg-[#E83354] text-white text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5">
-                        -{p.discountPercent}%
-                      </span>
-                    )}
-                    {p.primaryImageUrl ? (
-                      <img
-                        src={p.primaryImageUrl}
-                        alt={p.name}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-black/40 mb-0.5">{p.categoryName}</p>
-                    <h3 className="text-xs font-bold uppercase tracking-wider mb-1 line-clamp-2 min-h-[2rem]">{p.name}</h3>
-                    <div className="flex items-baseline gap-2">
-                      {p.salePrice != null ? (
-                        <>
-                          <span className="font-['Anton'] text-lg text-[#E83354]">{formatPrice(p.salePrice, p.currency)}</span>
-                          <span className="text-[11px] text-black/40 line-through">{formatPrice(p.basePrice, p.currency)}</span>
-                        </>
-                      ) : (
-                        <span className="font-['Anton'] text-lg">{formatPrice(p.basePrice, p.currency)}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {recs.length > 0 && <Carousel title="You may also like" items={recs} />}
       </div>
 
       <ConfirmDialog

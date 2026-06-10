@@ -70,4 +70,14 @@ class RetrievalServiceImplTest {
 
         assertThat(service.search(new float[]{1f, 0f, 0f, 0f}, 5)).isEmpty();
     }
+
+    @Test
+    void searchSimilarToProduct_unknownProductId_returnsEmpty() {
+        assertThat(service.searchSimilarToProduct(999L, 5)).isEmpty();
+    }
+
+    @Test
+    void searchSimilarToProduct_nonPositiveTopK_returnsEmpty() {
+        assertThat(service.searchSimilarToProduct(1L, 0)).isEmpty();
+    }
 }

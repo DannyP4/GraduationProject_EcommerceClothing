@@ -5,12 +5,13 @@ import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
 import QuantityStepper from '../components/QuantityStepper';
 import { useToast } from '../components/Toast';
-import { getProductByIdOrSlug } from '../services/productService';
+import { getProductByIdOrSlug, getSimilarProducts, getFrequentlyBoughtTogether } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import BrandCard from '../components/BrandCard';
 import ReviewsSection from '../components/ReviewsSection';
+import RecommendationRow from '../components/RecommendationRow';
 import { goBack } from '../lib/historyBack';
 
 export default function ProductPage() {
@@ -408,6 +409,9 @@ export default function ProductPage() {
       <BrandCard brandId={product.brandId} brandName={product.brandName} />
 
       <ReviewsSection product={product} onChanged={reloadProduct} />
+
+      <RecommendationRow title="Frequently bought together" productId={product.id} fetcher={getFrequentlyBoughtTogether} />
+      <RecommendationRow title="You may also like" productId={product.id} fetcher={getSimilarProducts} />
     </PageShell>
   );
 }

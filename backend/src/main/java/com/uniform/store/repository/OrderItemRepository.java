@@ -64,4 +64,25 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
         ORDER BY SUM(oi.quantity) DESC
         """)
     List<Long> findTopSellingProductIds(@Param("statuses") Collection<OrderStatus> statuses, Pageable pageable);
+
+    // Frequently bought together: co-occurring products in real-sale orders, excluding self / inactive / out-of-stock
+    @Query("""
+        SELECT oi2.variant.product.id
+        FROM OrderItem oi1, OrderItem oi2
+        WHERE oi1.order = oi2.order
+          AND oi1.variant.product.id = :productId
+          AND oi2.variant.product.id <> :productId
+          AND oi1.order.status IN :statuses
+          AND oi2.variant.product.isActive = true
+          AND oi2.variant.product.deletedAt IS NULL
+          AND EXISTS (SELECT 1 FROM ProductVariant v
+                      WHERE v.product = oi2.variant.product
+                        AND v.isActive = true
+                        AND v.stockQuantity > 0)
+        GROUP BY oi2.variant.product.id
+        ORDER BY COUNT(DISTINCT oi1.order.id) DESC
+        """)
+    List<Long> findFrequentlyBoughtTogether(@Param("productId") Long productId,
+                                            @Param("statuses") Collection<OrderStatus> statuses,
+                                            Pageable pageable);
 }

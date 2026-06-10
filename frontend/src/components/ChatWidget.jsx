@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { sendChatMessage } from '../services/chatService';
 import useChatHistory from '../hooks/useChatHistory';
+import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
 
 function formatPrice(value, currency) {
   if (value == null) return '';
@@ -77,6 +78,7 @@ export default function ChatWidget() {
   const { messages, append, clear } = useChatHistory();
   const endRef = useRef(null);
   const inputRef = useRef(null);
+  const msgScrollRef = useAutoHideScrollbar();
 
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -154,7 +156,7 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-[#F7F7F7]">
+          <div ref={msgScrollRef} className="flex-1 overflow-y-auto scrollbar-subtle px-3 py-3 space-y-3 bg-[#F7F7F7]">
             {messages.length === 0 && (
               <Bubble role="assistant">
                 Hi! I&apos;m Vesta&apos;s shopping assistant. Ask about our products - e.g. &quot;black jacket under 500k&quot; - or our shipping &amp; returns policy.

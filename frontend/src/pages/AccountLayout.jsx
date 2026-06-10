@@ -61,7 +61,7 @@ export default function AccountLayout() {
             </button>
           </aside>
 
-          <main className="bg-white p-6 md:p-8">
+          <main className="bg-white p-6 md:p-8 min-w-0">
             <Outlet />
           </main>
         </div>

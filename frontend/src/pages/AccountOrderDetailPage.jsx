@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import * as orderService from '../services/orderService';
 import * as paymentService from '../services/paymentService';
+import { getSimilarToProducts } from '../services/productService';
+import { Carousel } from '../components/RecommendationRow';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function AccountOrderDetailPage() {
@@ -30,6 +32,20 @@ export default function AccountOrderDetailPage() {
   }, [orderNumber]);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  const [recs, setRecs] = useState([]);
+  const orderIdsKey = [...new Set((order?.items ?? []).map((i) => i.productId).filter(Boolean))]
+    .sort((a, b) => a - b)
+    .join(',');
+
+  useEffect(() => {
+    if (!orderIdsKey) { setRecs([]); return undefined; }
+    let cancelled = false;
+    getSimilarToProducts(orderIdsKey.split(',').map(Number), 12)
+      .then((d) => { if (!cancelled) setRecs(d || []); })
+      .catch(() => { if (!cancelled) setRecs([]); });
+    return () => { cancelled = true; };
+  }, [orderIdsKey]);
 
   const doCancel = async () => {
     setConfirmCancel(false);
@@ -190,6 +206,8 @@ export default function AccountOrderDetailPage() {
           )}
         </aside>
       </div>
+
+      {recs.length > 0 && <Carousel title="You may also like" items={recs} />}
 
       <ConfirmDialog
         open={confirmCancel}

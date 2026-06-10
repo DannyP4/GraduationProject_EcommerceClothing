@@ -33,6 +33,13 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product WHERE v.id IN :ids")
     List<ProductVariant> findAllByIdInWithProduct(@Param("ids") Collection<Long> ids);
 
+    // In-stock active variants of a category, product joined, for the co-purchase demo seeder
+    @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product p"
+            + " WHERE v.isActive = true AND v.stockQuantity > 0"
+            + " AND p.isActive = true AND p.deletedAt IS NULL AND p.category.id = :categoryId"
+            + " ORDER BY p.id ASC, v.id ASC")
+    List<ProductVariant> findInStockByCategory(@Param("categoryId") Long categoryId);
+
     // SELECT ... FOR UPDATE - used at order placement / cancellation to serialize stock mutations
     // on the same variants and prevent oversell when multiple users check out concurrently.
     @Lock(LockModeType.PESSIMISTIC_WRITE)

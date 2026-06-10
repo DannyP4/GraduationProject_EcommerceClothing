@@ -71,9 +71,11 @@ public class OrderMapper {
 
         List<OrderItemDto> itemDtos = items.stream().map(oi -> {
             ProductVariant v = finalVariantMap.get(oi.getVariant().getId());
+            Long productId = null;
             String slug = null;
             String img = null;
             if (v != null) {
+                productId = v.getProduct().getId();
                 slug = v.getProduct().getSlug();
                 img = finalPrimaryImages.get(v.getProduct().getId());
             }
@@ -87,6 +89,7 @@ public class OrderMapper {
                     .originalUnitPrice(oi.getOriginalUnitPrice())
                     .quantity(oi.getQuantity())
                     .lineTotal(oi.getLineTotal())
+                    .productId(productId)
                     .productSlug(slug)
                     .imageUrl(img)
                     .build();

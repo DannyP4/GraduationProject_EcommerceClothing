@@ -17,4 +17,11 @@ public interface ProductService {
     List<ProductSummaryDto> getSummariesByIds(List<Long> ids, String locale);
 
     List<ProductSummaryDto> getTrendingSummaries(int limit, String locale);
+
+    List<ProductSummaryDto> getSimilarProducts(Long productId, int limit, String locale);
+
+    List<ProductSummaryDto> getFrequentlyBoughtTogether(Long productId, int limit, String locale);
+
+    // Aggregate similar across a set of seed products
+    List<ProductSummaryDto> getSimilarToProducts(List<Long> seedIds, int limit, String locale);
 }
