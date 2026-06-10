@@ -11,7 +11,7 @@ public class InheritEnvProfilesResolver implements ActiveProfilesResolver {
     @Override
     public String[] resolve(Class<?> testClass) {
         String fromEnv = System.getProperty("spring.profiles.active",
-                System.getenv().getOrDefault("SPRING_PROFILES_ACTIVE", "xampp"));
+                System.getenv().getOrDefault("SPRING_PROFILES_ACTIVE", "docker"));
         Set<String> profiles = new LinkedHashSet<>(Arrays.asList(fromEnv.split("\\s*,\\s*")));
         profiles.add("test");
         return profiles.toArray(new String[0]);

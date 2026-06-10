@@ -58,4 +58,27 @@ class GeminiChatClientTest {
         assertThat(client.generate("sys", List.of(new GeminiChatClient.Msg("user", "hi")))).isNull();
         server.verify();
     }
+
+    @Test
+    void generateWithTools_sendsToolDeclarations_parsesFunctionCall() {
+        server.expect(requestTo("https://gen.test/v1beta/models/gemini-2.5-flash:generateContent"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$.tools[0].functionDeclarations[0].name").value("find_similar_products"))
+                .andExpect(jsonPath("$.toolConfig.functionCallingConfig.mode").value("AUTO"))
+                .andRespond(withSuccess(
+                        "{\"candidates\":[{\"content\":{\"parts\":[{\"functionCall\":"
+                                + "{\"name\":\"find_similar_products\",\"args\":{\"product_name\":\"Black Jacket\"},\"id\":\"abc\"}}]}}]}",
+                        APPLICATION_JSON));
+
+        GeminiChatClient.FunctionDecl decl = new GeminiChatClient.FunctionDecl(
+                "find_similar_products", "desc", java.util.Map.of("type", "object"));
+        GeminiChatClient.Reply reply = client.generateWithTools(
+                "sys", List.of(GeminiChatClient.Content.text("user", "similar?")), List.of(decl));
+
+        assertThat(reply.isCall()).isTrue();
+        assertThat(reply.functionCall().name()).isEqualTo("find_similar_products");
+        assertThat(reply.functionCall().args().path("product_name").asText()).isEqualTo("Black Jacket");
+        assertThat(reply.functionCall().id()).isEqualTo("abc");
+        server.verify();
+    }
 }

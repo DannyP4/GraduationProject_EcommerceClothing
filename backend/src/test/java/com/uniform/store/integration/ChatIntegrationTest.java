@@ -57,7 +57,8 @@ class ChatIntegrationTest extends BaseIntegrationTest {
         });
         backfillService.backfill(false, 0);
 
-        when(chatClient.generate(anyString(), anyList())).thenReturn("Sure, here are some options for you.");
+        when(chatClient.generateWithTools(anyString(), anyList(), anyList()))
+                .thenReturn(new GeminiChatClient.Reply("Sure, here are some options for you.", null));
     }
 
     private float[] unit(int axis) {

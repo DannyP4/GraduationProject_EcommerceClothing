@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniform.store.config.GeminiProperties;
 import com.uniform.store.config.ShippingProperties;
 import com.uniform.store.dto.request.ChatRequest;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -37,6 +39,8 @@ class ChatServiceImplTest {
     private GeminiChatClient chatClient;
     private GeminiProperties props;
     private ChatServiceImpl service;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @BeforeEach
     void setup() {
@@ -56,6 +60,15 @@ class ChatServiceImplTest {
                 .brandName("Nike").categoryName("Jackets").build();
     }
 
+    private GeminiChatClient.Reply text(String t) {
+        return new GeminiChatClient.Reply(t, null);
+    }
+
+    private GeminiChatClient.Reply call(String name, String productName) {
+        return new GeminiChatClient.Reply(null, new GeminiChatClient.FunctionCall(
+                name, MAPPER.createObjectNode().put("product_name", productName), "fc-1"));
+    }
+
     @Test
     void chat_relevantProducts_groundsPromptWithProductNames_andReturnsProducts() {
         when(retrievalService.search(any(), anyInt())).thenReturn(List.of(
@@ -63,7 +76,7 @@ class ChatServiceImplTest {
         when(productService.getSummariesByIds(eq(List.of(1L, 2L)), anyString()))
                 .thenReturn(List.of(summary(1L, "Black Jacket"), summary(2L, "Navy Coat")));
         ArgumentCaptor<String> sys = ArgumentCaptor.forClass(String.class);
-        when(chatClient.generate(sys.capture(), anyList())).thenReturn("Here are some options.");
+        when(chatClient.generateWithTools(sys.capture(), anyList(), anyList())).thenReturn(text("Here are some options."));
 
         ChatRequest req = new ChatRequest();
         req.setMessage("warm jacket?");
@@ -82,7 +95,8 @@ class ChatServiceImplTest {
         when(productService.getTrendingSummaries(anyInt(), anyString()))
                 .thenReturn(List.of(summary(9L, "Best Seller Tee")));
         ArgumentCaptor<String> sys = ArgumentCaptor.forClass(String.class);
-        when(chatClient.generate(sys.capture(), anyList())).thenReturn("No exact match, but check these out.");
+        when(chatClient.generateWithTools(sys.capture(), anyList(), anyList()))
+                .thenReturn(text("No exact match, but check these out."));
 
         ChatRequest req = new ChatRequest();
         req.setMessage("weather today?");
@@ -97,7 +111,7 @@ class ChatServiceImplTest {
     @Test
     void chat_blankGeneration_usesFallback() {
         when(retrievalService.search(any(), anyInt())).thenReturn(List.of());
-        when(chatClient.generate(anyString(), anyList())).thenReturn("");
+        when(chatClient.generateWithTools(anyString(), anyList(), anyList())).thenReturn(text(""));
 
         ChatRequest req = new ChatRequest();
         req.setMessage("hi");
@@ -108,8 +122,8 @@ class ChatServiceImplTest {
     void chat_capsHistoryAndEndsWithCurrentUserMessage() {
         when(retrievalService.search(any(), anyInt())).thenReturn(List.of());
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<GeminiChatClient.Msg>> contents = ArgumentCaptor.forClass(List.class);
-        when(chatClient.generate(anyString(), contents.capture())).thenReturn("ok");
+        ArgumentCaptor<List<GeminiChatClient.Content>> contents = ArgumentCaptor.forClass(List.class);
+        when(chatClient.generateWithTools(anyString(), contents.capture(), anyList())).thenReturn(text("ok"));
 
         ChatRequest req = new ChatRequest();
         req.setMessage("current");
@@ -122,10 +136,49 @@ class ChatServiceImplTest {
 
         service.chat(req, "en");
 
-        List<GeminiChatClient.Msg> sent = contents.getValue();
+        List<GeminiChatClient.Content> sent = contents.getValue();
         assertThat(sent).hasSize(7); // historyMaxTurns=3 -> 6 history msgs + current
         assertThat(sent.get(0).role()).isEqualTo("user");
         assertThat(sent.get(sent.size() - 1).role()).isEqualTo("user");
         assertThat(sent.get(sent.size() - 1).text()).isEqualTo("current");
     }
+
+    @Test
+    void chat_toolCall_resolvesProduct_returnsRecommendationProducts() {
+        when(retrievalService.search(any(), anyInt())).thenReturn(List.of(new ScoredProduct(5L, 0.9)));
+        when(productService.getSummariesByIds(anyList(), anyString())).thenReturn(List.of(summary(5L, "Seed Product")));
+        when(productService.getSimilarProducts(eq(5L), anyInt(), anyString()))
+                .thenReturn(List.of(summary(11L, "Similar A"), summary(12L, "Similar B")));
+        when(chatClient.generateWithTools(anyString(), anyList(), anyList()))
+                .thenReturn(call(TOOL_SIMILAR, "Seed Product"))
+                .thenReturn(text("Here are similar items."));
+
+        ChatRequest req = new ChatRequest();
+        req.setMessage("anything similar to Seed Product?");
+        ChatResponse resp = service.chat(req, "en");
+
+        assertThat(resp.getReply()).isEqualTo("Here are similar items.");
+        assertThat(resp.getProducts()).extracting(ProductSummaryDto::getName)
+                .containsExactly("Similar A", "Similar B");
+        verify(productService).getSimilarProducts(eq(5L), anyInt(), anyString());
+    }
+
+    @Test
+    void chat_toolCall_unresolvedProduct_fallsBackToRagProducts() {
+        when(retrievalService.search(any(), anyInt())).thenReturn(List.of());
+        when(productService.getTrendingSummaries(anyInt(), anyString())).thenReturn(List.of(summary(9L, "Trending Tee")));
+        when(chatClient.generateWithTools(anyString(), anyList(), anyList()))
+                .thenReturn(call(TOOL_SIMILAR, "Ghost Product"))
+                .thenReturn(text("I couldn't find that product."));
+
+        ChatRequest req = new ChatRequest();
+        req.setMessage("similar to Ghost Product?");
+        ChatResponse resp = service.chat(req, "en");
+
+        assertThat(resp.getReply()).isEqualTo("I couldn't find that product.");
+        assertThat(resp.getProducts()).extracting(ProductSummaryDto::getName).containsExactly("Trending Tee");
+        verify(productService, never()).getSimilarProducts(anyLong(), anyInt(), anyString());
+    }
+
+    private static final String TOOL_SIMILAR = "find_similar_products";
 }

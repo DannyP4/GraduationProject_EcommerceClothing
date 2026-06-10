@@ -15,3 +15,5 @@ docs/
 .env
 backend/.env
 frontend/.env
+
+docker/mysql-init/01-uniform_store.sql

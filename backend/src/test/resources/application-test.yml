@@ -17,6 +17,10 @@ app:
     enabled: false
   catalog-seed:
     enabled: false
+  ai:
+    embeddings:
+      auto-reconcile:
+        enabled: false
 
   payments:
     vnpay:

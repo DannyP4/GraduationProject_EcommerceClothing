@@ -103,6 +103,9 @@ app:
       timeout-seconds: 30
     embeddings:
       backfill-on-startup: ${AI_EMBEDDINGS_BACKFILL_ON_STARTUP:false}
+      auto-reconcile:
+        enabled: ${AI_EMBEDDINGS_AUTO_RECONCILE:true}
+        interval-ms: ${AI_EMBEDDINGS_AUTO_RECONCILE_INTERVAL_MS:900000}   # 15 minutes
   seed:
     enabled: true
     products-count: 50
