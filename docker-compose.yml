@@ -56,3 +56,4 @@ services:
 volumes:
   mysql_data:
     driver: local
+# docker compose -f /docker-compose.yml up -d --build backend

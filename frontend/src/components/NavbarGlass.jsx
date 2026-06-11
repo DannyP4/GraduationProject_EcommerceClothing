@@ -5,6 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import { getProducts } from '../services/productService';
 import ConfirmDialog from './ConfirmDialog';
 import LanguageSwitcher from './LanguageSwitcher';
+import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
+import {
+  getNotifications,
+  getUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '../services/notificationService';
 
 const NAV_LINKS = [
   { label: 'Shop', to: '/shop' },
@@ -369,10 +376,41 @@ function CartHover() {
   );
 }
 
+const NOTIF_META = {
+  ORDER_PLACED:    { label: 'Placed',    cls: 'text-blue-700    bg-blue-50    border-blue-300',    icon: IconBox },
+  ORDER_PAID:      { label: 'Paid',      cls: 'text-emerald-700 bg-emerald-50 border-emerald-300', icon: IconCheck },
+  ORDER_SHIPPED:   { label: 'Shipped',   cls: 'text-indigo-700  bg-indigo-50  border-indigo-300',  icon: IconTruck },
+  ORDER_DELIVERED: { label: 'Delivered', cls: 'text-emerald-700 bg-emerald-50 border-emerald-300', icon: IconCheck },
+  ORDER_CANCELLED: { label: 'Cancelled', cls: 'text-rose-700    bg-rose-50    border-rose-300',    icon: IconCancel },
+  ORDER_REFUNDED:  { label: 'Refunded',  cls: 'text-amber-700   bg-amber-50   border-amber-300',   icon: IconRefund },
+};
+
+const NOTIF_POLL_MS = 60000;
+
 function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [total, setTotal] = useState(0);
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
+
+  const refreshUnread = async () => {
+    try { setUnread(await getUnreadCount()); } catch { /* keep last on transient error */ }
+  };
+  const loadList = async () => {
+    try {
+      const data = await getNotifications();
+      setItems(Array.isArray(data?.content) ? data.content : []);
+      setTotal(Number(data?.totalElements ?? 0));
+    } catch { /* keep last on transient error */ }
+  };
+
+  useEffect(() => {
+    refreshUnread();
+    const timer = setInterval(refreshUnread, NOTIF_POLL_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   const cancelClose = () => {
     if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
@@ -381,40 +419,158 @@ function NotificationBell() {
     cancelClose();
     closeTimerRef.current = setTimeout(() => setOpen(false), 200);
   };
+  const openPanel = () => { cancelClose(); setOpen(true); loadList(); };
 
   useEffect(() => () => cancelClose(), []);
+
+  const onItemClick = (n) => {
+    if (!n.read) {
+      markNotificationRead(n.id).catch(() => {});
+      setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      setUnread((u) => Math.max(0, u - 1));
+    }
+    setOpen(false);
+  };
+
+  const onMarkAll = async () => {
+    try { await markAllNotificationsRead(); } catch { /* ignore */ }
+    setItems((prev) => prev.map((x) => ({ ...x, read: true })));
+    setUnread(0);
+  };
 
   return (
     <div
       ref={wrapRef}
       className="relative hidden sm:block"
-      onMouseEnter={() => { cancelClose(); setOpen(true); }}
+      onMouseEnter={openPanel}
       onMouseLeave={scheduleClose}
     >
       <button
         type="button"
         aria-label="Notifications"
-        className="text-black/70 hover:text-[#E83354] transition-all hover:-translate-y-0.5 block"
+        className="relative text-black/70 hover:text-[#E83354] transition-all hover:-translate-y-0.5 block"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
+        {unread > 0 && (
+          <span className="absolute -top-2 -right-2 bg-[#E83354] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-black/10 shadow-xl z-50">
-          <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-black/10 shadow-xl z-50 max-h-[440px] flex flex-col">
+          <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between flex-shrink-0">
             <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">Notifications</p>
-            <span className="text-[9px] tracking-[0.15em] uppercase bg-black/5 text-black/40 px-2 py-0.5">Coming soon</span>
+            <span className="flex items-center gap-1.5">
+              {unread > 0 && (
+                <span className="text-[10px] font-bold tracking-wider uppercase bg-[#E83354] text-white px-2 py-0.5">
+                  {unread} new
+                </span>
+              )}
+              <span className="text-[10px] font-bold tracking-wider uppercase bg-black text-white px-2 py-0.5">
+                {total}
+              </span>
+              {unread > 0 && (
+                <button
+                  type="button"
+                  onClick={onMarkAll}
+                  className="text-[10px] font-bold tracking-wider uppercase text-[#E83354] hover:underline ml-1"
+                >
+                  Mark all read
+                </button>
+              )}
+            </span>
           </div>
-          <div className="px-4 py-8 text-center">
-            <p className="text-sm text-black/50">No notifications yet</p>
-            <p className="text-[11px] text-black/40 mt-1">Order updates and promos will appear here.</p>
-          </div>
+
+          {items.length === 0 ? (
+            <div className="px-4 py-8 text-center flex-1">
+              <p className="text-sm text-black/50">No notifications yet</p>
+              <p className="text-[11px] text-black/40 mt-1">Order updates will appear here.</p>
+            </div>
+          ) : (
+            <NotificationList items={items} onItemClick={onItemClick} />
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function NotificationList({ items, onItemClick }) {
+  const listRef = useAutoHideScrollbar();
+  return (
+    <ul ref={listRef} className="overflow-y-auto divide-y divide-black/5 flex-1 scrollbar-subtle">
+      {items.map((n) => {
+        const meta = NOTIF_META[n.type] ?? { label: n.type, cls: 'text-black/60 bg-black/5 border-black/15', icon: IconBox };
+        const Icon = meta.icon;
+        return (
+          <li key={n.id}>
+            <Link
+              to={n.href || '#'}
+              onClick={() => onItemClick(n)}
+              className={`flex gap-3 px-4 py-3 hover:bg-black/5 transition-colors ${n.read ? 'opacity-60' : ''}`}
+            >
+              <span className={`w-7 h-7 flex-shrink-0 border flex items-center justify-center ${meta.cls}`}>
+                <Icon />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className={`text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 border ${meta.cls}`}>
+                    {meta.label}
+                  </span>
+                  {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-[#E83354]" />}
+                </div>
+                <p className="text-xs text-black/80 leading-snug">{n.message}</p>
+                {n.createdAt && <p className="text-[10px] text-black/40 mt-1 tracking-wider">{notifTimeAgo(n.createdAt)}</p>}
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function notifTimeAgo(iso) {
+  if (!iso) return '';
+  const diffMin = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  return `${Math.round(diffH / 24)}d ago`;
+}
+
+function IconCheck() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+function IconTruck() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+      <circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" />
+    </svg>
+  );
+}
+function IconCancel() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+    </svg>
+  );
+}
+function IconRefund() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </svg>
   );
 }
 

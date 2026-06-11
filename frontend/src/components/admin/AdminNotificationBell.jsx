@@ -67,6 +67,13 @@ export default function AdminNotificationBell() {
       return next;
     });
   };
+  const markAllSeen = () => {
+    setSeen((prev) => {
+      const next = new Set([...prev, ...items.map((n) => n.id)]);
+      saveSeen(next);
+      return next;
+    });
+  };
 
   useEffect(() => () => cancelClose(), []);
 
@@ -107,6 +114,15 @@ export default function AdminNotificationBell() {
               <span className="text-[10px] font-bold tracking-wider uppercase bg-black text-white px-2 py-0.5">
                 {items.length}
               </span>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllSeen}
+                  className="text-[10px] font-bold tracking-wider uppercase text-[#E83354] hover:underline ml-1"
+                >
+                  Mark all read
+                </button>
+              )}
             </span>
           </div>
 

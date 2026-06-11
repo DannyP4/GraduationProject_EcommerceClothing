@@ -111,6 +111,9 @@ app:
     turnstile:
       secret-key: ${TURNSTILE_SECRET_KEY:}
       verify-url: ${TURNSTILE_VERIFY_URL:https://challenges.cloudflare.com/turnstile/v0/siteverify}
+  notifications:
+    retention-days: ${NOTIF_RETENTION_DAYS:90}
+    cleanup-cron: ${NOTIF_CLEANUP_CRON:0 0 3 * * *}
   fx:
     vnd-usd-rate: 0.0000385
     provider: HARDCODED
