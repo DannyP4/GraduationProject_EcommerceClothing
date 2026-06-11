@@ -45,7 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String authority = "ROLE_" + user.getRole().getName().toUpperCase();
                 UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                         .username(user.getEmail())
-                        .password(user.getPasswordHash())
+                        .password(user.getPasswordHash() != null ? user.getPasswordHash() : "")
                         .authorities(List.of(new SimpleGrantedAuthority(authority)))
                         .build();
 

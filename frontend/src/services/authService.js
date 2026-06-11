@@ -64,3 +64,8 @@ export async function acceptInvite({ token, fullName, password }) {
   const resp = await apiClient.post('/auth/accept-invite', { token, fullName, password }, { _skipAuth: true });
   return unwrap(resp);
 }
+
+export async function oauthExchange(code) {
+  const resp = await apiClient.post('/auth/oauth/exchange', { code }, { _skipAuth: true });
+  return unwrap(resp);
+}

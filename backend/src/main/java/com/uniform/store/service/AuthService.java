@@ -6,6 +6,7 @@ import com.uniform.store.dto.request.RegisterRequest;
 import com.uniform.store.dto.request.ResetPasswordRequest;
 import com.uniform.store.dto.response.AuthResponse;
 import com.uniform.store.dto.response.InvitePreviewResponse;
+import com.uniform.store.security.OAuthUserInfo;
 
 public interface AuthService {
     AuthResponse register(RegisterRequest req);
@@ -19,4 +20,6 @@ public interface AuthService {
     void resendVerification(String email);
     InvitePreviewResponse previewInvite(String token);
     AuthResponse acceptInvite(AcceptInviteRequest req);
+    String startOAuthHandoff(OAuthUserInfo info);
+    AuthResponse oauthExchange(String code);
 }

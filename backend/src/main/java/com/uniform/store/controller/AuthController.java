@@ -2,6 +2,7 @@ package com.uniform.store.controller;
 
 import com.uniform.store.dto.request.AcceptInviteRequest;
 import com.uniform.store.dto.request.ForgotPasswordRequest;
+import com.uniform.store.dto.request.OAuthExchangeRequest;
 import com.uniform.store.dto.request.LoginRequest;
 import com.uniform.store.dto.request.RegisterRequest;
 import com.uniform.store.dto.request.ResetPasswordRequest;
@@ -113,6 +114,12 @@ public class AuthController {
     @Operation(summary = "Accept an admin invitation: set a password and sign in", security = {})
     public ApiResponse<AuthResponse> acceptInvite(@Valid @RequestBody AcceptInviteRequest req) {
         return ApiResponse.ok("Welcome to the team.", authService.acceptInvite(req));
+    }
+
+    @PostMapping("/oauth/exchange")
+    @Operation(summary = "Exchange a one-time OAuth handoff code for a JWT session", security = {})
+    public ApiResponse<AuthResponse> oauthExchange(@Valid @RequestBody OAuthExchangeRequest req) {
+        return ApiResponse.ok(authService.oauthExchange(req.getCode()));
     }
 
     private String clientIp(HttpServletRequest request) {

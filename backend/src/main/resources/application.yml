@@ -56,6 +56,18 @@ spring:
   thymeleaf:
     check-template-location: false
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
+            scope:
+              - openid
+              - email
+              - profile
+
 db:
   name: uniform_store
 
@@ -92,7 +104,8 @@ app:
   auth:
     reset-token-ttl-minutes: ${AUTH_RESET_TOKEN_TTL_MINUTES:60}
     verify-token-ttl-hours: ${AUTH_VERIFY_TOKEN_TTL_HOURS:48}
-    admin-invite-ttl-hours: ${AUTH_ADMIN_INVITE_TTL_HOURS:72}
+    admin-invite-ttl-hours: ${AUTH_ADMIN_INVITE_TTL_HOURS:24}
+    oauth-handoff-ttl-seconds: ${AUTH_OAUTH_HANDOFF_TTL_SECONDS:120}
   captcha:
     enabled: ${CAPTCHA_ENABLED:true}
     turnstile:

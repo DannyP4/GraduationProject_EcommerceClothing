@@ -3,7 +3,9 @@ package com.uniform.store.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniform.store.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -30,7 +32,11 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           HttpCookieOAuth2AuthorizationRequestRepository cookieAuthRequestRepo,
+                                           OAuth2SuccessHandler oauth2SuccessHandler,
+                                           OAuth2FailureHandler oauth2FailureHandler,
+                                           ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider) throws Exception {
         http
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
@@ -39,8 +45,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login", "/auth/refresh",
                         "/auth/forgot-password", "/auth/reset-password", "/auth/verify-email",
-                        "/auth/accept-invite").permitAll()
+                        "/auth/accept-invite", "/auth/oauth/exchange").permitAll()
                 .requestMatchers(HttpMethod.GET, "/auth/invite").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/health", "/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/products/**", "/categories/**", "/brands/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
@@ -66,6 +73,13 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
+            http.oauth2Login(oauth -> oauth
+                    .authorizationEndpoint(a -> a.authorizationRequestRepository(cookieAuthRequestRepo))
+                    .successHandler(oauth2SuccessHandler)
+                    .failureHandler(oauth2FailureHandler));
+        }
 
         return http.build();
     }

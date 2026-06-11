@@ -10,8 +10,10 @@ import com.uniform.store.dto.response.InvitePreviewResponse;
 import com.uniform.store.entity.OneTimeToken;
 import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
+import com.uniform.store.enums.AuthProvider;
 import com.uniform.store.enums.TokenType;
 import com.uniform.store.enums.UserStatus;
+import com.uniform.store.security.OAuthUserInfo;
 import com.uniform.store.event.AuthMailEvent;
 import com.uniform.store.exception.AccountInactiveException;
 import com.uniform.store.exception.BadRequestException;
@@ -89,6 +91,11 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new BadRequestException("Invalid email or password"));
+
+        if (user.getPasswordHash() == null) {
+            throw new BadRequestException(
+                    "This account uses Google sign-in. Continue with Google, or set a password via Forgot password.");
+        }
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Invalid email or password");
@@ -207,6 +214,70 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         user = userRepository.save(user);
+        return buildAuthResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public String startOAuthHandoff(OAuthUserInfo info) {
+        if (info.email() == null || info.email().isBlank()) {
+            throw new BadRequestException("Google did not return an email");
+        }
+        String email = info.email().trim().toLowerCase();
+
+        User user = null;
+        if (info.subject() != null) {
+            user = userRepository.findByOauthSubject(info.subject()).orElse(null);
+        }
+        if (user == null) {
+            user = userRepository.findByEmail(email).orElse(null);
+        }
+
+        if (user == null) {
+            Role customerRole = roleRepository.findByName(Role.CUSTOMER)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Default '" + Role.CUSTOMER + "' role is missing — check V1 seed data"));
+            user = userRepository.save(User.builder()
+                    .email(email)
+                    .fullName(info.fullName() != null && !info.fullName().isBlank() ? info.fullName().trim() : email)
+                    .preferredLocale(DEFAULT_LOCALE)
+                    .role(customerRole)
+                    .status(UserStatus.ACTIVE)
+                    .emailVerifiedAt(Instant.now())
+                    .authProvider(AuthProvider.GOOGLE)
+                    .oauthSubject(info.subject())
+                    .build());
+        } else {
+            if (user.getOauthSubject() == null) {
+                if (!info.emailVerified()) {
+                    throw new BadRequestException("Google has not verified this email");
+                }
+                user.setOauthSubject(info.subject());
+                if (user.getEmailVerifiedAt() == null) {
+                    user.setEmailVerifiedAt(Instant.now());
+                }
+                userRepository.save(user);
+            }
+            if (user.getStatus() != UserStatus.ACTIVE) {
+                throw new AccountInactiveException("Account " + user.getStatus().name().toLowerCase());
+            }
+        }
+
+        return tokenService.issue(TokenType.OAUTH_HANDOFF, user.getEmail(), user.getId(),
+                Duration.ofSeconds(authProps.getOauthHandoffTtlSeconds()), null);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse oauthExchange(String code) {
+        OneTimeToken token = tokenService.consume(code, TokenType.OAUTH_HANDOFF);
+        User user = userRepository.findByEmail(token.getEmail())
+                .orElseThrow(() -> new BadRequestException("Invalid or expired token"));
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new AccountInactiveException("Account " + user.getStatus().name().toLowerCase());
+        }
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
         return buildAuthResponse(user);
     }
 

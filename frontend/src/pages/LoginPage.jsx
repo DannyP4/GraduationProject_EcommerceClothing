@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import CaptchaWidget, { captchaEnabled } from '../components/CaptchaWidget';
 import { useToast } from '../components/Toast';
+import { API_BASE_URL } from '../lib/api';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Mirrors BE @Pattern in RegisterRequest — at least one letter and one digit.
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+function friendlyOAuthError(code) {
+  return code === 'google_login_failed' ? 'Google sign-in failed. Please try again.' : code;
+}
 
 function GoogleIcon() {
   return (
@@ -34,8 +39,10 @@ export default function LoginPage() {
 
   const auth = useAuth();
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const oauthErrorShown = useRef(false);
   const handleGoogleLogin = () => {
-    toast.info('Google sign-in is coming soon.');
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
   const layer1 = useRef(null);
   const layer2 = useRef(null);
@@ -51,6 +58,18 @@ export default function LoginPage() {
       navigate(redirectFor(auth.user?.role), { replace: true });
     }
   }, [auth.status, auth.user?.role, navigate, fromPath]);
+
+  useEffect(() => {
+    if (oauthErrorShown.current) return;
+    const oauthError = searchParams.get('oauth_error');
+    if (oauthError) {
+      oauthErrorShown.current = true;
+      toast.error(friendlyOAuthError(oauthError));
+      const next = new URLSearchParams(searchParams);
+      next.delete('oauth_error');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams, toast]);
 
   const switchMode = (m) => {
     setMode(m);

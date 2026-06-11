@@ -13,5 +13,6 @@ public class AppAuthProperties {
 
     private int resetTokenTtlMinutes = 60;
     private int verifyTokenTtlHours = 48;
-    private int adminInviteTtlHours = 72;
+    private int adminInviteTtlHours = 24;
+    private int oauthHandoffTtlSeconds = 120;
 }
