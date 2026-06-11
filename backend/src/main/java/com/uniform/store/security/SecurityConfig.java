@@ -37,7 +37,10 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login", "/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login", "/auth/refresh",
+                        "/auth/forgot-password", "/auth/reset-password", "/auth/verify-email",
+                        "/auth/accept-invite").permitAll()
+                .requestMatchers(HttpMethod.GET, "/auth/invite").permitAll()
                 .requestMatchers(HttpMethod.GET, "/health", "/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/products/**", "/categories/**", "/brands/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()

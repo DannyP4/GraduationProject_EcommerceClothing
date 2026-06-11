@@ -27,6 +27,8 @@ public abstract class BaseIntegrationTest {
             "review_helpful_votes",
             "review_images",
             "reviews",
+            "email_log",
+            "one_time_tokens",
             "order_status_history",
             "order_items",
             "payments",

@@ -4,6 +4,7 @@ import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
 import ConfirmDialog from '../components/ConfirmDialog';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import { useAuth } from '../context/AuthContext';
 
 const NAV = [
@@ -35,6 +36,8 @@ export default function AccountLayout() {
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">My Account</h1>
         </div>
+
+        <EmailVerificationBanner />
 
         <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-8 items-start">
           <aside className="bg-white p-4">

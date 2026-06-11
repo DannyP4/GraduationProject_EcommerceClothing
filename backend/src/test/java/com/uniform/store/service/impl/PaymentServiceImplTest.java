@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -52,6 +53,7 @@ class PaymentServiceImplTest {
     @Mock FxService fxService;
     @Mock VnpayService vnpayService;
     @Mock StripeService stripeService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     PaymentServiceImpl paymentService;
 
@@ -66,7 +68,7 @@ class PaymentServiceImplTest {
         paymentService = new PaymentServiceImpl(
                 orderRepository, orderItemRepository, statusHistoryRepository, paymentRepository,
                 variantRepository, imageRepository, userRepository,
-                fxService, vnpayService, stripeService);
+                fxService, vnpayService, stripeService, eventPublisher);
 
         user = User.builder()
                 .email("buyer@uniform.test")

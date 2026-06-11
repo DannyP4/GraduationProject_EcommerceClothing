@@ -10,6 +10,10 @@ spring:
 app:
   jwt:
     secret: Emx7skOFeexLWGz48pKbJbOTjBA2QDiyVUz69BepBVQuSnD5FczXb8YhmLmYQxrtoWB7cIdbrCzmIuvEZKJf3N
+  mail:
+    enabled: false
+  captcha:
+    enabled: false
   fx:
     vnd-usd-rate: 0.0000385
     provider: TEST_FIXED

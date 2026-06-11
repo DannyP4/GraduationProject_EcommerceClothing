@@ -2,10 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
+import CaptchaWidget, { captchaEnabled } from '../components/CaptchaWidget';
+import { useToast } from '../components/Toast';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Mirrors BE @Pattern in RegisterRequest — at least one letter and one digit.
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+      <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" />
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z" />
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
@@ -15,8 +28,15 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0);
+  const resetCaptcha = () => { setCaptchaToken(''); setCaptchaKey((k) => k + 1); };
 
   const auth = useAuth();
+  const toast = useToast();
+  const handleGoogleLogin = () => {
+    toast.info('Google sign-in is coming soon.');
+  };
   const layer1 = useRef(null);
   const layer2 = useRef(null);
   const layer3 = useRef(null);
@@ -36,6 +56,7 @@ export default function LoginPage() {
     setMode(m);
     setError('');
     setConfirmPassword('');
+    resetCaptcha();
   };
 
   useEffect(() => {
@@ -80,11 +101,16 @@ export default function LoginPage() {
       }
     }
 
+    if (captchaEnabled && !captchaToken) {
+      setError('Please complete the captcha.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const loggedInUser = mode === 'login'
-        ? await auth.login(email.trim(), password)
-        : await auth.register({ email: email.trim(), password, fullName: fullName.trim() });
+        ? await auth.login(email.trim(), password, captchaToken)
+        : await auth.register({ email: email.trim(), password, fullName: fullName.trim(), captchaToken });
       navigate(redirectFor(loggedInUser?.role));
     } catch (err) {
       const msg = (err.message || '').toLowerCase();
@@ -93,6 +119,7 @@ export default function LoginPage() {
         navigate('/auth/account-status', { state: { status, email: email.trim() } });
         return;
       }
+      resetCaptcha();
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
@@ -221,15 +248,17 @@ export default function LoginPage() {
 
             {mode === 'login' && (
               <div className="text-right">
-                <a href="#" className="text-[11px] text-black/40 hover:text-black tracking-wider transition-colors">
+                <Link to="/auth/forgot-password" className="text-[13px] font-medium text-black/60 hover:text-[#E83354] transition-colors">
                   Forgot password?
-                </a>
+                </Link>
               </div>
             )}
 
+            <CaptchaWidget key={captchaKey} onToken={setCaptchaToken} />
+
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || (captchaEnabled && !captchaToken)}
               className="w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
             >
               {submitting
@@ -244,23 +273,21 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-black/10" />
           </div>
 
-          <div className="space-y-3">
-            {['Continue with Google', 'Continue with Apple'].map((label) => (
-              <button
-                key={label}
-                className="w-full border border-black/15 text-[12px] font-semibold text-black/70 py-3 hover:border-black/40 hover:text-black transition-all tracking-wide"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full border border-black/20 text-[13px] font-semibold text-black/80 py-3.5 hover:border-black hover:bg-black/[0.02] transition-all flex items-center justify-center gap-3"
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
 
-          <p className="text-center text-[11px] text-black/40 mt-8">
+          <p className="text-center text-[13px] text-black/55 mt-8">
             {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
               onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
-              className="font-bold text-black hover:text-[#E83354] transition-colors"
+              className="font-bold text-[#E83354] hover:underline underline-offset-2 transition-colors"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
             </button>
@@ -304,7 +331,7 @@ export default function LoginPage() {
 
         <div ref={layer3} className="absolute bottom-12 right-12" style={{ transition: 'transform 0.1s ease-out' }}>
           <div className="border border-white/20 p-6 max-w-xs backdrop-blur-sm">
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#E83354] mb-2">SS 2024</p>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#E83354] mb-2">SS 2026</p>
             <p className="font-['Anton'] text-3xl text-white tracking-wide leading-tight uppercase">
               Campus<br />Collection
             </p>

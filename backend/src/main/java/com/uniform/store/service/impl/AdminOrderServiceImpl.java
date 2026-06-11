@@ -10,10 +10,12 @@ import com.uniform.store.entity.OrderStatusHistory;
 import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
+import com.uniform.store.enums.OrderEmailType;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.OrderTransitions;
 import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
+import com.uniform.store.event.OrderEmailEvent;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.mapper.OrderMapper;
@@ -27,6 +29,7 @@ import com.uniform.store.repository.spec.OrderSpecs;
 import com.uniform.store.service.AdminOrderService;
 import com.uniform.store.service.CouponService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -52,6 +55,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final OrderMapper orderMapper;
     private final PaymentRepository paymentRepository;
     private final CouponService couponService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public PageResponse<AdminOrderSummaryDto> listOrders(AdminOrderFilter filter, Pageable pageable) {
@@ -99,6 +103,12 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 .changedByUserId(actor.getId())
                 .build());
 
+        if (targetStatus == OrderStatus.SHIPPED) {
+            eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.SHIPPED));
+        } else if (targetStatus == OrderStatus.DELIVERED) {
+            eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.DELIVERED));
+        }
+
         List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId());
         return orderMapper.toAdminDetailDto(order, items);
     }
@@ -142,6 +152,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 .note(buildCancelNote(actorEmail, reason))
                 .changedByUserId(actor.getId())
                 .build());
+
+        eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.CANCELLED));
 
         return orderMapper.toAdminDetailDto(order, items);
     }

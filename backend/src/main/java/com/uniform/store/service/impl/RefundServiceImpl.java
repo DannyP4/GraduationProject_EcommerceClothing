@@ -7,10 +7,12 @@ import com.uniform.store.entity.OrderStatusHistory;
 import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
+import com.uniform.store.enums.OrderEmailType;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.OrderTransitions;
 import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
+import com.uniform.store.event.OrderEmailEvent;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.mapper.OrderMapper;
@@ -25,6 +27,7 @@ import com.uniform.store.service.StripeService;
 import com.uniform.store.service.VnpayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +54,7 @@ public class RefundServiceImpl implements RefundService {
     private final OrderMapper orderMapper;
     private final StripeService stripeService;
     private final VnpayService vnpayService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -106,6 +110,8 @@ public class RefundServiceImpl implements RefundService {
                 .note(buildRefundNote(actorEmail, reason, payment.getProvider(), refundRef))
                 .changedByUserId(actor.getId())
                 .build());
+
+        eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.REFUNDED));
 
         return orderMapper.toAdminDetailDto(order, items);
     }

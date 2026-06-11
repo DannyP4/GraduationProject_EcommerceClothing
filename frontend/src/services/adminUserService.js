@@ -42,3 +42,8 @@ export async function softDeleteUser(id) {
   const resp = await apiClient.delete(`/admin/users/${id}`);
   return unwrap(resp);
 }
+
+export async function inviteAdmin({ email, fullName }) {
+  const resp = await apiClient.post('/admin/users/invite', cleanParams({ email, fullName }));
+  return unwrap(resp);
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<table th:fragment="header" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0A0A0A;">
+    <tr>
+        <td align="center" style="padding:30px 24px 24px;">
+            <span style="font-family:'Anton','Arial Black',Impact,sans-serif;font-size:42px;line-height:1;color:#ffffff;letter-spacing:11px;text-transform:uppercase;">VESTA</span>
+        </td>
+    </tr>
+    <tr>
+        <td style="height:5px;background-color:#E83354;font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
+</table>
+
+<table th:fragment="summary" role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="padding:4px 0 26px;border-top:2px solid #0A0A0A;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding:14px 0 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:rgba(10,10,10,0.4);">Order no.</td>
+                    <td align="right" style="padding:14px 0 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#0A0A0A;" th:text="'#' + ${orderNumber}">#VST-1</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 0 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:rgba(10,10,10,0.4);">Placed</td>
+                    <td align="right" style="padding:10px 0 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#0A0A0A;" th:text="${placedAt}">11 Jun 2026</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 0 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:rgba(10,10,10,0.4);">Status</td>
+                    <td align="right" style="padding:10px 0 0;">
+                        <span style="display:inline-block;padding:5px 11px;background-color:#0A0A0A;color:#ffffff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;" th:text="${statusLabel}">Pending</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                <tr>
+                    <td style="padding:0 0 9px;border-bottom:2px solid #0A0A0A;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#0A0A0A;">Item</td>
+                    <td align="center" style="padding:0 0 9px;border-bottom:2px solid #0A0A0A;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#0A0A0A;">Qty</td>
+                    <td align="right" style="padding:0 0 9px;border-bottom:2px solid #0A0A0A;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#0A0A0A;">Total</td>
+                </tr>
+                <tr th:each="item : ${items}">
+                    <td style="padding:13px 0;border-bottom:1px solid #ededed;font-family:Inter,Arial,Helvetica,sans-serif;">
+                        <div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#0A0A0A;" th:text="${item.name}">Product name</div>
+                        <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(10,10,10,0.45);margin-top:4px;" th:text="${item.variant}">M / Black</div>
+                    </td>
+                    <td align="center" style="padding:13px 0;border-bottom:1px solid #ededed;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#0A0A0A;" th:text="${item.quantity}">1</td>
+                    <td align="right" style="padding:13px 0;border-bottom:1px solid #ededed;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0A0A0A;" th:text="${item.lineTotal}">200,000&#8363;</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:18px 0 26px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding:3px 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(10,10,10,0.55);">Subtotal</td>
+                    <td align="right" style="padding:3px 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#0A0A0A;" th:text="${subtotal}">200,000&#8363;</td>
+                </tr>
+                <tr th:if="${hasDiscount}">
+                    <td style="padding:3px 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(10,10,10,0.55);">Discount</td>
+                    <td align="right" style="padding:3px 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#E83354;">&minus;<span th:text="${discountTotal}">20,000&#8363;</span></td>
+                </tr>
+                <tr>
+                    <td style="padding:3px 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(10,10,10,0.55);">Shipping</td>
+                    <td align="right" style="padding:3px 0;font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#0A0A0A;" th:text="${shippingCost}">30,000&#8363;</td>
+                </tr>
+                <tr>
+                    <td style="padding:14px 0 0;border-top:2px solid #0A0A0A;font-family:'Anton','Arial Black',Impact,sans-serif;font-size:18px;letter-spacing:0.02em;text-transform:uppercase;color:#0A0A0A;">Total</td>
+                    <td align="right" style="padding:14px 0 0;border-top:2px solid #0A0A0A;font-family:'Anton','Arial Black',Impact,sans-serif;font-size:24px;color:#E83354;" th:text="${grandTotal}">230,000&#8363;</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td valign="top" width="55%" style="padding:0 12px 0 0;font-family:Inter,Arial,Helvetica,sans-serif;">
+                        <div style="font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:rgba(10,10,10,0.4);margin-bottom:9px;">Ship to</div>
+                        <div style="font-size:13px;font-weight:700;letter-spacing:0.02em;color:#0A0A0A;" th:text="${shippingRecipient}">Recipient</div>
+                        <div style="font-size:13px;color:rgba(10,10,10,0.6);margin-top:3px;" th:text="${shippingPhone}">0900000000</div>
+                        <div style="font-size:13px;color:rgba(10,10,10,0.6);margin-top:3px;line-height:1.5;" th:text="${shippingAddress}">Address line</div>
+                    </td>
+                    <td valign="top" width="45%" style="padding:0;font-family:Inter,Arial,Helvetica,sans-serif;">
+                        <div style="font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:rgba(10,10,10,0.4);margin-bottom:9px;">Payment</div>
+                        <div style="font-size:13px;color:#0A0A0A;" th:text="${paymentMethod}">Cash on Delivery</div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<table th:fragment="cta(url, label)" role="presentation" cellpadding="0" cellspacing="0" style="margin:30px 0 4px;">
+    <tr>
+        <td style="background-color:#0A0A0A;">
+            <a th:href="${url}" style="display:inline-block;padding:16px 40px;font-family:Inter,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ffffff;text-decoration:none;" th:text="${label}">View your order</a>
+        </td>
+    </tr>
+</table>
+
+<table th:fragment="footer" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0A0A0A;">
+    <tr>
+        <td align="center" style="padding:32px 24px;">
+            <div style="font-family:'Anton','Arial Black',Impact,sans-serif;font-size:24px;color:#ffffff;letter-spacing:6px;text-transform:uppercase;">VESTA</div>
+            <div style="font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:0.22em;text-transform:uppercase;margin-top:10px;">Streetwear &middot; Fashion &amp; Virtual Try-On</div>
+            <div style="font-family:Inter,Arial,Helvetica,sans-serif;font-size:12px;color:rgba(255,255,255,0.65);margin-top:18px;">
+                Need help? <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}" style="color:#E83354;text-decoration:none;font-weight:600;">support</a>
+            </div>
+            <div style="font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;margin-top:18px;">&copy; <span th:text="${year}">2026</span> Vesta. All rights reserved.</div>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

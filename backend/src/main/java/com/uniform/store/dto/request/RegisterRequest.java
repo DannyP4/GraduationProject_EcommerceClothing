@@ -30,4 +30,6 @@ public class RegisterRequest {
 
     @Pattern(regexp = "^(en|vi|ja)$", message = "preferredLocale must be one of: en, vi, ja")
     private String preferredLocale;
+
+    private String captchaToken;
 }

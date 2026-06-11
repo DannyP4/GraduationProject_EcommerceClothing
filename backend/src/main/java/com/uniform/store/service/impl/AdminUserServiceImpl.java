@@ -1,6 +1,9 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.AppAuthProperties;
+import com.uniform.store.dto.request.AdminInviteRequest;
 import com.uniform.store.dto.request.AdminUserFilterRequest;
+import com.uniform.store.dto.response.AdminInviteResponse;
 import com.uniform.store.dto.response.AdminUserDetailDto;
 import com.uniform.store.dto.response.AdminUserSummaryDto;
 import com.uniform.store.dto.response.PageResponse;
@@ -8,19 +11,26 @@ import com.uniform.store.entity.Address;
 import com.uniform.store.entity.Order;
 import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
+import com.uniform.store.enums.TokenType;
 import com.uniform.store.enums.UserStatus;
+import com.uniform.store.event.AuthMailEvent;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.repository.AddressRepository;
 import com.uniform.store.repository.OrderRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.service.AdminUserService;
+import com.uniform.store.service.OneTimeTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +43,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final AddressRepository addressRepository;
+    private final OneTimeTokenService tokenService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final AppAuthProperties authProps;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     @Override
     public PageResponse<AdminUserSummaryDto> list(AdminUserFilterRequest filter, Pageable pageable) {
@@ -62,6 +78,32 @@ public class AdminUserServiceImpl implements AdminUserService {
         List<Order> orders = orderRepository.findTop50ByUserIdOrderByPlacedAtDesc(id);
         long ordersCount = orderRepository.countByUserId(id);
         return toDetail(user, addresses, orders, ordersCount);
+    }
+
+    @Override
+    @Transactional
+    public AdminInviteResponse invite(AdminInviteRequest req) {
+        String email = req.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("A user with this email already exists");
+        }
+
+        String fullName = (req.getFullName() != null && !req.getFullName().isBlank())
+                ? req.getFullName().trim()
+                : null;
+
+        Duration ttl = Duration.ofHours(authProps.getAdminInviteTtlHours());
+        Map<String, Object> payload = fullName != null ? Map.of("fullName", fullName) : null;
+        String rawToken = tokenService.issue(TokenType.ADMIN_INVITE, email, null, ttl, payload);
+
+        String link = frontendBaseUrl + "/auth/accept-invite?token=" + rawToken;
+        eventPublisher.publishEvent(new AuthMailEvent(
+                TokenType.ADMIN_INVITE, email, fullName != null ? fullName : "there", link));
+
+        return AdminInviteResponse.builder()
+                .email(email)
+                .expiresAt(Instant.now().plus(ttl))
+                .build();
     }
 
     @Override

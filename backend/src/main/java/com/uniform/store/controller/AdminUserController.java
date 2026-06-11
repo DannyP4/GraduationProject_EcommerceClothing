@@ -1,6 +1,8 @@
 package com.uniform.store.controller;
 
+import com.uniform.store.dto.request.AdminInviteRequest;
 import com.uniform.store.dto.request.AdminUserFilterRequest;
+import com.uniform.store.dto.response.AdminInviteResponse;
 import com.uniform.store.dto.response.AdminUserDetailDto;
 import com.uniform.store.dto.response.AdminUserSummaryDto;
 import com.uniform.store.dto.response.ApiResponse;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,6 +48,12 @@ public class AdminUserController {
     @Operation(summary = "Get user detail with addresses and recent orders")
     public ApiResponse<AdminUserDetailDto> get(@PathVariable Long id) {
         return ApiResponse.ok(adminUserService.get(id));
+    }
+
+    @PostMapping("/invite")
+    @Operation(summary = "Invite a new administrator by email (they set their own password via the link)")
+    public ApiResponse<AdminInviteResponse> invite(@Valid @RequestBody AdminInviteRequest req) {
+        return ApiResponse.ok("Invitation sent", adminUserService.invite(req));
     }
 
     @PostMapping("/{id}/suspend")

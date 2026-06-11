@@ -51,8 +51,8 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:logout', onLogout);
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    const data = await authService.login({ email, password });
+  const login = useCallback(async (email, password, captchaToken) => {
+    const data = await authService.login({ email, password, captchaToken });
     setStoredTokens(data.accessToken, data.refreshToken);
     setStoredUser(data.user);
     setUser(data.user);
@@ -60,8 +60,16 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const register = useCallback(async ({ email, password, fullName }) => {
-    const data = await authService.register({ email, password, fullName });
+  const register = useCallback(async ({ email, password, fullName, captchaToken }) => {
+    const data = await authService.register({ email, password, fullName, captchaToken });
+    setStoredTokens(data.accessToken, data.refreshToken);
+    setStoredUser(data.user);
+    setUser(data.user);
+    setStatus('authenticated');
+    return data.user;
+  }, []);
+
+  const adoptSession = useCallback((data) => {
     setStoredTokens(data.accessToken, data.refreshToken);
     setStoredUser(data.user);
     setUser(data.user);
@@ -85,7 +93,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, status, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, status, login, register, logout, refreshUser, adoptSession }}>
       {children}
     </AuthContext.Provider>
   );

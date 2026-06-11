@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -59,6 +60,7 @@ class RefundServiceImplTest {
     @Mock OrderMapper orderMapper;
     @Mock StripeService stripeService;
     @Mock VnpayService vnpayService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     RefundServiceImpl refundService;
 
@@ -73,7 +75,8 @@ class RefundServiceImplTest {
     void setUp() {
         refundService = new RefundServiceImpl(
                 orderRepository, orderItemRepository, statusHistoryRepository, paymentRepository,
-                variantRepository, userRepository, orderMapper, stripeService, vnpayService);
+                variantRepository, userRepository, orderMapper, stripeService, vnpayService,
+                eventPublisher);
 
         adminUser = User.builder()
                 .email("admin@uniform.test").fullName("Boss")

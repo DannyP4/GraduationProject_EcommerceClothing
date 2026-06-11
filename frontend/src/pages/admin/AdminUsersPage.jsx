@@ -41,6 +41,7 @@ export default function AdminUsersPage() {
   const [confirmSuspend, setConfirmSuspend] = useState(null);
   const [confirmActivate, setConfirmActivate] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showInvite, setShowInvite] = useState(false);
 
   useScrollRestore(!loading);
 
@@ -145,11 +146,20 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">Users</h1>
-        <p className="text-sm text-black/55 mt-1 max-w-md">
-          Customer accounts — suspend, reactivate, or soft-delete. Admins cannot be ban'd from this view.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight">Users</h1>
+          <p className="text-sm text-black/55 mt-1 max-w-md">
+            Customer accounts - suspend, reactivate, or soft-delete. Admins cannot be ban'd from this view.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowInvite(true)}
+          className="shrink-0 text-[11px] font-bold tracking-[0.15em] uppercase bg-black text-white px-5 py-3 hover:bg-[#E83354] transition-colors"
+        >
+          Invite admin
+        </button>
       </div>
 
       <div className="bg-white border border-black/10 p-3">
@@ -258,6 +268,96 @@ export default function AdminUsersPage() {
         onCancel={() => setConfirmDelete(null)}
         onConfirm={handleDelete}
       />
+
+      {showInvite && <InviteAdminModal onClose={() => setShowInvite(false)} />}
+    </div>
+  );
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function InviteAdminModal({ onClose }) {
+  const toast = useToast();
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!EMAIL_REGEX.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await userSvc.inviteAdmin({ email: email.trim(), fullName: fullName.trim() || undefined });
+      toast.success(`Invitation sent to ${email.trim()}`);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Could not send invitation.');
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+      <div className="bg-white border border-black/10 w-full max-w-md p-7" onClick={(e) => e.stopPropagation()}>
+        <div className="text-[10px] font-bold tracking-[0.25em] uppercase text-[#E83354] mb-2">Team invitation</div>
+        <h2 className="font-['Anton'] text-3xl uppercase tracking-tight mb-2">Invite admin</h2>
+        <p className="text-sm text-black/55 mb-6">
+          They'll get an email with a link to set their own password and join the admin team.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="border border-[#E83354]/40 bg-[#E83354]/5 px-4 py-3 text-[12px] text-[#E83354]">
+              {error}
+            </div>
+          )}
+          <div>
+            <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">Email</label>
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
+              required
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
+              Name <span className="text-black/30 normal-case tracking-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Their name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full border border-black/15 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors"
+              maxLength={150}
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 py-3 hover:border-black transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 text-[11px] font-bold tracking-[0.15em] uppercase bg-black text-white py-3 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
+            >
+              {submitting ? 'Sending...' : 'Send invite'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

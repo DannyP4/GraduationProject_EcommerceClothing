@@ -18,9 +18,11 @@ import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.Product;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
+import com.uniform.store.enums.OrderEmailType;
 import com.uniform.store.enums.OrderStatus;
 import com.uniform.store.enums.PaymentProvider;
 import com.uniform.store.enums.PaymentStatus;
+import com.uniform.store.event.OrderEmailEvent;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.mapper.OrderMapper;
@@ -42,6 +44,7 @@ import com.uniform.store.service.ShippingService;
 import com.uniform.store.service.StripeService;
 import com.uniform.store.service.VnpayService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -83,6 +86,7 @@ public class OrderServiceImpl implements OrderService {
     private final CouponService couponService;
     private final OrderCouponRepository orderCouponRepository;
     private final ShippingService shippingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -236,6 +240,8 @@ public class OrderServiceImpl implements OrderService {
                 .changedByUserId(user.getId())
                 .build());
 
+        eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.CONFIRMATION));
+
         return switch (provider) {
             case COD -> finalizeCodPlacement(order, grandTotal, currency, orderItems);
             case VNPAY -> finalizeVnpayPlacement(order, grandTotal, currency, orderItems, clientIp);
@@ -363,6 +369,8 @@ public class OrderServiceImpl implements OrderService {
                 .note("Cancelled by customer")
                 .changedByUserId(user.getId())
                 .build());
+
+        eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.CANCELLED));
 
         // payment enum has no CANCELLED; FAILED is the closest terminal state.
         paymentRepository.findFirstByOrderIdOrderByIdDesc(order.getId()).ifPresent(p -> {

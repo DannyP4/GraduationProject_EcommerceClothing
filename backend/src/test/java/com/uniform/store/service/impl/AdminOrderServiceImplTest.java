@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +62,7 @@ class AdminOrderServiceImplTest {
     @Mock OrderMapper orderMapper;
     @Mock PaymentRepository paymentRepository;
     @Mock CouponService couponService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     AdminOrderServiceImpl adminOrderService;
 
@@ -74,7 +76,8 @@ class AdminOrderServiceImplTest {
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(
                 orderRepository, orderItemRepository, statusHistoryRepository,
-                variantRepository, userRepository, orderMapper, paymentRepository, couponService);
+                variantRepository, userRepository, orderMapper, paymentRepository, couponService,
+                eventPublisher);
 
         adminUser = User.builder()
                 .email("admin@uniform.test")

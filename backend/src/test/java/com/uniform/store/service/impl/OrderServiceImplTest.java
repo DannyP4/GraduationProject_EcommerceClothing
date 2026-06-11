@@ -45,6 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -83,6 +84,7 @@ class OrderServiceImplTest {
     @Mock CouponService couponService;
     @Mock OrderCouponRepository orderCouponRepository;
     @Mock ShippingService shippingService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     OrderServiceImpl orderService;
 
@@ -100,7 +102,7 @@ class OrderServiceImplTest {
                 variantRepository, orderRepository, orderItemRepository,
                 statusHistoryRepository, paymentRepository, orderNumberGenerator,
                 fxService, vnpayService, stripeService, orderMapper, new PricingService(),
-                couponService, orderCouponRepository, shippingService);
+                couponService, orderCouponRepository, shippingService, eventPublisher);
 
         lenient().when(shippingService.fee(any(), any())).thenReturn(BigDecimal.ZERO);
 

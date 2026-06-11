@@ -1,6 +1,6 @@
 spring:
   profiles:
-    default: xampp
+    default: docker
   config:
     import:
       - "optional:file:.env[.properties]"
@@ -37,6 +37,25 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
 
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  thymeleaf:
+    check-template-location: false
+
 db:
   name: uniform_store
 
@@ -65,6 +84,20 @@ app:
     free-threshold: 500000
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from-name: ${MAIL_FROM_NAME:Vesta}
+    from-address: ${MAIL_FROM:${MAIL_USERNAME:}}
+    support-email: ${MAIL_SUPPORT:${MAIL_FROM:${MAIL_USERNAME:}}}
+  auth:
+    reset-token-ttl-minutes: ${AUTH_RESET_TOKEN_TTL_MINUTES:60}
+    verify-token-ttl-hours: ${AUTH_VERIFY_TOKEN_TTL_HOURS:48}
+    admin-invite-ttl-hours: ${AUTH_ADMIN_INVITE_TTL_HOURS:72}
+  captcha:
+    enabled: ${CAPTCHA_ENABLED:true}
+    turnstile:
+      secret-key: ${TURNSTILE_SECRET_KEY:}
+      verify-url: ${TURNSTILE_VERIFY_URL:https://challenges.cloudflare.com/turnstile/v0/siteverify}
   fx:
     vnd-usd-rate: 0.0000385
     provider: HARDCODED

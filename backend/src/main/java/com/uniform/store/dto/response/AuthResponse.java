@@ -25,5 +25,6 @@ public class AuthResponse {
         private String phone;
         private String role;
         private String preferredLocale;
+        private Boolean emailVerified;
     }
 }

@@ -1,11 +1,18 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.AppAuthProperties;
+import com.uniform.store.dto.request.AcceptInviteRequest;
 import com.uniform.store.dto.request.LoginRequest;
 import com.uniform.store.dto.request.RegisterRequest;
+import com.uniform.store.dto.request.ResetPasswordRequest;
 import com.uniform.store.dto.response.AuthResponse;
+import com.uniform.store.dto.response.InvitePreviewResponse;
+import com.uniform.store.entity.OneTimeToken;
 import com.uniform.store.entity.Role;
 import com.uniform.store.entity.User;
+import com.uniform.store.enums.TokenType;
 import com.uniform.store.enums.UserStatus;
+import com.uniform.store.event.AuthMailEvent;
 import com.uniform.store.exception.AccountInactiveException;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
@@ -13,11 +20,15 @@ import com.uniform.store.repository.RoleRepository;
 import com.uniform.store.repository.UserRepository;
 import com.uniform.store.security.JwtUtil;
 import com.uniform.store.service.AuthService;
+import com.uniform.store.service.OneTimeTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 
 @Service
@@ -30,6 +41,12 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final OneTimeTokenService tokenService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final AppAuthProperties authProps;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     @Override
     @Transactional
@@ -61,6 +78,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         user = userRepository.save(user);
+        issueVerify(user);
         return buildAuthResponse(user);
     }
 
@@ -97,6 +115,99 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(String email) {
         // Stateless JWT: no server-side state.
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(String email) {
+        String normalizedEmail = email.trim().toLowerCase();
+        userRepository.findByEmail(normalizedEmail).ifPresent(user -> {
+            String rawToken = tokenService.issue(TokenType.PASSWORD_RESET, user.getEmail(), user.getId(),
+                    Duration.ofMinutes(authProps.getResetTokenTtlMinutes()), null);
+            String link = frontendBaseUrl + "/auth/reset-password?token=" + rawToken;
+            eventPublisher.publishEvent(new AuthMailEvent(
+                    TokenType.PASSWORD_RESET, user.getEmail(), user.getFullName(), link));
+        });
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest req) {
+        OneTimeToken token = tokenService.consume(req.getToken(), TokenType.PASSWORD_RESET);
+        User user = userRepository.findByEmail(token.getEmail())
+                .orElseThrow(() -> new BadRequestException("Invalid or expired token"));
+        user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void verifyEmail(String token) {
+        OneTimeToken consumed = tokenService.consume(token, TokenType.EMAIL_VERIFY);
+        User user = userRepository.findByEmail(consumed.getEmail())
+                .orElseThrow(() -> new BadRequestException("Invalid or expired token"));
+        if (user.getEmailVerifiedAt() == null) {
+            user.setEmailVerifiedAt(Instant.now());
+            userRepository.save(user);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resendVerification(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+        if (user.getEmailVerifiedAt() != null) {
+            throw new BadRequestException("Email is already verified");
+        }
+        issueVerify(user);
+    }
+
+    private void issueVerify(User user) {
+        String rawToken = tokenService.issue(TokenType.EMAIL_VERIFY, user.getEmail(), user.getId(),
+                Duration.ofHours(authProps.getVerifyTokenTtlHours()), null);
+        String link = frontendBaseUrl + "/auth/verify-email?token=" + rawToken;
+        eventPublisher.publishEvent(new AuthMailEvent(
+                TokenType.EMAIL_VERIFY, user.getEmail(), user.getFullName(), link));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InvitePreviewResponse previewInvite(String token) {
+        OneTimeToken invite = tokenService.peek(token, TokenType.ADMIN_INVITE);
+        String fullName = invite.getPayload() != null
+                ? (String) invite.getPayload().get("fullName")
+                : null;
+        return InvitePreviewResponse.builder()
+                .email(invite.getEmail())
+                .fullName(fullName)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse acceptInvite(AcceptInviteRequest req) {
+        OneTimeToken invite = tokenService.consume(req.getToken(), TokenType.ADMIN_INVITE);
+        if (userRepository.existsByEmail(invite.getEmail())) {
+            throw new BadRequestException("A user with this email already exists");
+        }
+
+        Role adminRole = roleRepository.findByName(Role.ADMIN)
+                .orElseThrow(() -> new IllegalStateException(
+                        "'" + Role.ADMIN + "' role is missing — check V1 seed data"));
+
+        User user = User.builder()
+                .email(invite.getEmail())
+                .passwordHash(passwordEncoder.encode(req.getPassword()))
+                .fullName(req.getFullName().trim())
+                .preferredLocale(DEFAULT_LOCALE)
+                .role(adminRole)
+                .status(UserStatus.ACTIVE)
+                .emailVerifiedAt(Instant.now())
+                .build();
+
+        user = userRepository.save(user);
+        return buildAuthResponse(user);
     }
 
     @Override
@@ -138,6 +249,7 @@ public class AuthServiceImpl implements AuthService {
                 .phone(user.getPhone())
                 .role(user.getRole().getName())
                 .preferredLocale(user.getPreferredLocale())
+                .emailVerified(user.getEmailVerifiedAt() != null)
                 .build();
     }
 }
