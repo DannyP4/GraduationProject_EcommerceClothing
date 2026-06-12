@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as authService from '../services/authService';
 import AuthCard from '../components/AuthCard';
 import CaptchaWidget, { captchaEnabled } from '../components/CaptchaWidget';
@@ -7,6 +8,7 @@ import CaptchaWidget, { captchaEnabled } from '../components/CaptchaWidget';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -19,11 +21,11 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     if (!EMAIL_REGEX.test(email.trim())) {
-      setError('Please enter a valid email address.');
+      setError(t('authFlow.errors.invalidEmail'));
       return;
     }
     if (captchaEnabled && !captchaToken) {
-      setError('Please complete the captcha.');
+      setError(t('authFlow.errors.captcha'));
       return;
     }
     setSubmitting(true);
@@ -32,7 +34,7 @@ export default function ForgotPasswordPage() {
       setSent(true);
     } catch (err) {
       resetCaptcha();
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || t('authFlow.errors.generic'));
     } finally {
       setSubmitting(false);
     }
@@ -40,25 +42,26 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthCard eyebrow="Account" title="Check your inbox">
+      <AuthCard eyebrow={t('authFlow.eyebrow.account')} title={t('authFlow.forgot.sentTitle')}>
         <p className="text-sm text-black/60 mb-7 leading-relaxed">
-          If an account exists for <strong className="text-black break-all">{email.trim()}</strong>, we've sent a
-          password-reset link. It expires in 60 minutes - check your inbox (and spam).
+          {t('authFlow.forgot.sentLead.before')}
+          <strong className="text-black break-all">{email.trim()}</strong>
+          {t('authFlow.forgot.sentLead.after')}
         </p>
         <Link
           to="/login"
           className="block text-center w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors"
         >
-          Back to sign in
+          {t('authFlow.backToSignIn')}
         </Link>
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard eyebrow="Account" title="Reset password">
+    <AuthCard eyebrow={t('authFlow.eyebrow.account')} title={t('authFlow.forgot.title')}>
       <p className="text-sm text-black/50 mb-7">
-        Enter your email and we'll send you a link to set a new password.
+        {t('authFlow.forgot.lead')}
       </p>
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
@@ -68,7 +71,7 @@ export default function ForgotPasswordPage() {
         )}
         <div>
           <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-            Email
+            {t('authFlow.fields.email')}
           </label>
           <input
             type="email"
@@ -86,12 +89,12 @@ export default function ForgotPasswordPage() {
           disabled={submitting || (captchaEnabled && !captchaToken)}
           className="w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
         >
-          {submitting ? 'Sending...' : 'Send reset link'}
+          {submitting ? t('authFlow.forgot.sending') : t('authFlow.forgot.submit')}
         </button>
       </form>
       <p className="text-center text-[11px] text-black/40 mt-7">
         <Link to="/login" className="font-bold text-black hover:text-[#E83354] transition-colors">
-          Back to sign in
+          {t('authFlow.backToSignIn')}
         </Link>
       </p>
     </AuthCard>

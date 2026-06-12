@@ -1,0 +1,699 @@
+{
+  "nav": {
+    "shop": "ショップ",
+    "collections": "コレクション",
+    "lookbook": "ルックブック",
+    "about": "概要",
+    "comingSoon": "近日公開",
+    "login": "ログイン"
+  },
+  "search": {
+    "placeholder": "商品を検索...",
+    "label": "検索",
+    "submit": "検索",
+    "clear": "クリア",
+    "searching": "検索中…",
+    "noMatches": "「{{query}}」に一致する商品がありません",
+    "tryDifferent": "別のキーワードをお試しください",
+    "matches_other": "{{count}}件",
+    "viewAll": "すべての結果を見る →"
+  },
+  "cart": {
+    "label": "カート",
+    "title": "マイカート",
+    "items_other": "{{count}}点",
+    "empty": "カートは空です",
+    "shopNow": "買い物を始める",
+    "moreInCart_other": "カートにあと{{count}}点",
+    "subtotal": "小計",
+    "viewCart": "カートを見る",
+    "checkout": "購入手続き"
+  },
+  "notifications": {
+    "label": "通知",
+    "title": "通知",
+    "new": "新着{{count}}件",
+    "markAllRead": "すべて既読にする",
+    "empty": "通知はまだありません",
+    "emptyHint": "注文の更新がここに表示されます。",
+    "type": {
+      "ORDER_PLACED": "注文済み",
+      "ORDER_PAID": "支払済み",
+      "ORDER_SHIPPED": "発送済み",
+      "ORDER_DELIVERED": "配達済み",
+      "ORDER_CANCELLED": "キャンセル",
+      "ORDER_REFUNDED": "返金済み"
+    }
+  },
+  "account": {
+    "signedInAs": "ログイン中",
+    "adminDashboard": "管理ダッシュボード",
+    "profile": "プロフィール",
+    "orders": "注文履歴",
+    "addresses": "住所",
+    "signOut": "ログアウト",
+    "signOutConfirmTitle": "ログアウトしますか？",
+    "signOutConfirmMessage": "アカウント、注文、保存済みの住所にアクセスするには、再度ログインが必要です。",
+    "staySignedIn": "ログインを続ける"
+  },
+  "footer": {
+    "tagline": "大胆なあなたのためのストリートウェア — あなたらしく着こなすために。",
+    "shop": "ショップ",
+    "info": "情報",
+    "stayUpdated": "最新情報",
+    "newsletterHint": "新作の先行案内や限定メンバー特典をお届けします。",
+    "emailPlaceholder": "your@email.com",
+    "subscribe": "送信",
+    "rights": "© 2026 VESTA. All rights reserved.",
+    "links": {
+      "newArrivals": "新着",
+      "tops": "トップス",
+      "bottoms": "ボトムス",
+      "outerwear": "アウター",
+      "accessories": "アクセサリー",
+      "sale": "セール",
+      "aboutUs": "私たちについて",
+      "sustainability": "サステナビリティ",
+      "sizeGuide": "サイズガイド",
+      "shippingReturns": "配送と返品",
+      "faq": "よくある質問",
+      "contact": "お問い合わせ",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "cookies": "Cookieポリシー"
+    }
+  },
+  "announcement": {
+    "ticker": "⚡ 全アイテムでバーチャル試着 · シーズンセール — 対象スタイル値下げ中 · クーポンをお持ちですか？購入時にご利用ください · 毎週新作入荷 · ",
+    "dismiss": "閉じる"
+  },
+  "common": {
+    "noImage": "画像なし",
+    "viewDetails": "詳細を見る →",
+    "sold": "{{n}}点販売"
+  },
+  "home": {
+    "eyebrow": "SS 2026 コレクション",
+    "heroTitleLine1": "伝説の",
+    "heroTitleLine2": "ように",
+    "heroTitleAccent": "装え",
+    "subtitle": "自分らしく着こなす人のためのステートメント・ストリートウェア。限定ドロップ、無限のスタイル。",
+    "ctaShop": "今すぐ購入",
+    "ctaExplore": "ルックを見る",
+    "editorial": "エディトリアル",
+    "featured1": "注目の",
+    "featured2": "ルックブック",
+    "manifesto": "マニフェスト",
+    "statement1": "己の",
+    "statementHi1": "野心",
+    "statement2": "を示し、",
+    "statementHi2": "舞台",
+    "statement3": "を制して基準を打ち立てよ。",
+    "manifestoBody": "すべてのアイテムはあなたと共に動くために作られています — 日常のために設計され、際立つために生まれました。",
+    "whatsHot": "人気",
+    "trending1": "トレンド",
+    "trending2": "ナウ",
+    "viewAll": "すべて見る",
+    "noProducts": "商品はまだありません。",
+    "lookbooks": {
+      "campusEssentialsTag": "デイリー定番",
+      "campusEssentialsTitle": "デイリースタイル",
+      "streetwearTag": "ストリートウェア",
+      "streetwearTitle": "アーバンエディット",
+      "seasonalTag": "シーズナル",
+      "seasonalTitle": "冬のレイヤー",
+      "minimalTag": "ミニマル",
+      "minimalTitle": "クリーンカット",
+      "retroTag": "レトロ",
+      "retroTitle": "バーシティクラブ"
+    }
+  },
+  "shop": {
+    "sortNewest": "新着",
+    "sortPriceAsc": "価格: 安い順",
+    "sortPriceDesc": "価格: 高い順",
+    "sortPopular": "人気",
+    "eyebrowSearch": "検索 · {{n}}件",
+    "eyebrowBrand": "ブランド · {{n}}点",
+    "eyebrowSeason": "SS 2026 · {{n}}点",
+    "titleResults": "「{{query}}」の検索結果",
+    "titleBrand": "ブランド",
+    "titleAll": "すべての商品",
+    "clearSearch": "検索をクリア",
+    "clearBrand": "ブランドをクリア",
+    "collections": "コレクション",
+    "searchCategory": "カテゴリを検索…",
+    "all": "すべて",
+    "sortBy": "並び替え",
+    "clearFilters": "フィルターをクリア",
+    "errorTitle": "商品を読み込めませんでした",
+    "retry": "再試行",
+    "noMatchTitle": "「{{query}}」に一致する商品がありません",
+    "noMatchBody": "その検索に一致する商品が見つかりませんでした。別のキーワードをお試しいただくか、全カタログをご覧ください。",
+    "backToShop": "ショップに戻る",
+    "noProductsTitle": "商品が見つかりません",
+    "noProductsHint": "フィルターを調整してみてください",
+    "showing": "{{total}}件中 {{shown}}件を表示",
+    "loadMore": "もっと見る",
+    "loading": "読み込み中…"
+  },
+  "product": {
+    "notAvailable": "商品は利用できません",
+    "notFound": "この商品は見つかりませんでした。",
+    "backToShop": "ショップに戻る",
+    "home": "ホーム",
+    "selectSize": "サイズを選択してください",
+    "comboUnavailable": "このサイズ/カラーの組み合わせは在庫がありません",
+    "onlyInStock": "残り{{n}}点のみ",
+    "signInToContinue": "続行するにはログインしてください",
+    "couldNotAdd": "カートに追加できませんでした",
+    "addedToCart": "{{name}}を{{count}}点カートに追加しました",
+    "saleEnds": "セール終了 {{date}}",
+    "color": "カラー",
+    "size": "サイズ",
+    "quantity": "数量",
+    "inStock": "在庫{{n}}点",
+    "outOfStock": "在庫切れ",
+    "buyNow": "今すぐ購入",
+    "adding": "追加中…",
+    "addToCart": "+ カートに追加",
+    "virtualTryOn": "バーチャル試着",
+    "details": "詳細",
+    "reviewsCount_other": "レビュー{{count}}件",
+    "noReviews": "レビューはまだありません",
+    "fbt": "よく一緒に購入されている商品",
+    "alsoLike": "おすすめ商品"
+  },
+  "reviews": {
+    "eyebrow": "お客様の声",
+    "heading": "レビュー",
+    "count_other": "{{count}}件のレビュー",
+    "writeReview": "レビューを書く",
+    "alreadyReviewed": "この商品はすでにレビュー済みです。",
+    "purchaseRequired": "この商品を購入し受け取ったお客様のみレビューできます。",
+    "loading": "レビューを読み込み中…",
+    "loadingMore": "読み込み中…",
+    "loadMore": "さらにレビューを表示",
+    "showing": "{{total}}件中{{shown}}件を表示",
+    "verifiedPurchase": "購入済み",
+    "imageAlt": "カスタマーレビュー",
+    "editReview": "レビューを編集",
+    "deleteReview": "レビューを削除",
+    "markHelpful": "参考になった",
+    "foundHelpful_other": "{{count}}人が参考になった",
+    "sort": {
+      "newest": "新しい順",
+      "helpful": "参考になった順"
+    },
+    "empty": {
+      "title": "まだレビューがありません",
+      "subtitle": "この商品の感想を最初に共有しましょう。"
+    },
+    "deleteDialog": {
+      "title": "レビューを削除しますか？",
+      "message": "レビューと画像が永久に削除されます。その後に新しいレビューを書くことができます。",
+      "confirm": "削除",
+      "cancel": "キャンセル"
+    },
+    "toasts": {
+      "updated": "レビューを更新しました",
+      "created": "レビューありがとうございます！",
+      "deleted": "レビューを削除しました",
+      "loginToVote": "レビューに投票するにはログインしてください",
+      "loginToWrite": "レビューを書くにはログインしてください"
+    },
+    "errors": {
+      "load": "レビューを読み込めませんでした",
+      "loadMore": "さらにレビューを読み込めませんでした",
+      "delete": "削除に失敗しました",
+      "vote": "投票を記録できませんでした"
+    },
+    "form": {
+      "ratingLabel": "あなたの評価",
+      "titleLabel": "タイトル（任意）",
+      "titlePlaceholder": "一言でまとめてください",
+      "bodyLabel": "レビュー内容",
+      "bodyPlaceholder": "良かった点・気になった点は？サイズ感や品質はいかがでしたか？",
+      "photosLabel": "写真（任意、最大{{max}}枚）",
+      "uploadAlt": "アップロード",
+      "removeImage": "画像を削除",
+      "maxImages": "1件のレビューに添付できる画像は最大{{max}}枚です",
+      "uploadFailed": "画像のアップロードに失敗しました",
+      "bodyRequired": "商品について一言ご記入ください",
+      "submitFailed": "レビューを送信できませんでした",
+      "submitting": "送信中…",
+      "update": "レビューを更新",
+      "submit": "レビューを送信",
+      "cancel": "キャンセル"
+    }
+  },
+  "brand": {
+    "label": "ブランド",
+    "fallbackName": "ブランド",
+    "viewStore": "ストアを見る",
+    "products": "商品",
+    "sold": "販売済み",
+    "noRatings": "まだ評価がありません"
+  },
+  "recommend": {
+    "scrollLeft": "左にスクロール",
+    "scrollRight": "右にスクロール"
+  },
+  "cartPage": {
+    "title": "カート",
+    "itemCount_other": "{{count}}点",
+    "guestCart": "ゲストカート",
+    "clearAll": "すべて削除",
+    "signInPromptLead": "ログイン",
+    "signInPromptRest": "すると、このカートを端末間で保存できます。",
+    "signIn": "ログイン",
+    "loading": "カートを読み込み中…",
+    "continueShopping": "買い物を続ける",
+    "youMayAlsoLike": "こちらもおすすめ",
+    "empty": {
+      "title": "カートは空です",
+      "subtitle": "お気に入りのアイテムを追加して始めましょう。",
+      "shopNow": "今すぐ購入"
+    },
+    "summary": {
+      "title": "注文内容",
+      "subtotal_other": "小計（{{count}}点）",
+      "shipping": "配送料",
+      "tax": "税",
+      "calculatedAtCheckout": "購入手続き時に計算",
+      "total": "合計",
+      "exclShippingTax": "配送料・税抜き"
+    },
+    "checkout": {
+      "resolveStock": "在庫の問題を解決",
+      "signInToCheckout": "ログインして購入手続き",
+      "placeOrder": "注文する"
+    },
+    "perks": {
+      "secureCheckout": "安全なお支払い",
+      "freeReturns": "30日以内は返品無料",
+      "multiplePayments": "複数のお支払い方法"
+    },
+    "item": {
+      "fallbackName": "商品",
+      "tryOn": "試着",
+      "each": "単価",
+      "remove": "削除",
+      "removeAria": "{{name}}をカートから削除"
+    },
+    "stock": {
+      "onlyLeft": "残り{{n}}点",
+      "low": "在庫わずか",
+      "out": "在庫切れ",
+      "unavailable": "販売終了"
+    },
+    "confirmClear": {
+      "title": "すべて削除しますか？",
+      "message_other": "カート内の{{count}}点すべてを削除します。この操作は取り消せません。",
+      "confirm": "カートを空にする",
+      "cancel": "残しておく"
+    },
+    "errors": {
+      "updateQty": "数量を更新できませんでした",
+      "removeItem": "商品を削除できませんでした",
+      "clearCart": "カートを空にできませんでした"
+    }
+  },
+  "checkout": {
+    "eyebrow": {
+      "buyNow": "今すぐ購入",
+      "cart": "安全なお支払い"
+    },
+    "title": "ご購入手続き",
+    "loading": "購入手続きを読み込み中…",
+    "section": {
+      "shippingAddress": "お届け先住所",
+      "items": "ご注文商品",
+      "paymentMethod": "お支払い方法",
+      "orderNotes": "注文メモ"
+    },
+    "optional": "任意",
+    "needChanges": "変更が必要ですか？",
+    "backToProduct": "商品ページに戻る",
+    "backToCart": "カートに戻る",
+    "continueShopping": "買い物を続ける",
+    "notesPlaceholder": "ご要望があればご記入ください（例：配送に関する指示）",
+    "summary": {
+      "title": "ご注文内容",
+      "subtotal_other": "小計（{{count}}点）",
+      "shipping": "配送料",
+      "free": "無料",
+      "freeOver": "{{amount}}以上で送料無料",
+      "tax": "税",
+      "taxNote": "込み",
+      "discount": "割引（{{code}}）",
+      "total": "合計"
+    },
+    "qty": "数量 {{n}}",
+    "coupon": {
+      "placeholder": "クーポンコード",
+      "apply": "適用",
+      "remove": "削除",
+      "applied": "−{{amount}} を適用しました",
+      "invalid": "無効なクーポンコードです"
+    },
+    "payment": {
+      "cod": {
+        "title": "代金引換",
+        "subtitle": "商品到着時に現金でお支払い"
+      },
+      "vnpay": {
+        "title": "VNPAY",
+        "subtitle": "VNPAYでオンライン決済（ATM・QR・カード）"
+      },
+      "stripe": {
+        "title": "カード",
+        "subtitle": "クレジット・デビットカードで安全にお支払い"
+      }
+    },
+    "footnote": {
+      "cod": "商品到着時に現金でお支払いいただきます。",
+      "vnpay": "VNPAYのページに移動して決済を完了します。",
+      "stripe": "安全なカード決済ページに移動します。"
+    },
+    "address": {
+      "loading": "住所を読み込み中…",
+      "loadError": "住所を読み込めませんでした。",
+      "none": "保存された住所がまだありません。",
+      "add": "住所を追加",
+      "manage": "住所を管理",
+      "default": "デフォルト"
+    },
+    "blockedItems_other": "{{count}}点の商品が在庫切れまたは購入できません。",
+    "fixInCart": "カートで修正",
+    "placeOrder": "注文を確定",
+    "placingOrder": "注文を処理中…",
+    "submitError": "注文を確定できませんでした。もう一度お試しください。",
+    "empty": {
+      "title": "購入する商品がありません",
+      "subtitle": "カートが空です。まずはお気に入りの商品を追加してください。",
+      "shopNow": "今すぐ購入"
+    },
+    "toast": {
+      "placedSuccess": "注文 {{orderNumber}} を確定しました！",
+      "placedRedirect": "注文 {{orderNumber}} を作成しました — 決済へ移動します…"
+    },
+    "confirm": {
+      "title": "ご注文の確認",
+      "place": "注文を確定",
+      "placeAndPay": "確定して支払う",
+      "reviewAgain": "もう一度確認",
+      "head_other": "{{count}}点・合計 {{amount}} でこの注文を確定します",
+      "shipTo": "。お届け先：{{recipient}}様（{{district}}、{{city}}）",
+      "tailCod": "。代金引換で現金にてお支払いいただきます。",
+      "tailVnpay": "。VNPAYのページに移動してお支払いいただきます。",
+      "tailStripe": "。カード決済ページに移動してお支払いいただきます。"
+    }
+  },
+  "accountPage": {
+    "title": "マイアカウント",
+    "loading": "読み込み中…",
+    "signOut": "ログアウト",
+    "nav": {
+      "profile": "プロフィール",
+      "orders": "注文",
+      "addresses": "住所"
+    },
+    "signOutDialog": {
+      "title": "ログアウトしますか？",
+      "message": "アカウントにアクセスするには再度ログインが必要です。",
+      "cancel": "ログインしたまま"
+    },
+    "status": {
+      "PENDING": "保留中",
+      "PAID": "支払い済み",
+      "PROCESSING": "処理中",
+      "SHIPPED": "発送済み",
+      "DELIVERED": "配達済み",
+      "CANCELLED": "キャンセル済み",
+      "REFUNDED": "返金済み"
+    },
+    "paymentStatus": {
+      "PENDING": "保留中",
+      "AUTHORIZED": "承認済み",
+      "CAPTURED": "支払い済み",
+      "FAILED": "失敗",
+      "REFUNDED": "返金済み"
+    },
+    "pagination": {
+      "prev": "前へ",
+      "next": "次へ",
+      "pageOf": "{{total}} ページ中 {{page}} ページ"
+    },
+    "profile": {
+      "heading": "プロフィール",
+      "subtitle": "個人情報を管理します。",
+      "email": "メールアドレス",
+      "emailHint": "メールアドレスは変更できません。",
+      "fullName": "氏名",
+      "phone": "電話番号",
+      "save": "変更を保存",
+      "saving": "保存中…",
+      "updated": "プロフィールを更新しました。",
+      "saveError": "プロフィールを保存できませんでした。"
+    },
+    "password": {
+      "heading": "パスワード",
+      "subtitle": "アカウントを安全に保つため、強力なパスワードを設定してください。",
+      "current": "現在のパスワード",
+      "new": "新しいパスワード",
+      "confirm": "新しいパスワード（確認）",
+      "update": "パスワードを更新",
+      "updating": "更新中…",
+      "changed": "パスワードを変更しました。",
+      "mismatch": "新しいパスワードが一致しません。",
+      "tooShort": "パスワードは8文字以上で入力してください。",
+      "changeError": "パスワードを変更できませんでした。"
+    },
+    "orders": {
+      "heading": "注文",
+      "subtitle": "注文の確認と管理ができます。",
+      "empty": "まだ注文がありません。",
+      "startShopping": "ショッピングを始める",
+      "viewDetail": "詳細を見る",
+      "moreItems": "他 +{{n}} 点",
+      "loadError": "注文を読み込めませんでした。"
+    },
+    "detail": {
+      "loadError": "この注文を読み込めませんでした。",
+      "backToOrders": "注文一覧へ戻る",
+      "orderHistory": "← 注文履歴",
+      "placed": "注文日 {{date}}",
+      "items": "商品",
+      "shippingAddress": "配送先住所",
+      "notes": "備考",
+      "statusTimeline": "ステータス履歴",
+      "summary": "概要",
+      "subtotal": "小計",
+      "discount": "割引",
+      "shipping": "送料",
+      "tax": "税",
+      "total": "合計",
+      "payment": "支払い",
+      "paidAt": "支払い日 {{date}}",
+      "sku": "SKU {{sku}}",
+      "qty": "数量 {{n}}",
+      "continuePaying": "{{provider}} で支払いを続ける",
+      "redirecting": "リダイレクト中…",
+      "cancelOrder": "注文をキャンセル",
+      "cancelling": "キャンセル中…",
+      "cancelSuccess": "注文をキャンセルしました。",
+      "cancelError": "この注文をキャンセルできませんでした。",
+      "payUrlError": "支払いを開始できませんでした。",
+      "payInitError": "支払いを開始できませんでした。",
+      "youMayAlsoLike": "こちらもおすすめ",
+      "cancelDialog": {
+        "title": "注文をキャンセルしますか？",
+        "message": "注文 {{order}} をキャンセルしてもよろしいですか？この操作は取り消せません。",
+        "keep": "注文を保持"
+      }
+    },
+    "addresses": {
+      "heading": "住所",
+      "subtitle": "配送先住所を管理します。",
+      "add": "住所を追加",
+      "addFirst": "最初の住所を追加",
+      "empty": "まだ住所が登録されていません。",
+      "default": "デフォルト",
+      "other": "その他",
+      "defaultStar": "★ デフォルト",
+      "setDefault": "デフォルトに設定",
+      "edit": "編集",
+      "delete": "削除",
+      "loadError": "住所を読み込めませんでした。",
+      "actionError": "エラーが発生しました。もう一度お試しください。",
+      "region": {
+        "NORTH": "ベトナム北部",
+        "CENTRAL": "ベトナム中部",
+        "SOUTH": "ベトナム南部"
+      },
+      "deleteDialog": {
+        "title": "住所を削除しますか？",
+        "message": "「{{name}}」を削除しますか？この操作は取り消せません。",
+        "keep": "保持"
+      },
+      "setDefaultDialog": {
+        "title": "デフォルトに設定しますか？",
+        "message": "「{{name}}」をデフォルトの配送先住所として使用しますか？",
+        "cancel": "キャンセル"
+      }
+    }
+  },
+  "auth": {
+    "back": "戻る",
+    "signIn": "ログイン",
+    "createAccount": "アカウント作成",
+    "welcomeBack": "おかえりなさい",
+    "joinTitle": "VESTAに登録",
+    "loginSubtitle": "ログインして続けましょう。",
+    "signupSubtitle": "アカウントを作成して買い物を始めましょう。",
+    "fullName": "氏名",
+    "fullNamePlaceholder": "お名前",
+    "email": "メールアドレス",
+    "emailPlaceholder": "you@example.com",
+    "password": "パスワード",
+    "confirmPassword": "パスワードの確認",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "signingIn": "ログイン中...",
+    "creatingAccount": "アカウント作成中...",
+    "or": "または",
+    "continueWithGoogle": "Googleで続ける",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "haveAccount": "すでにアカウントをお持ちですか？",
+    "signUpAction": "新規登録",
+    "signInAction": "ログイン",
+    "promo": {
+      "line1": "未来を",
+      "line2": "着る",
+      "tagline": "バーチャル試着。リアルなスタイル。大胆なあなたへ。"
+    },
+    "strength": {
+      "tooWeak": "弱すぎる",
+      "weak": "弱い",
+      "fair": "普通",
+      "strong": "強い",
+      "veryStrong": "非常に強い"
+    },
+    "verifyBanner": {
+      "message": "アカウントを保護するためにメールアドレスを認証してください。",
+      "resend": "再送信",
+      "sending": "送信中...",
+      "sent": "認証メールを送信しました。",
+      "sendError": "認証メールを送信できませんでした。",
+      "dismiss": "閉じる"
+    },
+    "errors": {
+      "googleFailed": "Googleログインに失敗しました。もう一度お試しください。",
+      "invalidEmail": "有効なメールアドレスを入力してください。",
+      "passwordMinLength": "パスワードは8文字以上で入力してください。",
+      "fullNameRequired": "氏名を入力してください。",
+      "passwordRule": "パスワードには英字と数字をそれぞれ1文字以上含めてください。",
+      "passwordMismatch": "パスワードが一致しません。",
+      "passwordMismatchShort": "パスワードが一致しません",
+      "captchaRequired": "captcha認証を完了してください。",
+      "generic": "問題が発生しました。もう一度お試しください。"
+    }
+  },
+  "authFlow": {
+    "signIn": "ログイン",
+    "backToSignIn": "ログインに戻る",
+    "backToStore": "ストアに戻る",
+    "eyebrow": {
+      "account": "アカウント"
+    },
+    "errors": {
+      "invalidEmail": "有効なメールアドレスを入力してください。",
+      "captcha": "認証を完了してください。",
+      "generic": "問題が発生しました。もう一度お試しください。",
+      "passwordRule": "パスワードは8文字以上で、英字と数字を含めてください。",
+      "passwordMismatch": "パスワードが一致しません。",
+      "linkExpired": "このリンクは無効か有効期限が切れています。",
+      "nameRequired": "お名前を入力してください。"
+    },
+    "fields": {
+      "email": "メールアドレス",
+      "newPassword": "新しいパスワード",
+      "password": "パスワード",
+      "confirmPassword": "パスワードの確認",
+      "fullName": "氏名",
+      "fullNamePlaceholder": "お名前",
+      "mismatchHint": "パスワードが一致しません"
+    },
+    "forgot": {
+      "title": "パスワードをお忘れの方",
+      "lead": "メールアドレスを入力すると、パスワード再設定用のリンクをお送りします。",
+      "submit": "再設定リンクを送信",
+      "sending": "送信中...",
+      "sentTitle": "受信トレイをご確認ください",
+      "sentLead": {
+        "before": "次のメールアドレスのアカウントが存在する場合 ",
+        "after": " 、まもなくパスワード再設定リンクが届きます。"
+      }
+    },
+    "reset": {
+      "title": "パスワードの再設定",
+      "lead": "アカウントの新しいパスワードを設定してください。",
+      "submit": "パスワードを再設定",
+      "updating": "更新中...",
+      "success": "パスワードを更新しました。ログインしてください。",
+      "invalidTitle": "無効なリンク",
+      "invalidLead": "このパスワード再設定リンクは存在しないか無効です。続けるには新しいリンクをリクエストしてください。",
+      "requestNew": "新しいリンクをリクエスト"
+    },
+    "verify": {
+      "missingToken": "確認リンクが存在しないか無効です。",
+      "verifyingEyebrow": "確認中",
+      "verifyingTitle": "メールアドレスを確認しています",
+      "verifyingLead": "メールアドレスを確認しています。少々お待ちください。",
+      "successEyebrow": "確認済み",
+      "successTitle": "メールアドレスを確認しました",
+      "successLead": "メールアドレスが確認されました。これで準備完了です。",
+      "goToAccount": "アカウントへ",
+      "failedEyebrow": "確認に失敗しました",
+      "failedTitle": "確認に失敗しました"
+    },
+    "invite": {
+      "eyebrow": "招待",
+      "title": "招待を承認",
+      "lead": {
+        "before": "次のメールアドレスでチームへ招待されています ",
+        "after": " 。アカウントを設定して始めましょう。"
+      },
+      "loadingTitle": "招待を読み込み中",
+      "loadingLead": "招待を確認しています...",
+      "invalidTitle": "無効な招待",
+      "invalidLead": "この招待は無効か有効期限が切れています。管理者に新しい招待の送信を依頼してください。",
+      "invalidError": "この招待は無効か有効期限が切れています。",
+      "success": "ようこそ！アカウントの準備ができました。",
+      "submit": "アカウントを作成",
+      "settingUp": "設定中..."
+    },
+    "oauth": {
+      "eyebrow": "ログイン中",
+      "title": "ログインを完了しています",
+      "lead": "Googleでのログインを完了しています。少々お待ちください。"
+    }
+  },
+  "shared": {
+    "close": "閉じる",
+    "confirm": {
+      "title": "よろしいですか？",
+      "confirm": "確認",
+      "cancel": "キャンセル"
+    },
+    "quantity": {
+      "label": "数量",
+      "decrease": "数量を減らす",
+      "increase": "数量を増やす"
+    },
+    "rating": {
+      "starCount_other": "星{{count}}個",
+      "outOf": "星{{max}}個中{{value}}"
+    }
+  }
+}

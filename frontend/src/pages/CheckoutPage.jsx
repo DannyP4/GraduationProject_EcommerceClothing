@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
 import { useCart } from '../context/CartContext';
+import { formatPrice } from '../lib/format';
 import * as addressService from '../services/addressService';
 import * as orderService from '../services/orderService';
 import * as couponService from '../services/couponService';
 import * as shippingService from '../services/shippingService';
 
 export default function CheckoutPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -69,7 +72,7 @@ export default function CheckoutPage() {
       setCouponInput('');
     } catch (err) {
       setAppliedCoupon(null);
-      setCouponError(err.message || 'Invalid coupon code.');
+      setCouponError(err.message || t('checkout.coupon.invalid'));
     } finally {
       setCouponLoading(false);
     }
@@ -92,7 +95,7 @@ export default function CheckoutPage() {
         if (def) setSelectedAddressId(def.id);
       })
       .catch((err) => {
-        if (!cancelled) setAddressesError(err.message || 'Could not load addresses.');
+        if (!cancelled) setAddressesError(err.message || t('checkout.address.loadError'));
       })
       .finally(() => { if (!cancelled) setAddressesLoading(false); });
     return () => { cancelled = true; };
@@ -146,16 +149,16 @@ export default function CheckoutPage() {
       const redirectUrl = result?.redirectUrl;
 
       if (redirectUrl) {
-        toast.success(`Order ${order.orderNumber} placed — redirecting to payment…`);
+        toast.success(t('checkout.toast.placedRedirect', { orderNumber: order.orderNumber }));
         window.location.assign(redirectUrl);
         return;
       }
 
       if (!isBuyNow) await clearCart();
-      toast.success(`Order ${order.orderNumber} placed successfully`);
+      toast.success(t('checkout.toast.placedSuccess', { orderNumber: order.orderNumber }));
       navigate(`/account/orders/${order.orderNumber}`, { replace: true });
     } catch (err) {
-      setSubmitError(err.message || 'Could not place order. Please try again.');
+      setSubmitError(err.message || t('checkout.submitError'));
       setSubmitting(false);
     }
   };
@@ -168,19 +171,19 @@ export default function CheckoutPage() {
       <div className="max-w-[1440px] mx-auto px-6 py-10">
         <div className="mb-8">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">
-            {isBuyNow ? 'Buy Now · Review & Confirm' : 'Step 2 of 2 · Review & Confirm'}
+            {isBuyNow ? t('checkout.eyebrow.buyNow') : t('checkout.eyebrow.cart')}
           </p>
-          <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">Checkout</h1>
+          <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('checkout.title')}</h1>
         </div>
 
         {cartLoading && items.length === 0 ? (
-          <div className="text-center py-24 text-black/40 text-sm uppercase tracking-wider">Loading…</div>
+          <div className="text-center py-24 text-black/40 text-sm uppercase tracking-wider">{t('checkout.loading')}</div>
         ) : items.length === 0 ? (
           <EmptyCartNotice />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
             <div className="space-y-5">
-              <Section title="Shipping Address" stepNum={1}>
+              <Section title={t('checkout.section.shippingAddress')} stepNum={1}>
                 <AddressPicker
                   addresses={addresses}
                   loading={addressesLoading}
@@ -190,29 +193,29 @@ export default function CheckoutPage() {
                 />
               </Section>
 
-              <Section title="Items" stepNum={2}>
+              <Section title={t('checkout.section.items')} stepNum={2}>
                 <CartReview items={items} currency={currency} />
                 <div className="mt-3 text-[11px] text-black/50">
-                  Need changes?{' '}
+                  {t('checkout.needChanges')}{' '}
                   {isBuyNow ? (
-                    <Link to={`/product/${buyNow.productId}`} className="underline hover:text-[#E83354]">Back to product</Link>
+                    <Link to={`/product/${buyNow.productId}`} className="underline hover:text-[#E83354]">{t('checkout.backToProduct')}</Link>
                   ) : (
-                    <Link to="/cart" className="underline hover:text-[#E83354]">Back to cart</Link>
+                    <Link to="/cart" className="underline hover:text-[#E83354]">{t('checkout.backToCart')}</Link>
                   )}
                 </div>
               </Section>
 
-              <Section title="Payment Method" stepNum={3}>
+              <Section title={t('checkout.section.paymentMethod')} stepNum={3}>
                 <PaymentPicker value={paymentMethod} onChange={setPaymentMethod} />
               </Section>
 
-              <Section title="Order Notes" stepNum={4} optional>
+              <Section title={t('checkout.section.orderNotes')} stepNum={4} optional>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   maxLength={500}
                   rows={3}
-                  placeholder="Delivery instructions, gift message, etc."
+                  placeholder={t('checkout.notesPlaceholder')}
                   className="w-full bg-white border border-black/15 px-3 py-2 text-sm focus:outline-none focus:border-black"
                 />
                 <div className="text-[10px] text-black/40 text-right mt-1">{notes.length}/500</div>
@@ -221,18 +224,18 @@ export default function CheckoutPage() {
 
             <aside className="lg:sticky lg:top-20">
               <div className="bg-[#0A0A0A] text-white p-6">
-                <h2 className="font-['Anton'] text-2xl uppercase tracking-wider mb-6">Summary</h2>
+                <h2 className="font-['Anton'] text-2xl uppercase tracking-wider mb-6">{t('checkout.summary.title')}</h2>
 
                 <div className="space-y-3 mb-4 text-sm">
-                  <Row label={`Subtotal (${cartCount} ${cartCount === 1 ? 'item' : 'items'})`} value={formatPrice(subtotal, currency)} />
+                  <Row label={t('checkout.summary.subtotal', { count: cartCount })} value={formatPrice(subtotal, currency)} />
                   <Row
-                    label="Shipping"
-                    value={shippingCost === 0 ? 'Free' : formatPrice(shippingCost, currency)}
-                    note={shippingCost > 0 && shipping.freeThreshold ? `Free over ${formatPrice(shipping.freeThreshold, currency)}` : undefined}
+                    label={t('checkout.summary.shipping')}
+                    value={shippingCost === 0 ? t('checkout.summary.free') : formatPrice(shippingCost, currency)}
+                    note={shippingCost > 0 && shipping.freeThreshold ? t('checkout.summary.freeOver', { amount: formatPrice(shipping.freeThreshold, currency) }) : undefined}
                   />
-                  <Row label="Tax" value={formatPrice(taxTotal, currency)} note="VAT not applied" />
+                  <Row label={t('checkout.summary.tax')} value={formatPrice(taxTotal, currency)} note={t('checkout.summary.taxNote')} />
                   {appliedCoupon && (
-                    <Row label={`Discount · ${appliedCoupon.code}`} value={`− ${formatPrice(discountTotal, currency)}`} />
+                    <Row label={t('checkout.summary.discount', { code: appliedCoupon.code })} value={`− ${formatPrice(discountTotal, currency)}`} />
                   )}
                 </div>
 
@@ -241,14 +244,14 @@ export default function CheckoutPage() {
                     <div className="flex items-center justify-between gap-2 border border-[#E83354]/50 bg-[#E83354]/10 px-3 py-2.5">
                       <div className="min-w-0">
                         <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#E83354]">✓ {appliedCoupon.code}</p>
-                        <p className="text-[10px] text-white/50">−{formatPrice(discountTotal, currency)} applied</p>
+                        <p className="text-[10px] text-white/50">{t('checkout.coupon.applied', { amount: formatPrice(discountTotal, currency) })}</p>
                       </div>
                       <button
                         type="button"
                         onClick={removeCoupon}
                         className="text-[10px] font-bold tracking-[0.1em] uppercase text-white/50 hover:text-white"
                       >
-                        Remove
+                        {t('checkout.coupon.remove')}
                       </button>
                     </div>
                   ) : (
@@ -259,7 +262,7 @@ export default function CheckoutPage() {
                           value={couponInput}
                           onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } }}
-                          placeholder="Coupon code"
+                          placeholder={t('checkout.coupon.placeholder')}
                           className="flex-1 min-w-0 bg-white text-black text-sm px-3 py-2 focus:outline-none"
                         />
                         <button
@@ -268,7 +271,7 @@ export default function CheckoutPage() {
                           disabled={couponLoading || !couponInput.trim()}
                           className="text-[11px] font-bold tracking-[0.1em] uppercase border border-white/30 px-4 hover:bg-white hover:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                          {couponLoading ? '…' : 'Apply'}
+                          {couponLoading ? '…' : t('checkout.coupon.apply')}
                         </button>
                       </div>
                       {couponError && <p className="text-[10px] text-[#E83354] mt-1.5">{couponError}</p>}
@@ -278,15 +281,15 @@ export default function CheckoutPage() {
 
                 <div className="border-t border-white/15 pt-4 mb-6">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">Total</span>
+                    <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">{t('checkout.summary.total')}</span>
                     <span className="font-['Anton'] text-3xl">{formatPrice(grandTotal, currency)}</span>
                   </div>
                 </div>
 
                 {blockedItems.length > 0 && (
                   <p className="bg-[#E83354]/15 border-l-4 border-[#E83354] px-3 py-2 text-[11px] mb-4">
-                    {blockedItems.length} item(s) in your cart cannot be ordered.{' '}
-                    <Link to="/cart" className="underline">Fix in cart</Link>.
+                    {t('checkout.blockedItems', { count: blockedItems.length })}{' '}
+                    <Link to="/cart" className="underline">{t('checkout.fixInCart')}</Link>.
                   </p>
                 )}
 
@@ -301,20 +304,20 @@ export default function CheckoutPage() {
                   disabled={!canPlaceOrder}
                   className="w-full bg-[#E83354] text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#c82244] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#E83354]"
                 >
-                  {submitting ? 'Placing Order…' : 'Place Order'}
+                  {submitting ? t('checkout.placingOrder') : t('checkout.placeOrder')}
                 </button>
 
                 <Link
                   to={isBuyNow ? '/shop' : '/cart'}
                   className="block text-center w-full border border-white/20 text-white text-[11px] font-bold tracking-[0.1em] uppercase py-3 hover:border-white/50 transition-all"
                 >
-                  {isBuyNow ? 'Continue Shopping' : 'Back to Cart'}
+                  {isBuyNow ? t('checkout.continueShopping') : t('checkout.backToCart')}
                 </Link>
 
                 <p className="mt-5 text-[10px] text-white/30 text-center leading-relaxed">
-                  {paymentMethod === 'COD' && 'COD orders are confirmed at delivery. You can cancel any time before we mark the order as processing.'}
-                  {paymentMethod === 'VNPAY' && 'You will be redirected to VNPAY sandbox to complete payment. Stock is reserved for 15 minutes.'}
-                  {paymentMethod === 'STRIPE' && 'You will be redirected to Stripe Checkout. Amount will be charged in USD using a locked exchange rate.'}
+                  {paymentMethod === 'COD' && t('checkout.footnote.cod')}
+                  {paymentMethod === 'VNPAY' && t('checkout.footnote.vnpay')}
+                  {paymentMethod === 'STRIPE' && t('checkout.footnote.stripe')}
                 </p>
               </div>
             </aside>
@@ -324,10 +327,10 @@ export default function CheckoutPage() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Confirm your order?"
-        message={buildConfirmMessage({ cartCount, grandTotal, currency, selectedAddress, paymentMethod })}
-        confirmLabel={paymentMethod === 'COD' ? 'Place Order' : 'Place Order & Pay'}
-        cancelLabel="Review Again"
+        title={t('checkout.confirm.title')}
+        message={buildConfirmMessage({ t, cartCount, grandTotal, currency, selectedAddress, paymentMethod })}
+        confirmLabel={paymentMethod === 'COD' ? t('checkout.confirm.place') : t('checkout.confirm.placeAndPay')}
+        cancelLabel={t('checkout.confirm.reviewAgain')}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={doPlaceOrder}
       />
@@ -338,12 +341,13 @@ export default function CheckoutPage() {
 }
 
 function Section({ title, stepNum, optional, children }) {
+  const { t } = useTranslation();
   return (
     <section className="bg-white p-5">
       <div className="flex items-baseline gap-3 mb-4">
         <span className="font-['Anton'] text-2xl text-black/30">{String(stepNum).padStart(2, '0')}</span>
         <h2 className="font-['Anton'] text-xl uppercase tracking-tight">{title}</h2>
-        {optional && <span className="text-[10px] font-bold tracking-wider uppercase text-black/40">Optional</span>}
+        {optional && <span className="text-[10px] font-bold tracking-wider uppercase text-black/40">{t('checkout.optional')}</span>}
       </div>
       {children}
     </section>
@@ -351,17 +355,18 @@ function Section({ title, stepNum, optional, children }) {
 }
 
 function AddressPicker({ addresses, loading, error, selectedId, onSelect }) {
-  if (loading) return <p className="text-sm text-black/40">Loading addresses…</p>;
+  const { t } = useTranslation();
+  if (loading) return <p className="text-sm text-black/40">{t('checkout.address.loading')}</p>;
   if (error) return <p className="text-sm text-[#E83354]">{error}</p>;
   if (addresses.length === 0) {
     return (
       <div className="border border-dashed border-black/15 px-5 py-8 text-center">
-        <p className="text-sm text-black/60 mb-3">No saved addresses yet.</p>
+        <p className="text-sm text-black/60 mb-3">{t('checkout.address.none')}</p>
         <Link
           to="/account/addresses"
           className="inline-block text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
         >
-          + Add Address
+          {t('checkout.address.add')}
         </Link>
       </div>
     );
@@ -391,7 +396,7 @@ function AddressPicker({ addresses, loading, error, selectedId, onSelect }) {
                     <span className="text-[10px] font-bold tracking-wider uppercase bg-black/8 px-2 py-0.5">{a.label}</span>
                   )}
                   {a.isDefault && (
-                    <span className="text-[10px] font-bold tracking-wider uppercase bg-[#E83354] text-white px-2 py-0.5">Default</span>
+                    <span className="text-[10px] font-bold tracking-wider uppercase bg-[#E83354] text-white px-2 py-0.5">{t('checkout.address.default')}</span>
                   )}
                 </div>
                 <p className="font-bold text-sm">{a.recipient}</p>
@@ -410,13 +415,14 @@ function AddressPicker({ addresses, loading, error, selectedId, onSelect }) {
         to="/account/addresses"
         className="block text-center text-[11px] font-bold tracking-[0.15em] uppercase border border-dashed border-black/30 py-3 hover:border-black hover:bg-black/5 transition-colors"
       >
-        + Manage Addresses
+        {t('checkout.address.manage')}
       </Link>
     </div>
   );
 }
 
 function CartReview({ items, currency }) {
+  const { t } = useTranslation();
   return (
     <ul className="divide-y divide-black/8">
       {items.map((item) => (
@@ -429,7 +435,7 @@ function CartReview({ items, currency }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold uppercase tracking-wider truncate">{item.productName}</p>
             <p className="text-[11px] text-black/50">
-              {item.size}{item.color ? ` · ${item.color}` : ''} · Qty {item.quantity}
+              {item.size}{item.color ? ` · ${item.color}` : ''} · {t('checkout.qty', { n: item.quantity })}
             </p>
           </div>
           <span className="text-sm font-bold whitespace-nowrap">
@@ -442,6 +448,7 @@ function CartReview({ items, currency }) {
 }
 
 function PaymentPicker({ value, onChange }) {
+  const { t } = useTranslation();
   const Option = ({ id, title, subtitle }) => {
     const isSel = value === id;
     return (
@@ -464,23 +471,24 @@ function PaymentPicker({ value, onChange }) {
   };
   return (
     <div className="space-y-2">
-      <Option id="COD" title="Cash on Delivery" subtitle="Pay with cash when your order is delivered." />
-      <Option id="VNPAY" title="VNPAY · ATM / QR / Wallet" subtitle="Pay in VND via VNPAY sandbox gateway." />
-      <Option id="STRIPE" title="Stripe · International Card" subtitle="Pay in USD via Stripe Checkout. FX locked at order time." />
+      <Option id="COD" title={t('checkout.payment.cod.title')} subtitle={t('checkout.payment.cod.subtitle')} />
+      <Option id="VNPAY" title={t('checkout.payment.vnpay.title')} subtitle={t('checkout.payment.vnpay.subtitle')} />
+      <Option id="STRIPE" title={t('checkout.payment.stripe.title')} subtitle={t('checkout.payment.stripe.subtitle')} />
     </div>
   );
 }
 
 function EmptyCartNotice() {
+  const { t } = useTranslation();
   return (
     <div className="text-center py-24 bg-white">
-      <p className="font-['Anton'] text-3xl uppercase mb-4">Your cart is empty</p>
-      <p className="text-black/50 mb-8">Add items before checking out.</p>
+      <p className="font-['Anton'] text-3xl uppercase mb-4">{t('checkout.empty.title')}</p>
+      <p className="text-black/50 mb-8">{t('checkout.empty.subtitle')}</p>
       <Link
         to="/shop"
         className="inline-block bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase px-12 py-4 hover:bg-[#E83354] transition-colors"
       >
-        Shop Now
+        {t('checkout.empty.shopNow')}
       </Link>
     </div>
   );
@@ -513,23 +521,20 @@ function buyNowItem(b) {
   };
 }
 
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
-}
-
-function buildConfirmMessage({ cartCount, grandTotal, currency, selectedAddress, paymentMethod }) {
-  const head = `${cartCount} ${cartCount === 1 ? 'item' : 'items'} · ${formatPrice(grandTotal, currency)}`;
+function buildConfirmMessage({ t, cartCount, grandTotal, currency, selectedAddress, paymentMethod }) {
+  const head = t('checkout.confirm.head', { count: cartCount, amount: formatPrice(grandTotal, currency) });
   const ship = selectedAddress
-    ? ` — shipping to ${selectedAddress.recipient}, ${selectedAddress.district}, ${selectedAddress.city}.`
+    ? t('checkout.confirm.shipTo', {
+        recipient: selectedAddress.recipient,
+        district: selectedAddress.district,
+        city: selectedAddress.city,
+      })
     : '.';
   const tail =
     paymentMethod === 'VNPAY'
-      ? ' You will be redirected to VNPAY sandbox to complete payment.'
+      ? t('checkout.confirm.tailVnpay')
       : paymentMethod === 'STRIPE'
-        ? ' You will be redirected to Stripe Checkout (USD).'
-        : ' Pay COD on delivery.';
+        ? t('checkout.confirm.tailStripe')
+        : t('checkout.confirm.tailCod');
   return head + ship + tail;
 }

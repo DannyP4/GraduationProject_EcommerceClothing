@@ -8,7 +8,7 @@ const GARMENTS = [
   { id: 'varsity-bomber', label: 'Varsity Bomber', img: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80' },
   { id: 'campus-hoodie', label: 'Arch Hoodie', img: 'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600&q=80' },
   { id: 'track-jacket', label: 'Track Jacket', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80' },
-  { id: 'graphic-tee', label: 'Campus Tee', img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80' },
+  { id: 'graphic-tee', label: 'Graphic Tee', img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80' },
 ];
 
 export default function TryOnPage() {

@@ -20,6 +20,18 @@ public class UpdateProductRequest {
     @Size(max = 5000)
     private String description;
 
+    @Size(max = 255)
+    private String nameVi;
+
+    @Size(max = 255)
+    private String nameJa;
+
+    @Size(max = 5000)
+    private String descriptionVi;
+
+    @Size(max = 5000)
+    private String descriptionJa;
+
     private Long brandId;
 
     private Long categoryId;

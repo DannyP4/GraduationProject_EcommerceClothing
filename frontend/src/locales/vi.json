@@ -1,0 +1,699 @@
+{
+  "nav": {
+    "shop": "Cửa hàng",
+    "collections": "Bộ sưu tập",
+    "lookbook": "Lookbook",
+    "about": "Giới thiệu",
+    "comingSoon": "Sắp ra mắt",
+    "login": "Đăng nhập"
+  },
+  "search": {
+    "placeholder": "Tìm sản phẩm...",
+    "label": "Tìm kiếm",
+    "submit": "Tìm",
+    "clear": "Xóa",
+    "searching": "Đang tìm…",
+    "noMatches": "Không có kết quả cho “{{query}}”",
+    "tryDifferent": "Thử từ khóa khác",
+    "matches_other": "{{count}} kết quả",
+    "viewAll": "Xem tất cả kết quả →"
+  },
+  "cart": {
+    "label": "Giỏ hàng",
+    "title": "Giỏ hàng",
+    "items_other": "{{count}} sản phẩm",
+    "empty": "Giỏ hàng trống",
+    "shopNow": "Mua sắm ngay",
+    "moreInCart_other": "+{{count}} sản phẩm khác trong giỏ",
+    "subtotal": "Tạm tính",
+    "viewCart": "Xem giỏ hàng",
+    "checkout": "Thanh toán"
+  },
+  "notifications": {
+    "label": "Thông báo",
+    "title": "Thông báo",
+    "new": "{{count}} mới",
+    "markAllRead": "Đánh dấu đã đọc",
+    "empty": "Chưa có thông báo",
+    "emptyHint": "Cập nhật đơn hàng sẽ hiển thị ở đây.",
+    "type": {
+      "ORDER_PLACED": "Đã đặt",
+      "ORDER_PAID": "Đã thanh toán",
+      "ORDER_SHIPPED": "Đang giao",
+      "ORDER_DELIVERED": "Đã giao",
+      "ORDER_CANCELLED": "Đã hủy",
+      "ORDER_REFUNDED": "Đã hoàn tiền"
+    }
+  },
+  "account": {
+    "signedInAs": "Đăng nhập với tên",
+    "adminDashboard": "Trang quản trị",
+    "profile": "Hồ sơ của tôi",
+    "orders": "Lịch sử đơn hàng",
+    "addresses": "Địa chỉ",
+    "signOut": "Đăng xuất",
+    "signOutConfirmTitle": "Đăng xuất?",
+    "signOutConfirmMessage": "Bạn sẽ cần đăng nhập lại để truy cập tài khoản, đơn hàng và địa chỉ đã lưu.",
+    "staySignedIn": "Ở lại"
+  },
+  "footer": {
+    "tagline": "Streetwear cho người bản lĩnh — mặc theo cách của riêng bạn.",
+    "shop": "Cửa hàng",
+    "info": "Thông tin",
+    "stayUpdated": "Cập nhật tin mới",
+    "newsletterHint": "Nhận ưu đãi sớm và các deal độc quyền cho thành viên.",
+    "emailPlaceholder": "email@cua-ban.com",
+    "subscribe": "GỬI",
+    "rights": "© 2026 VESTA. Bảo lưu mọi quyền.",
+    "links": {
+      "newArrivals": "Hàng mới về",
+      "tops": "Áo",
+      "bottoms": "Quần",
+      "outerwear": "Áo khoác",
+      "accessories": "Phụ kiện",
+      "sale": "Khuyến mãi",
+      "aboutUs": "Về chúng tôi",
+      "sustainability": "Bền vững",
+      "sizeGuide": "Hướng dẫn chọn size",
+      "shippingReturns": "Vận chuyển & Đổi trả",
+      "faq": "Câu hỏi thường gặp",
+      "contact": "Liên hệ",
+      "privacy": "Chính sách bảo mật",
+      "terms": "Điều khoản dịch vụ",
+      "cookies": "Chính sách Cookie"
+    }
+  },
+  "announcement": {
+    "ticker": "⚡ THỬ ĐỒ ẢO TRÊN MỌI SẢN PHẨM · SALE THEO MÙA — NHIỀU MẪU GIẢM GIÁ · CÓ VOUCHER? ÁP DỤNG KHI THANH TOÁN · HÀNG MỚI MỖI TUẦN · ",
+    "dismiss": "Đóng"
+  },
+  "common": {
+    "noImage": "Không có ảnh",
+    "viewDetails": "Xem chi tiết →",
+    "sold": "Đã bán {{n}}"
+  },
+  "home": {
+    "eyebrow": "Bộ sưu tập SS 2026",
+    "heroTitleLine1": "MẶC",
+    "heroTitleLine2": "NHƯ",
+    "heroTitleAccent": "HUYỀN THOẠI",
+    "subtitle": "Streetwear cá tính cho người mặc theo cách riêng của mình. Số lượng giới hạn, phong cách vô hạn.",
+    "ctaShop": "Mua ngay",
+    "ctaExplore": "Khám phá",
+    "editorial": "Editorial",
+    "featured1": "Lookbook",
+    "featured2": "Nổi bật",
+    "manifesto": "Tuyên ngôn",
+    "statement1": "THỂ HIỆN",
+    "statementHi1": "THAM VỌNG.",
+    "statement2": "LÀM CHỦ",
+    "statementHi2": "CUỘC CHƠI.",
+    "statement3": "ĐẶT RA CHUẨN MỰC.",
+    "manifestoBody": "Mỗi sản phẩm được tạo ra để đồng hành cùng bạn — thiết kế cho đời thực, sinh ra để nổi bật.",
+    "whatsHot": "Đang hot",
+    "trending1": "Xu hướng",
+    "trending2": "Hiện tại",
+    "viewAll": "Xem tất cả",
+    "noProducts": "Chưa có sản phẩm nào.",
+    "lookbooks": {
+      "campusEssentialsTag": "Đồ cơ bản",
+      "campusEssentialsTitle": "Phối hằng ngày",
+      "streetwearTag": "Streetwear",
+      "streetwearTitle": "Phố thị",
+      "seasonalTag": "Theo mùa",
+      "seasonalTitle": "Lớp áo mùa đông",
+      "minimalTag": "Tối giản",
+      "minimalTitle": "Đường cắt gọn",
+      "retroTag": "Cổ điển",
+      "retroTitle": "Câu lạc bộ Varsity"
+    }
+  },
+  "shop": {
+    "sortNewest": "Mới nhất",
+    "sortPriceAsc": "Giá: Thấp đến cao",
+    "sortPriceDesc": "Giá: Cao đến thấp",
+    "sortPopular": "Phổ biến",
+    "eyebrowSearch": "Tìm kiếm · {{n}} kết quả",
+    "eyebrowBrand": "Thương hiệu · {{n}} sản phẩm",
+    "eyebrowSeason": "SS 2026 · {{n}} sản phẩm",
+    "titleResults": "Kết quả cho “{{query}}”",
+    "titleBrand": "Thương hiệu",
+    "titleAll": "Tất cả sản phẩm",
+    "clearSearch": "Xóa tìm kiếm",
+    "clearBrand": "Xóa thương hiệu",
+    "collections": "Bộ sưu tập",
+    "searchCategory": "Tìm danh mục…",
+    "all": "Tất cả",
+    "sortBy": "Sắp xếp",
+    "clearFilters": "Xóa bộ lọc",
+    "errorTitle": "Không tải được sản phẩm",
+    "retry": "Thử lại",
+    "noMatchTitle": "Không có kết quả cho “{{query}}”",
+    "noMatchBody": "Không tìm thấy gì khớp với tìm kiếm này. Hãy thử từ khóa khác hoặc xem toàn bộ danh mục.",
+    "backToShop": "Quay lại cửa hàng",
+    "noProductsTitle": "Không tìm thấy sản phẩm",
+    "noProductsHint": "Hãy thử điều chỉnh bộ lọc",
+    "showing": "Hiển thị {{shown}} / {{total}}",
+    "loadMore": "Tải thêm",
+    "loading": "Đang tải…"
+  },
+  "product": {
+    "notAvailable": "Sản phẩm không khả dụng",
+    "notFound": "Không tìm thấy sản phẩm này.",
+    "backToShop": "Quay lại cửa hàng",
+    "home": "Trang chủ",
+    "selectSize": "Vui lòng chọn kích cỡ",
+    "comboUnavailable": "Tổ hợp màu/kích cỡ này không có sẵn",
+    "onlyInStock": "Chỉ còn {{n}} trong kho",
+    "signInToContinue": "Vui lòng đăng nhập để tiếp tục",
+    "couldNotAdd": "Không thể thêm vào giỏ",
+    "addedToCart": "Đã thêm {{count}} × {{name}} vào giỏ",
+    "saleEnds": "Kết thúc khuyến mãi {{date}}",
+    "color": "Màu sắc",
+    "size": "Kích cỡ",
+    "quantity": "Số lượng",
+    "inStock": "Còn {{n}} trong kho",
+    "outOfStock": "Hết hàng",
+    "buyNow": "Mua ngay",
+    "adding": "Đang thêm…",
+    "addToCart": "+ Thêm vào giỏ",
+    "virtualTryOn": "Thử đồ ảo",
+    "details": "Chi tiết",
+    "reviewsCount_other": "{{count}} đánh giá",
+    "noReviews": "Chưa có đánh giá",
+    "fbt": "Thường được mua cùng",
+    "alsoLike": "Có thể bạn cũng thích"
+  },
+  "reviews": {
+    "eyebrow": "Cảm nhận khách hàng",
+    "heading": "Đánh giá",
+    "count_other": "{{count}} đánh giá",
+    "writeReview": "Viết đánh giá",
+    "alreadyReviewed": "Bạn đã đánh giá sản phẩm này rồi.",
+    "purchaseRequired": "Chỉ khách đã mua và nhận sản phẩm này mới có thể đánh giá.",
+    "loading": "Đang tải đánh giá…",
+    "loadingMore": "Đang tải…",
+    "loadMore": "Xem thêm đánh giá",
+    "showing": "Đang hiển thị {{shown}} trên {{total}}",
+    "verifiedPurchase": "Đã mua hàng",
+    "imageAlt": "Ảnh đánh giá",
+    "editReview": "Sửa đánh giá",
+    "deleteReview": "Xóa đánh giá",
+    "markHelpful": "Đánh dấu hữu ích",
+    "foundHelpful_other": "{{count}} thấy hữu ích",
+    "sort": {
+      "newest": "Mới nhất",
+      "helpful": "Hữu ích nhất"
+    },
+    "empty": {
+      "title": "Chưa có đánh giá",
+      "subtitle": "Hãy là người đầu tiên chia sẻ cảm nhận về sản phẩm này."
+    },
+    "deleteDialog": {
+      "title": "Xóa đánh giá của bạn?",
+      "message": "Thao tác này sẽ xóa vĩnh viễn đánh giá và ảnh đính kèm. Bạn có thể viết đánh giá mới sau đó.",
+      "confirm": "Xóa",
+      "cancel": "Hủy"
+    },
+    "toasts": {
+      "updated": "Đã cập nhật đánh giá",
+      "created": "Cảm ơn bạn đã đánh giá!",
+      "deleted": "Đã xóa đánh giá",
+      "loginToVote": "Đăng nhập để bình chọn đánh giá",
+      "loginToWrite": "Vui lòng đăng nhập để viết đánh giá"
+    },
+    "errors": {
+      "load": "Không tải được đánh giá",
+      "loadMore": "Không tải được thêm đánh giá",
+      "delete": "Xóa thất bại",
+      "vote": "Không ghi nhận được bình chọn của bạn"
+    },
+    "form": {
+      "ratingLabel": "Đánh giá của bạn",
+      "titleLabel": "Tiêu đề (không bắt buộc)",
+      "titlePlaceholder": "Tóm tắt trong vài từ",
+      "bodyLabel": "Nội dung đánh giá",
+      "bodyPlaceholder": "Bạn thích hay không thích điểm gì? Dáng và chất lượng ra sao?",
+      "photosLabel": "Ảnh (không bắt buộc, tối đa {{max}})",
+      "uploadAlt": "tải lên",
+      "removeImage": "Xóa ảnh",
+      "maxImages": "Mỗi đánh giá chỉ được tối đa {{max}} ảnh",
+      "uploadFailed": "Tải ảnh lên thất bại",
+      "bodyRequired": "Vui lòng viết vài dòng về sản phẩm",
+      "submitFailed": "Không gửi được đánh giá",
+      "submitting": "Đang gửi…",
+      "update": "Cập nhật đánh giá",
+      "submit": "Gửi đánh giá",
+      "cancel": "Hủy"
+    }
+  },
+  "brand": {
+    "label": "Thương hiệu",
+    "fallbackName": "Thương hiệu",
+    "viewStore": "Xem cửa hàng",
+    "products": "sản phẩm",
+    "sold": "đã bán",
+    "noRatings": "Chưa có đánh giá"
+  },
+  "recommend": {
+    "scrollLeft": "Cuộn sang trái",
+    "scrollRight": "Cuộn sang phải"
+  },
+  "cartPage": {
+    "title": "Giỏ hàng của bạn",
+    "itemCount_other": "{{count}} sản phẩm",
+    "guestCart": "giỏ hàng khách",
+    "clearAll": "Xóa tất cả",
+    "signInPromptLead": "Đăng nhập",
+    "signInPromptRest": "để lưu giỏ hàng trên mọi thiết bị.",
+    "signIn": "Đăng nhập",
+    "loading": "Đang tải giỏ hàng…",
+    "continueShopping": "Tiếp tục mua sắm",
+    "youMayAlsoLike": "Có thể bạn cũng thích",
+    "empty": {
+      "title": "Giỏ hàng đang trống",
+      "subtitle": "Thêm vài món chất để bắt đầu nào.",
+      "shopNow": "Mua ngay"
+    },
+    "summary": {
+      "title": "Tóm tắt đơn hàng",
+      "subtotal_other": "Tạm tính ({{count}} sản phẩm)",
+      "shipping": "Phí vận chuyển",
+      "tax": "Thuế",
+      "calculatedAtCheckout": "Tính khi thanh toán",
+      "total": "Tổng cộng",
+      "exclShippingTax": "chưa gồm phí ship & thuế"
+    },
+    "checkout": {
+      "resolveStock": "Xử lý vấn đề tồn kho",
+      "signInToCheckout": "Đăng nhập để thanh toán",
+      "placeOrder": "Đặt hàng"
+    },
+    "perks": {
+      "secureCheckout": "Thanh toán an toàn",
+      "freeReturns": "Đổi trả miễn phí trong 30 ngày",
+      "multiplePayments": "Nhiều hình thức thanh toán"
+    },
+    "item": {
+      "fallbackName": "Sản phẩm",
+      "tryOn": "Thử đồ",
+      "each": "mỗi cái",
+      "remove": "Xóa",
+      "removeAria": "Xóa {{name}} khỏi giỏ hàng"
+    },
+    "stock": {
+      "onlyLeft": "Chỉ còn {{n}}",
+      "low": "Sắp hết hàng",
+      "out": "Hết hàng",
+      "unavailable": "Không còn bán"
+    },
+    "confirmClear": {
+      "title": "Xóa tất cả sản phẩm?",
+      "message_other": "Thao tác này sẽ xóa toàn bộ {{count}} sản phẩm khỏi giỏ hàng. Không thể hoàn tác.",
+      "confirm": "Xóa giỏ hàng",
+      "cancel": "Giữ lại"
+    },
+    "errors": {
+      "updateQty": "Không thể cập nhật số lượng",
+      "removeItem": "Không thể xóa sản phẩm",
+      "clearCart": "Không thể xóa giỏ hàng"
+    }
+  },
+  "checkout": {
+    "eyebrow": {
+      "buyNow": "Mua ngay",
+      "cart": "Thanh toán an toàn"
+    },
+    "title": "Thanh toán",
+    "loading": "Đang tải trang thanh toán…",
+    "section": {
+      "shippingAddress": "Địa chỉ giao hàng",
+      "items": "Sản phẩm của bạn",
+      "paymentMethod": "Phương thức thanh toán",
+      "orderNotes": "Ghi chú đơn hàng"
+    },
+    "optional": "Không bắt buộc",
+    "needChanges": "Cần thay đổi?",
+    "backToProduct": "Quay lại sản phẩm",
+    "backToCart": "Quay lại giỏ hàng",
+    "continueShopping": "Tiếp tục mua sắm",
+    "notesPlaceholder": "Bạn muốn nhắn gì không? (vd: hướng dẫn giao hàng)",
+    "summary": {
+      "title": "Tóm tắt đơn hàng",
+      "subtotal_other": "Tạm tính ({{count}} sản phẩm)",
+      "shipping": "Phí vận chuyển",
+      "free": "Miễn phí",
+      "freeOver": "Miễn phí cho đơn trên {{amount}}",
+      "tax": "Thuế",
+      "taxNote": "Đã bao gồm",
+      "discount": "Giảm giá ({{code}})",
+      "total": "Tổng cộng"
+    },
+    "qty": "SL {{n}}",
+    "coupon": {
+      "placeholder": "Mã giảm giá",
+      "apply": "Áp dụng",
+      "remove": "Bỏ",
+      "applied": "Đã giảm −{{amount}}",
+      "invalid": "Mã giảm giá không hợp lệ"
+    },
+    "payment": {
+      "cod": {
+        "title": "Thanh toán khi nhận hàng",
+        "subtitle": "Trả tiền mặt khi đơn hàng được giao"
+      },
+      "vnpay": {
+        "title": "VNPAY",
+        "subtitle": "Thanh toán online qua VNPAY (ATM, QR, thẻ)"
+      },
+      "stripe": {
+        "title": "Thẻ",
+        "subtitle": "Thanh toán an toàn bằng thẻ tín dụng hoặc ghi nợ"
+      }
+    },
+    "footnote": {
+      "cod": "Bạn sẽ thanh toán tiền mặt khi đơn hàng được giao.",
+      "vnpay": "Bạn sẽ được chuyển sang VNPAY để hoàn tất thanh toán.",
+      "stripe": "Bạn sẽ được chuyển sang trang thanh toán thẻ an toàn."
+    },
+    "address": {
+      "loading": "Đang tải địa chỉ…",
+      "loadError": "Không tải được địa chỉ của bạn.",
+      "none": "Bạn chưa lưu địa chỉ nào.",
+      "add": "Thêm địa chỉ",
+      "manage": "Quản lý địa chỉ",
+      "default": "Mặc định"
+    },
+    "blockedItems_other": "{{count}} sản phẩm đã hết hàng hoặc không khả dụng.",
+    "fixInCart": "Sửa trong giỏ hàng",
+    "placeOrder": "Đặt hàng",
+    "placingOrder": "Đang đặt hàng…",
+    "submitError": "Không đặt được đơn hàng. Vui lòng thử lại.",
+    "empty": {
+      "title": "Chưa có gì để thanh toán",
+      "subtitle": "Giỏ hàng của bạn đang trống. Hãy thêm món bạn thích trước nhé.",
+      "shopNow": "Mua ngay"
+    },
+    "toast": {
+      "placedSuccess": "Đã đặt đơn {{orderNumber}}!",
+      "placedRedirect": "Đã tạo đơn {{orderNumber}} — đang chuyển đến thanh toán…"
+    },
+    "confirm": {
+      "title": "Xác nhận đơn hàng",
+      "place": "Đặt hàng",
+      "placeAndPay": "Đặt & thanh toán",
+      "reviewAgain": "Xem lại",
+      "head_other": "Đặt đơn này gồm {{count}} sản phẩm với tổng {{amount}}",
+      "shipTo": ", giao đến {{recipient}} tại {{district}}, {{city}}",
+      "tailCod": ". Bạn sẽ thanh toán tiền mặt khi nhận hàng.",
+      "tailVnpay": ". Bạn sẽ được chuyển sang VNPAY để thanh toán.",
+      "tailStripe": ". Bạn sẽ được chuyển đến trang thanh toán thẻ."
+    }
+  },
+  "accountPage": {
+    "title": "Tài khoản của tôi",
+    "loading": "Đang tải…",
+    "signOut": "Đăng xuất",
+    "nav": {
+      "profile": "Hồ sơ",
+      "orders": "Đơn hàng",
+      "addresses": "Địa chỉ"
+    },
+    "signOutDialog": {
+      "title": "Đăng xuất?",
+      "message": "Bạn sẽ cần đăng nhập lại để truy cập tài khoản.",
+      "cancel": "Ở lại"
+    },
+    "status": {
+      "PENDING": "Chờ xử lý",
+      "PAID": "Đã thanh toán",
+      "PROCESSING": "Đang xử lý",
+      "SHIPPED": "Đang giao",
+      "DELIVERED": "Đã giao",
+      "CANCELLED": "Đã hủy",
+      "REFUNDED": "Đã hoàn tiền"
+    },
+    "paymentStatus": {
+      "PENDING": "Chờ thanh toán",
+      "AUTHORIZED": "Đã ủy quyền",
+      "CAPTURED": "Đã thanh toán",
+      "FAILED": "Thất bại",
+      "REFUNDED": "Đã hoàn tiền"
+    },
+    "pagination": {
+      "prev": "Trước",
+      "next": "Sau",
+      "pageOf": "Trang {{page}} / {{total}}"
+    },
+    "profile": {
+      "heading": "Hồ sơ",
+      "subtitle": "Quản lý thông tin cá nhân của bạn.",
+      "email": "Email",
+      "emailHint": "Không thể thay đổi email.",
+      "fullName": "Họ và tên",
+      "phone": "Số điện thoại",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu…",
+      "updated": "Đã cập nhật hồ sơ.",
+      "saveError": "Không thể lưu hồ sơ."
+    },
+    "password": {
+      "heading": "Mật khẩu",
+      "subtitle": "Chọn mật khẩu mạnh để bảo vệ tài khoản.",
+      "current": "Mật khẩu hiện tại",
+      "new": "Mật khẩu mới",
+      "confirm": "Xác nhận mật khẩu mới",
+      "update": "Đổi mật khẩu",
+      "updating": "Đang cập nhật…",
+      "changed": "Đã đổi mật khẩu.",
+      "mismatch": "Mật khẩu mới không khớp.",
+      "tooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "changeError": "Không thể đổi mật khẩu."
+    },
+    "orders": {
+      "heading": "Đơn hàng",
+      "subtitle": "Theo dõi và quản lý đơn hàng của bạn.",
+      "empty": "Bạn chưa có đơn hàng nào.",
+      "startShopping": "Mua sắm ngay",
+      "viewDetail": "Xem chi tiết",
+      "moreItems": "+{{n}} sản phẩm khác",
+      "loadError": "Không thể tải đơn hàng."
+    },
+    "detail": {
+      "loadError": "Không thể tải đơn hàng này.",
+      "backToOrders": "Quay lại đơn hàng",
+      "orderHistory": "← Lịch sử đơn hàng",
+      "placed": "Đặt ngày {{date}}",
+      "items": "Sản phẩm",
+      "shippingAddress": "Địa chỉ giao hàng",
+      "notes": "Ghi chú",
+      "statusTimeline": "Tiến trình đơn hàng",
+      "summary": "Tóm tắt",
+      "subtotal": "Tạm tính",
+      "discount": "Giảm giá",
+      "shipping": "Phí vận chuyển",
+      "tax": "Thuế",
+      "total": "Tổng cộng",
+      "payment": "Thanh toán",
+      "paidAt": "Thanh toán {{date}}",
+      "sku": "SKU {{sku}}",
+      "qty": "SL {{n}}",
+      "continuePaying": "Tiếp tục thanh toán với {{provider}}",
+      "redirecting": "Đang chuyển hướng…",
+      "cancelOrder": "Hủy đơn",
+      "cancelling": "Đang hủy…",
+      "cancelSuccess": "Đã hủy đơn hàng.",
+      "cancelError": "Không thể hủy đơn hàng này.",
+      "payUrlError": "Không thể bắt đầu thanh toán.",
+      "payInitError": "Không thể bắt đầu thanh toán.",
+      "youMayAlsoLike": "Có thể bạn cũng thích",
+      "cancelDialog": {
+        "title": "Hủy đơn hàng?",
+        "message": "Bạn chắc chắn muốn hủy đơn {{order}}? Hành động này không thể hoàn tác.",
+        "keep": "Giữ đơn"
+      }
+    },
+    "addresses": {
+      "heading": "Địa chỉ",
+      "subtitle": "Quản lý địa chỉ giao hàng của bạn.",
+      "add": "Thêm địa chỉ",
+      "addFirst": "Thêm địa chỉ đầu tiên",
+      "empty": "Bạn chưa thêm địa chỉ nào.",
+      "default": "Mặc định",
+      "other": "Khác",
+      "defaultStar": "★ Mặc định",
+      "setDefault": "Đặt mặc định",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "loadError": "Không thể tải địa chỉ.",
+      "actionError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "region": {
+        "NORTH": "Miền Bắc",
+        "CENTRAL": "Miền Trung",
+        "SOUTH": "Miền Nam"
+      },
+      "deleteDialog": {
+        "title": "Xóa địa chỉ?",
+        "message": "Xóa \"{{name}}\"? Hành động này không thể hoàn tác.",
+        "keep": "Giữ lại"
+      },
+      "setDefaultDialog": {
+        "title": "Đặt làm mặc định?",
+        "message": "Dùng \"{{name}}\" làm địa chỉ giao hàng mặc định?",
+        "cancel": "Hủy"
+      }
+    }
+  },
+  "auth": {
+    "back": "Quay lại",
+    "signIn": "Đăng nhập",
+    "createAccount": "Tạo tài khoản",
+    "welcomeBack": "Chào mừng trở lại",
+    "joinTitle": "Gia nhập VESTA",
+    "loginSubtitle": "Đăng nhập để tiếp tục hành trình của bạn.",
+    "signupSubtitle": "Tạo tài khoản để bắt đầu mua sắm.",
+    "fullName": "Họ và tên",
+    "fullNamePlaceholder": "Tên của bạn",
+    "email": "Email",
+    "emailPlaceholder": "ban@vidu.com",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "forgotPassword": "Quên mật khẩu?",
+    "signingIn": "Đang đăng nhập...",
+    "creatingAccount": "Đang tạo tài khoản...",
+    "or": "hoặc",
+    "continueWithGoogle": "Tiếp tục với Google",
+    "noAccount": "Chưa có tài khoản?",
+    "haveAccount": "Đã có tài khoản?",
+    "signUpAction": "Đăng ký",
+    "signInAction": "Đăng nhập",
+    "promo": {
+      "line1": "Mặc",
+      "line2": "Tương Lai",
+      "tagline": "Thử đồ ảo. Phong cách thật. Dành cho người bản lĩnh."
+    },
+    "strength": {
+      "tooWeak": "Quá yếu",
+      "weak": "Yếu",
+      "fair": "Trung bình",
+      "strong": "Mạnh",
+      "veryStrong": "Rất mạnh"
+    },
+    "verifyBanner": {
+      "message": "Vui lòng xác minh email để bảo mật tài khoản của bạn.",
+      "resend": "Gửi lại",
+      "sending": "Đang gửi...",
+      "sent": "Đã gửi email xác minh.",
+      "sendError": "Không thể gửi email xác minh.",
+      "dismiss": "Đóng"
+    },
+    "errors": {
+      "googleFailed": "Đăng nhập Google thất bại. Vui lòng thử lại.",
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "fullNameRequired": "Vui lòng nhập họ và tên của bạn.",
+      "passwordRule": "Mật khẩu phải chứa ít nhất một chữ cái và một chữ số.",
+      "passwordMismatch": "Mật khẩu không khớp.",
+      "passwordMismatchShort": "Mật khẩu không khớp",
+      "captchaRequired": "Vui lòng hoàn tất xác thực captcha.",
+      "generic": "Đã có lỗi xảy ra. Vui lòng thử lại."
+    }
+  },
+  "authFlow": {
+    "signIn": "Đăng nhập",
+    "backToSignIn": "Quay lại đăng nhập",
+    "backToStore": "Quay lại cửa hàng",
+    "eyebrow": {
+      "account": "Tài khoản"
+    },
+    "errors": {
+      "invalidEmail": "Nhập địa chỉ email hợp lệ.",
+      "captcha": "Vui lòng hoàn tất bước xác minh.",
+      "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+      "passwordRule": "Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ và số.",
+      "passwordMismatch": "Mật khẩu không khớp.",
+      "linkExpired": "Liên kết không hợp lệ hoặc đã hết hạn.",
+      "nameRequired": "Vui lòng nhập tên của bạn."
+    },
+    "fields": {
+      "email": "Email",
+      "newPassword": "Mật khẩu mới",
+      "password": "Mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "fullName": "Họ và tên",
+      "fullNamePlaceholder": "Tên của bạn",
+      "mismatchHint": "Mật khẩu không khớp"
+    },
+    "forgot": {
+      "title": "Quên mật khẩu",
+      "lead": "Nhập email và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.",
+      "submit": "Gửi liên kết đặt lại",
+      "sending": "Đang gửi...",
+      "sentTitle": "Kiểm tra hộp thư của bạn",
+      "sentLead": {
+        "before": "Nếu có tài khoản dùng email ",
+        "after": ", bạn sẽ sớm nhận được liên kết đặt lại mật khẩu."
+      }
+    },
+    "reset": {
+      "title": "Đặt lại mật khẩu",
+      "lead": "Chọn mật khẩu mới cho tài khoản của bạn.",
+      "submit": "Đặt lại mật khẩu",
+      "updating": "Đang cập nhật...",
+      "success": "Đã cập nhật mật khẩu. Vui lòng đăng nhập.",
+      "invalidTitle": "Liên kết không hợp lệ",
+      "invalidLead": "Liên kết đặt lại mật khẩu này bị thiếu hoặc không hợp lệ. Hãy yêu cầu liên kết mới để tiếp tục.",
+      "requestNew": "Yêu cầu liên kết mới"
+    },
+    "verify": {
+      "missingToken": "Liên kết xác minh bị thiếu hoặc không hợp lệ.",
+      "verifyingEyebrow": "Đang xác minh",
+      "verifyingTitle": "Đang xác minh email của bạn",
+      "verifyingLead": "Chờ một chút trong khi chúng tôi xác nhận địa chỉ email của bạn.",
+      "successEyebrow": "Đã xác minh",
+      "successTitle": "Email đã được xác minh",
+      "successLead": "Địa chỉ email của bạn đã được xác nhận. Mọi thứ đã sẵn sàng.",
+      "goToAccount": "Đến tài khoản",
+      "failedEyebrow": "Xác minh thất bại",
+      "failedTitle": "Xác minh thất bại"
+    },
+    "invite": {
+      "eyebrow": "Lời mời",
+      "title": "Chấp nhận lời mời",
+      "lead": {
+        "before": "Bạn được mời tham gia nhóm với email ",
+        "after": ". Thiết lập tài khoản để bắt đầu."
+      },
+      "loadingTitle": "Đang tải lời mời",
+      "loadingLead": "Đang kiểm tra lời mời của bạn...",
+      "invalidTitle": "Lời mời không hợp lệ",
+      "invalidLead": "Lời mời này không hợp lệ hoặc đã hết hạn. Hãy nhờ quản trị viên gửi lời mời mới.",
+      "invalidError": "Lời mời này không hợp lệ hoặc đã hết hạn.",
+      "success": "Chào mừng bạn! Tài khoản của bạn đã sẵn sàng.",
+      "submit": "Tạo tài khoản",
+      "settingUp": "Đang thiết lập..."
+    },
+    "oauth": {
+      "eyebrow": "Đang đăng nhập",
+      "title": "Đang hoàn tất đăng nhập",
+      "lead": "Chờ một chút trong khi chúng tôi hoàn tất đăng nhập bằng Google."
+    }
+  },
+  "shared": {
+    "close": "Đóng",
+    "confirm": {
+      "title": "Bạn chắc chứ?",
+      "confirm": "Xác nhận",
+      "cancel": "Hủy"
+    },
+    "quantity": {
+      "label": "Số lượng",
+      "decrease": "Giảm số lượng",
+      "increase": "Tăng số lượng"
+    },
+    "rating": {
+      "starCount_other": "{{count}} sao",
+      "outOf": "{{value}} trên {{max}} sao"
+    }
+  }
+}

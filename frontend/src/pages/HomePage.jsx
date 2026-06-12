@@ -4,6 +4,8 @@ import NavbarGlass from '../components/NavbarGlass';
 import AnnouncementBar from '../components/AnnouncementBar';
 import FooterFull from '../components/FooterFull';
 import { getProducts } from '../services/productService';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../lib/format';
 
 export default function HomePage() {
   const bgTextRef = useRef(null);
@@ -12,6 +14,7 @@ export default function HomePage() {
   const modelRef = useRef(null);
   const heroRef = useRef(null);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [trending, setTrending] = useState([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
@@ -54,7 +57,7 @@ export default function HomePage() {
       .catch(() => { if (!cancelled) setTrending([]); })
       .finally(() => { if (!cancelled) setTrendingLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [i18n.language]);
 
   return (
     <div style={{ background: 'var(--bg-color)', minHeight: '100vh' }}>
@@ -63,7 +66,7 @@ export default function HomePage() {
 
       {/* HERO */}
       <section className="hero" ref={heroRef}>
-        <div className="hero-bg-text" ref={bgTextRef}>CAMPUS LEGEND</div>
+        <div className="hero-bg-text" ref={bgTextRef}>STREET LEGEND</div>
 
         <div className="hero-shape hero-shape-1" />
         <div className="hero-shape hero-shape-2" />
@@ -79,18 +82,18 @@ export default function HomePage() {
         />
 
         <div className="hero-content">
-          <p className="hero-eyebrow">SS 2026 Collection</p>
+          <p className="hero-eyebrow">{t('home.eyebrow')}</p>
           <h1 className="hero-title">
-            DRESS<br />
-            LIKE A<br />
-            <span>LEGEND</span>
+            {t('home.heroTitleLine1')}<br />
+            {t('home.heroTitleLine2')}<br />
+            <span>{t('home.heroTitleAccent')}</span>
           </h1>
           <p className="hero-subtitle">
-            Student streetwear engineered for campus life and beyond. Limited drops, unlimited style.
+            {t('home.subtitle')}
           </p>
           <div className="hero-cta">
-            <Link to="/shop" className="btn-primary">Shop The Drop</Link>
-            <Link to="/shop" className="btn-secondary">Explore Looks</Link>
+            <Link to="/shop" className="btn-primary">{t('home.ctaShop')}</Link>
+            <Link to="/shop" className="btn-secondary">{t('home.ctaExplore')}</Link>
           </div>
         </div>
       </section>
@@ -98,29 +101,29 @@ export default function HomePage() {
       {/* FEATURED LOOKBOOKS */}
       <section style={{ padding: '80px 48px' }}>
         <div style={{ marginBottom: '40px' }}>
-          <p className="section-label">Editorial</p>
-          <h2 className="section-title">Featured<br />Lookbooks</h2>
+          <p className="section-label">{t('home.editorial')}</p>
+          <h2 className="section-title">{t('home.featured1')}<br />{t('home.featured2')}</h2>
         </div>
 
         <div className="lookbooks-grid">
           {[
-            { tag: 'Campus Essentials', title: 'Back to School' },
-            { tag: 'Streetwear', title: 'Urban Edit' },
-            { tag: 'Seasonal', title: 'Winter Layers' },
-            { tag: 'Minimal', title: 'Clean Cuts' },
-            { tag: 'Retro', title: 'Varsity Club' },
+            { tag: 'campusEssentialsTag', title: 'campusEssentialsTitle' },
+            { tag: 'streetwearTag', title: 'streetwearTitle' },
+            { tag: 'seasonalTag', title: 'seasonalTitle' },
+            { tag: 'minimalTag', title: 'minimalTitle' },
+            { tag: 'retroTag', title: 'retroTitle' },
           ].map((lb, i) => (
             <div key={i} className="lookbook-card">
               <div className="lookbook-card-inner" style={{ height: '100%' }}>
                 <img
                   className="lookbook-img"
                   src={`https://images.unsplash.com/photo-${['1539109136881-3be0616acf4b', '1509631179647-0177331693ae', '1516762689617-e1cffcef479d', '1487222477894-8943e31ef7b2', '1591047139829-d91aecb6caea'][i]}?w=800&q=80`}
-                  alt={lb.title}
+                  alt={t(`home.lookbooks.${lb.title}`)}
                   style={{ height: '100%', minHeight: 'unset' }}
                 />
                 <div className="lookbook-overlay">
-                  <p className="lookbook-tag">{lb.tag}</p>
-                  <h3 className="lookbook-title">{lb.title}</h3>
+                  <p className="lookbook-tag">{t(`home.lookbooks.${lb.tag}`)}</p>
+                  <h3 className="lookbook-title">{t(`home.lookbooks.${lb.title}`)}</h3>
                 </div>
               </div>
             </div>
@@ -141,13 +144,13 @@ export default function HomePage() {
             marginBottom: '24px',
           }}
         >
-          The Manifesto
+          {t('home.manifesto')}
         </div>
         <p className="statement-text">
-          WEAR YOUR <span className="highlight">AMBITION.</span> OWN THE <span className="highlight">CAMPUS.</span> SET THE STANDARD.
+          {t('home.statement1')} <span className="highlight">{t('home.statementHi1')}</span> {t('home.statement2')} <span className="highlight">{t('home.statementHi2')}</span> {t('home.statement3')}
         </p>
         <p style={{ marginTop: '32px', color: 'rgba(255,255,255,0.5)', fontSize: '14px', maxWidth: '500px', margin: '32px auto 0', lineHeight: 1.7 }}>
-          Every piece is designed with the student in mind — built for long days, late nights, and everything in between.
+          {t('home.manifestoBody')}
         </p>
       </section>
 
@@ -155,10 +158,10 @@ export default function HomePage() {
       <section style={{ padding: '80px 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
           <div>
-            <p className="section-label">What's Hot</p>
-            <h2 className="section-title">Trending<br />Now</h2>
+            <p className="section-label">{t('home.whatsHot')}</p>
+            <h2 className="section-title">{t('home.trending1')}<br />{t('home.trending2')}</h2>
           </div>
-          <Link to="/shop" className="btn-secondary" style={{ fontSize: '11px' }}>View All</Link>
+          <Link to="/shop" className="btn-secondary" style={{ fontSize: '11px' }}>{t('home.viewAll')}</Link>
         </div>
 
         <TrendingGrid loading={trendingLoading} products={trending} onClick={(p) => navigate(`/product/${p.slug || p.id}`)} />
@@ -170,6 +173,7 @@ export default function HomePage() {
 }
 
 function TrendingGrid({ loading, products, onClick }) {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -190,7 +194,7 @@ function TrendingGrid({ loading, products, onClick }) {
   if (products.length === 0) {
     return (
       <div className="text-center py-16 text-black/40">
-        <p className="text-sm">No products available yet.</p>
+        <p className="text-sm">{t('home.noProducts')}</p>
       </div>
     );
   }
@@ -212,11 +216,11 @@ function TrendingGrid({ loading, products, onClick }) {
               />
             ) : (
               <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
-                No image
+                {t('common.noImage')}
               </div>
             )}
             <div className="absolute inset-x-0 bottom-0 bg-black/85 text-white text-center py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-              <span className="text-[11px] font-bold tracking-[0.2em] uppercase">View Details →</span>
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase">{t('common.viewDetails')}</span>
             </div>
           </div>
 
@@ -231,11 +235,4 @@ function TrendingGrid({ loading, products, onClick }) {
       ))}
     </div>
   );
-}
-
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
 }

@@ -17,8 +17,8 @@ public class AdminCategoryDto {
     private final String slug;
     private final String name;
     private final String imageUrl;
-    private final String nameEn;
     private final String nameVi;
+    private final String nameJa;
     private final Integer sortOrder;
     private final Boolean isActive;
     private final Long productCount;

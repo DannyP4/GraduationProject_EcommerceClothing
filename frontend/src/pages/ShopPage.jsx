@@ -6,12 +6,14 @@ import FooterFull from '../components/FooterFull';
 import { getProducts, getCategories, getBrands } from '../services/productService';
 import useScrollRestore from '../lib/useScrollRestore';
 import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../lib/format';
 
 const SORT_OPTIONS = [
-  { label: 'Newest', value: 'NEWEST' },
-  { label: 'Price: Low to High', value: 'PRICE_ASC' },
-  { label: 'Price: High to Low', value: 'PRICE_DESC' },
-  { label: 'Popular', value: 'POPULAR' },
+  { labelKey: 'sortNewest', value: 'NEWEST' },
+  { labelKey: 'sortPriceAsc', value: 'PRICE_ASC' },
+  { labelKey: 'sortPriceDesc', value: 'PRICE_DESC' },
+  { labelKey: 'sortPopular', value: 'POPULAR' },
 ];
 
 const PAGE_SIZE = 12;
@@ -20,6 +22,7 @@ export default function ShopPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t, i18n } = useTranslation();
   const query = searchParams.get('q')?.trim() ?? '';
 
   const [categories, setCategories] = useState([]);
@@ -73,12 +76,12 @@ export default function ShopPage() {
       .then((data) => { if (!cancelled) setBrands(data || []); })
       .catch(() => { });
     return () => { cancelled = true; };
-  }, []);
+  }, [i18n.language]);
 
   const loaded = useRef({ key: null, through: -1 });
   useEffect(() => {
     let cancelled = false;
-    const filterKey = `${activeCategoryId ?? ''}|${activeBrandId ?? ''}|${sort}|${query}`;
+    const filterKey = `${i18n.language}|${activeCategoryId ?? ''}|${activeBrandId ?? ''}|${sort}|${query}`;
     const fetchPage = (p) => getProducts({
       page: p,
       size: PAGE_SIZE,
@@ -119,7 +122,7 @@ export default function ShopPage() {
     };
     run();
     return () => { cancelled = true; };
-  }, [page, sort, activeCategoryId, activeBrandId, query, reloadNonce]);
+  }, [page, sort, activeCategoryId, activeBrandId, query, reloadNonce, i18n.language]);
 
   const clearQuery = () => {
     const next = new URLSearchParams(searchParams);
@@ -147,13 +150,13 @@ export default function ShopPage() {
         <div className="max-w-[1440px] mx-auto">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40 mb-2">
             {query
-              ? `Search · ${loading ? '…' : `${totalElements} result${totalElements === 1 ? '' : 's'}`}`
+              ? t('shop.eyebrowSearch', { n: loading ? '…' : totalElements })
               : activeBrandId
-                ? `Brand · ${loading ? '…' : `${totalElements} item${totalElements === 1 ? '' : 's'}`}`
-                : `SS 2026 · ${loading ? '…' : `${totalElements} items`}`}
+                ? t('shop.eyebrowBrand', { n: loading ? '…' : totalElements })
+                : t('shop.eyebrowSeason', { n: loading ? '…' : totalElements })}
           </p>
           <h1 className="font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
-            {query ? <>Results for &ldquo;{query}&rdquo;</> : activeBrandId ? (brandName || 'Brand') : 'Shop All'}
+            {query ? t('shop.titleResults', { query }) : activeBrandId ? (brandName || t('shop.titleBrand')) : t('shop.titleAll')}
           </h1>
           {(query || activeBrandId) && (
             <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -162,7 +165,7 @@ export default function ShopPage() {
                   onClick={clearQuery}
                   className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/60 hover:text-[#E83354] transition-colors"
                 >
-                  <span>Clear search</span>
+                  <span>{t('shop.clearSearch')}</span>
                   <span aria-hidden>×</span>
                 </button>
               )}
@@ -171,7 +174,7 @@ export default function ShopPage() {
                   onClick={clearBrand}
                   className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/60 hover:text-[#E83354] transition-colors"
                 >
-                  <span>Clear brand</span>
+                  <span>{t('shop.clearBrand')}</span>
                   <span aria-hidden>×</span>
                 </button>
               )}
@@ -186,12 +189,12 @@ export default function ShopPage() {
           <div className="sticky top-20 space-y-8">
             {/* Categories */}
             <div>
-              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-3">Collections</h3>
+              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-3">{t('shop.collections')}</h3>
               <input
                 type="text"
                 value={catFilter}
                 onChange={(e) => setCatFilter(e.target.value)}
-                placeholder="Search category…"
+                placeholder={t('shop.searchCategory')}
                 className="w-full border border-black/15 bg-white text-xs px-2.5 py-1.5 mb-2 focus:outline-none focus:border-black"
               />
               <ul ref={catScrollRef} className="space-y-1 max-h-[52vh] overflow-y-auto pr-1 scrollbar-subtle">
@@ -203,7 +206,7 @@ export default function ShopPage() {
                       : 'text-black/60 hover:text-black hover:bg-black/5'
                       }`}
                   >
-                    All
+                    {t('shop.all')}
                   </button>
                 </li>
                 {categories
@@ -226,14 +229,14 @@ export default function ShopPage() {
 
             {/* Sort */}
             <div>
-              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-4">Sort By</h3>
+              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-4">{t('shop.sortBy')}</h3>
               <div className="relative">
                 <select
                   value={sort}
                   onChange={(e) => { setSort(e.target.value); setPage(0); }}
                   className="w-full border border-black/15 bg-white text-sm pl-3 pr-9 py-2.5 focus:outline-none focus:border-black appearance-none cursor-pointer"
                 >
-                  {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{t(`shop.${s.labelKey}`)}</option>)}
                 </select>
                 <svg
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/40"
@@ -249,7 +252,7 @@ export default function ShopPage() {
                 onClick={() => { setActiveCategoryId(null); setPage(0); }}
                 className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#E83354] hover:underline"
               >
-                Clear Filters
+                {t('shop.clearFilters')}
               </button>
             )}
           </div>
@@ -259,13 +262,13 @@ export default function ShopPage() {
         <main className="flex-1">
           {error ? (
             <div className="bg-white border border-[#E83354]/30 px-6 py-10 text-center">
-              <p className="text-sm font-bold text-[#E83354] mb-1 uppercase tracking-wider">Could not load products</p>
+              <p className="text-sm font-bold text-[#E83354] mb-1 uppercase tracking-wider">{t('shop.errorTitle')}</p>
               <p className="text-xs text-black/60 mb-4">{error}</p>
               <button
                 onClick={() => { loaded.current = { key: null, through: -1 }; setError(null); setReloadNonce((n) => n + 1); }}
                 className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
               >
-                Retry
+                {t('shop.retry')}
               </button>
             </div>
           ) : loading ? (
@@ -274,22 +277,22 @@ export default function ShopPage() {
             query ? (
               <div className="bg-white border border-black/10 py-20 px-6 text-center">
                 <p className="font-['Anton'] text-4xl uppercase tracking-tight mb-3">
-                  No matches for &ldquo;{query}&rdquo;
+                  {t('shop.noMatchTitle', { query })}
                 </p>
                 <p className="text-sm text-black/60 mb-8">
-                  We couldn&rsquo;t find anything matching that search. Try a different keyword or browse the full catalog.
+                  {t('shop.noMatchBody')}
                 </p>
                 <button
                   onClick={clearQuery}
                   className="inline-block bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase px-12 py-4 hover:bg-[#E83354] transition-colors"
                 >
-                  Back to Shop
+                  {t('shop.backToShop')}
                 </button>
               </div>
             ) : (
               <div className="text-center py-24 text-black/40">
-                <p className="text-xl font-bold mb-2">No products found</p>
-                <p className="text-sm">Try adjusting your filters</p>
+                <p className="text-xl font-bold mb-2">{t('shop.noProductsTitle')}</p>
+                <p className="text-sm">{t('shop.noProductsHint')}</p>
               </div>
             )
           ) : (
@@ -314,12 +317,12 @@ export default function ShopPage() {
                       />
                     ) : (
                       <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
-                        No image
+                        {t('common.noImage')}
                       </div>
                     )}
                     {/* Slide-up overlay — translate-y-full hidden, rises on hover */}
                     <div className="absolute inset-x-0 bottom-0 bg-black/85 text-white text-center py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-                      <span className="text-[11px] font-bold tracking-[0.2em] uppercase">View Details →</span>
+                      <span className="text-[11px] font-bold tracking-[0.2em] uppercase">{t('common.viewDetails')}</span>
                     </div>
                   </div>
 
@@ -357,7 +360,7 @@ export default function ShopPage() {
                         )}
                         {product.reviewCount > 0 && product.soldCount > 0 && <span className="text-black/20">·</span>}
                         {product.soldCount > 0 && (
-                          <span className="text-[11px] leading-none">{product.soldCount} sold</span>
+                          <span className="text-[11px] leading-none">{t('common.sold', { n: product.soldCount })}</span>
                         )}
                       </div>
                     )}
@@ -370,7 +373,7 @@ export default function ShopPage() {
           {!loading && !error && products.length > 0 && (
             <div className="mt-12 flex flex-col items-center gap-3">
               <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-black/40">
-                Showing {products.length} of {totalElements}
+                {t('shop.showing', { shown: products.length, total: totalElements })}
               </p>
               {hasNext && (
                 <button
@@ -379,7 +382,7 @@ export default function ShopPage() {
                   onClick={() => setPage((p) => p + 1)}
                   className="text-[12px] font-bold tracking-[0.15em] uppercase border-2 border-black px-10 py-3.5 hover:bg-black hover:text-white transition-colors disabled:opacity-40 disabled:cursor-wait"
                 >
-                  {loadingMore ? 'Loading…' : 'Load more'}
+                  {loadingMore ? t('shop.loading') : t('shop.loadMore')}
                 </button>
               )}
             </div>
@@ -407,11 +410,4 @@ function SkeletonGrid({ count }) {
       ))}
     </div>
   );
-}
-
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
 }

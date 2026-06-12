@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function QuantityStepper({
   value,
@@ -8,6 +9,7 @@ export default function QuantityStepper({
   disabled = false,
   size = 'md', // 'sm' | 'md'
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(String(value ?? min));
   const [editing, setEditing] = useState(false);
   const targetRef = useRef(value ?? min);
@@ -99,7 +101,7 @@ export default function QuantityStepper({
         onTouchEnd={(e) => { e.preventDefault(); stopHold(); }}
         disabled={decDisabled}
         className={buttonClass}
-        aria-label="Decrease quantity"
+        aria-label={t('shared.quantity.decrease')}
       >−</button>
       <input
         type="text"
@@ -114,7 +116,7 @@ export default function QuantityStepper({
         }}
         disabled={disabled}
         className={`${dims.input} text-center font-bold tabular-nums bg-transparent focus:outline-none focus:bg-black/5 disabled:opacity-50`}
-        aria-label="Quantity"
+        aria-label={t('shared.quantity.label')}
       />
       <button
         type="button"
@@ -125,7 +127,7 @@ export default function QuantityStepper({
         onTouchEnd={(e) => { e.preventDefault(); stopHold(); }}
         disabled={incDisabled}
         className={buttonClass}
-        aria-label="Increase quantity"
+        aria-label={t('shared.quantity.increase')}
       >+</button>
     </div>
   );

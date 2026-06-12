@@ -124,7 +124,7 @@ class PaymentVnpayIntegrationTest extends BaseIntegrationTest {
         p.put("vnp_BankCode", "NCB");
         p.put("vnp_BankTranNo", "VNP14393107");
         p.put("vnp_CardType", "ATM");
-        p.put("vnp_OrderInfo", "Thanh toan don hang " + orderNumber);
+        p.put("vnp_OrderInfo", "Payment for order " + orderNumber);
         p.put("vnp_PayDate", "20260514103000");
         p.put("vnp_ResponseCode", code);
         p.put("vnp_TransactionNo", "14393107");

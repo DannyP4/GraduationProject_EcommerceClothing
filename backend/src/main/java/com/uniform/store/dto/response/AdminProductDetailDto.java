@@ -19,6 +19,10 @@ public class AdminProductDetailDto {
     private final String slug;
     private final String name;
     private final String description;
+    private final String nameVi;
+    private final String nameJa;
+    private final String descriptionVi;
+    private final String descriptionJa;
     private final Gender gender;
     private final BigDecimal basePrice;
     private final SaleType saleType;

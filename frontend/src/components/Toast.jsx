@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 const ToastContext = createContext(null);
 const DEFAULT_DURATION_MS = 3000;
@@ -48,6 +49,7 @@ export function ToastProvider({ children }) {
 }
 
 function ToastItem({ toast, onDismiss }) {
+  const { t } = useTranslation();
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ function ToastItem({ toast, onDismiss }) {
       <button
         onClick={() => { setLeaving(true); setTimeout(onDismiss, 200); }}
         className="flex-shrink-0 text-black/30 hover:text-black transition-colors"
-        aria-label="Close"
+        aria-label={t('shared.close')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

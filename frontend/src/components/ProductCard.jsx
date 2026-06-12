@@ -1,13 +1,9 @@
 import { Link } from 'react-router-dom';
-
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
-}
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../lib/format';
 
 export default function ProductCard({ product }) {
+  const { t } = useTranslation();
   const onSale = product.salePrice != null;
   return (
     <Link
@@ -28,7 +24,7 @@ export default function ProductCard({ product }) {
           />
         ) : (
           <div className="absolute inset-0 bg-black/5 flex items-center justify-center text-black/30 text-xs">
-            No image
+            {t('common.noImage')}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
@@ -8,12 +9,13 @@ import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import { useAuth } from '../context/AuthContext';
 
 const NAV = [
-  { to: '/account/profile', label: 'Profile' },
-  { to: '/account/orders', label: 'Orders' },
-  { to: '/account/addresses', label: 'Addresses' },
+  { to: '/account/profile', key: 'nav.profile' },
+  { to: '/account/orders', key: 'nav.orders' },
+  { to: '/account/addresses', key: 'nav.addresses' },
 ];
 
 export default function AccountLayout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -34,7 +36,7 @@ export default function AccountLayout() {
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">
             {user?.email}
           </p>
-          <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">My Account</h1>
+          <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('accountPage.title')}</h1>
         </div>
 
         <EmailVerificationBanner />
@@ -52,7 +54,7 @@ export default function AccountLayout() {
                     }`
                   }
                 >
-                  {n.label}
+                  {t(`accountPage.${n.key}`)}
                 </NavLink>
               ))}
             </nav>
@@ -60,7 +62,7 @@ export default function AccountLayout() {
               onClick={() => setConfirmOpen(true)}
               className="mt-3 md:mt-6 w-full px-3 py-2 text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 text-black/60 hover:border-[#E83354] hover:text-[#E83354] transition-colors"
             >
-              Sign Out
+              {t('accountPage.signOut')}
             </button>
           </aside>
 
@@ -72,10 +74,10 @@ export default function AccountLayout() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Sign out?"
-        message="You will need to sign in again to access your account, orders and saved addresses."
-        confirmLabel="Sign Out"
-        cancelLabel="Stay Signed In"
+        title={t('accountPage.signOutDialog.title')}
+        message={t('accountPage.signOutDialog.message')}
+        confirmLabel={t('accountPage.signOut')}
+        cancelLabel={t('accountPage.signOutDialog.cancel')}
         tone="danger"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={doLogout}

@@ -56,6 +56,7 @@ class AdminBrandIntegrationTest extends BaseIntegrationTest {
         req.setName("Atlas Studio");
         req.setDescriptionVi("Thương hiệu Atlas");
         req.setDescriptionEn("Atlas brand description");
+        req.setDescriptionJa("アトラスブランド");
 
         mockMvc.perform(post("/admin/brands")
                         .header("Authorization", "Bearer " + adminJwt)
@@ -65,6 +66,7 @@ class AdminBrandIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.data.slug").value("atlas-studio"))
                 .andExpect(jsonPath("$.data.descriptionVi").value("Thương hiệu Atlas"))
                 .andExpect(jsonPath("$.data.descriptionEn").value("Atlas brand description"))
+                .andExpect(jsonPath("$.data.descriptionJa").value("アトラスブランド"))
                 .andExpect(jsonPath("$.data.productCount").value(0));
 
         assertThat(brandRepository.existsBySlug("atlas-studio")).isTrue();

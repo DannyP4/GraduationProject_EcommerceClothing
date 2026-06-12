@@ -33,7 +33,8 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class AdminCategoryServiceImpl implements AdminCategoryService {
 
-    private static final String LOCALE_EN = "en";
+    private static final String LOCALE_VI = "vi";
+    private static final String LOCALE_JA = "ja";
 
     private final CategoryRepository categoryRepository;
     private final CategoryTranslationRepository translationRepository;
@@ -45,9 +46,11 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         if (all.isEmpty()) return List.of();
 
         List<Long> ids = all.stream().map(Category::getId).toList();
-        Map<Long, String> enNames = new HashMap<>();
+        Map<Long, String> viNames = new HashMap<>();
+        Map<Long, String> jaNames = new HashMap<>();
         for (CategoryTranslation t : translationRepository.findByCategoryIdIn(ids)) {
-            if (LOCALE_EN.equals(t.getLocale())) enNames.put(t.getCategory().getId(), t.getName());
+            if (LOCALE_VI.equals(t.getLocale())) viNames.put(t.getCategory().getId(), t.getName());
+            else if (LOCALE_JA.equals(t.getLocale())) jaNames.put(t.getCategory().getId(), t.getName());
         }
 
         Map<Long, Long> productCounts = new HashMap<>();
@@ -63,8 +66,8 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
                     .slug(c.getSlug())
                     .name(c.getName())
                     .imageUrl(c.getImageUrl())
-                    .nameVi(c.getName())
-                    .nameEn(enNames.get(c.getId()))
+                    .nameVi(viNames.get(c.getId()))
+                    .nameJa(jaNames.get(c.getId()))
                     .sortOrder(c.getSortOrder())
                     .isActive(c.getIsActive())
                     .productCount(productCounts.get(c.getId()))
@@ -113,7 +116,9 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     public AdminCategoryDto get(Long id) {
         Category c = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", id));
-        String enName = translationRepository.findByCategoryIdAndLocale(id, LOCALE_EN)
+        String viName = translationRepository.findByCategoryIdAndLocale(id, LOCALE_VI)
+                .map(CategoryTranslation::getName).orElse(null);
+        String jaName = translationRepository.findByCategoryIdAndLocale(id, LOCALE_JA)
                 .map(CategoryTranslation::getName).orElse(null);
         long products = productRepository.countByCategoryIdAndDeletedAtIsNull(id);
         return AdminCategoryDto.builder()
@@ -122,8 +127,8 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
                 .slug(c.getSlug())
                 .name(c.getName())
                 .imageUrl(c.getImageUrl())
-                .nameVi(c.getName())
-                .nameEn(enName)
+                .nameVi(viName)
+                .nameJa(jaName)
                 .sortOrder(c.getSortOrder())
                 .isActive(c.getIsActive())
                 .productCount(products)
@@ -150,14 +155,8 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
                 .isActive(req.getIsActive() == null ? Boolean.TRUE : req.getIsActive())
                 .build());
 
-        if (req.getNameEn() != null && !req.getNameEn().isBlank()) {
-            translationRepository.save(CategoryTranslation.builder()
-                    .category(saved)
-                    .locale(LOCALE_EN)
-                    .name(req.getNameEn())
-                    .translatedAt(Instant.now())
-                    .build());
-        }
+        upsertCategoryTranslation(saved, LOCALE_VI, req.getNameVi());
+        upsertCategoryTranslation(saved, LOCALE_JA, req.getNameJa());
         return get(saved.getId());
     }
 
@@ -190,19 +189,8 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         if (req.getSortOrder() != null) c.setSortOrder(req.getSortOrder());
         if (req.getIsActive() != null) c.setIsActive(req.getIsActive());
 
-        if (req.getNameEn() != null) {
-            CategoryTranslation existing = translationRepository.findByCategoryIdAndLocale(id, LOCALE_EN).orElse(null);
-            if (req.getNameEn().isBlank()) {
-                if (existing != null) translationRepository.delete(existing);
-            } else if (existing != null) {
-                existing.setName(req.getNameEn());
-                existing.setTranslatedAt(Instant.now());
-            } else {
-                translationRepository.save(CategoryTranslation.builder()
-                        .category(c).locale(LOCALE_EN).name(req.getNameEn())
-                        .translatedAt(Instant.now()).build());
-            }
-        }
+        if (req.getNameVi() != null) upsertCategoryTranslation(c, LOCALE_VI, req.getNameVi());
+        if (req.getNameJa() != null) upsertCategoryTranslation(c, LOCALE_JA, req.getNameJa());
         return get(id);
     }
 
@@ -220,6 +208,23 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         }
         translationRepository.deleteByCategoryId(id);
         categoryRepository.delete(c);
+    }
+
+    private void upsertCategoryTranslation(Category category, String locale, String name) {
+        String n = blankToNull(name);
+        CategoryTranslation existing = translationRepository.findByCategoryIdAndLocale(category.getId(), locale).orElse(null);
+        if (n == null) {
+            if (existing != null) translationRepository.delete(existing);
+            return;
+        }
+        if (existing != null) {
+            existing.setName(n);
+            existing.setTranslatedAt(Instant.now());
+        } else {
+            translationRepository.save(CategoryTranslation.builder()
+                    .category(category).locale(locale).name(n)
+                    .translatedAt(Instant.now()).build());
+        }
     }
 
     private static String blankToNull(String s) {

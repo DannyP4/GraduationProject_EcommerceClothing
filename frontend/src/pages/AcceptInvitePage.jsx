@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as authService from '../services/authService';
 import AuthCard from '../components/AuthCard';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
@@ -9,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).+$/;
 
 export default function AcceptInvitePage() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const token = params.get('token') || '';
   const [state, setState] = useState('loading'); // 'loading' | 'ready' | 'invalid'
@@ -45,58 +47,59 @@ export default function AcceptInvitePage() {
     e.preventDefault();
     setError('');
     if (!fullName.trim()) {
-      setError('Please enter your name.');
+      setError(t('authFlow.errors.nameRequired'));
       return;
     }
     if (password.length < 8 || !PASSWORD_RULE.test(password)) {
-      setError('Password must be at least 8 characters with one letter and one digit.');
+      setError(t('authFlow.errors.passwordRule'));
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setError(t('authFlow.errors.passwordMismatch'));
       return;
     }
     setSubmitting(true);
     try {
       const data = await authService.acceptInvite({ token, fullName: fullName.trim(), password });
       adoptSession(data);
-      toast.success('Welcome to the team.');
+      toast.success(t('authFlow.invite.success'));
       navigate('/admin');
     } catch (err) {
-      setError(err.message || 'This invitation is invalid or has expired.');
+      setError(err.message || t('authFlow.invite.invalidError'));
       setSubmitting(false);
     }
   };
 
   if (state === 'loading') {
     return (
-      <AuthCard eyebrow="Team invitation" title="Checking...">
-        <p className="text-sm text-black/50">Validating your invitation.</p>
+      <AuthCard eyebrow={t('authFlow.invite.eyebrow')} title={t('authFlow.invite.loadingTitle')}>
+        <p className="text-sm text-black/50">{t('authFlow.invite.loadingLead')}</p>
       </AuthCard>
     );
   }
 
   if (state === 'invalid') {
     return (
-      <AuthCard eyebrow="Team invitation" title="Invalid link">
+      <AuthCard eyebrow={t('authFlow.invite.eyebrow')} title={t('authFlow.invite.invalidTitle')}>
         <p className="text-sm text-black/60 mb-7 leading-relaxed">
-          This invitation is missing its token, has already been used, or has expired. Ask an admin to send a fresh one.
+          {t('authFlow.invite.invalidLead')}
         </p>
         <Link
           to="/login"
           className="block text-center w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors"
         >
-          Back to sign in
+          {t('authFlow.backToSignIn')}
         </Link>
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard eyebrow="Team invitation" title="Join Vesta">
+    <AuthCard eyebrow={t('authFlow.invite.eyebrow')} title={t('authFlow.invite.title')}>
       <p className="text-sm text-black/60 mb-7 leading-relaxed">
-        You've been invited to manage <strong className="text-black break-all">{email}</strong> as an administrator. Set
-        your name and password to finish.
+        {t('authFlow.invite.lead.before')}
+        <strong className="text-black break-all">{email}</strong>
+        {t('authFlow.invite.lead.after')}
       </p>
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
@@ -106,11 +109,11 @@ export default function AcceptInvitePage() {
         )}
         <div>
           <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-            Full name
+            {t('authFlow.fields.fullName')}
           </label>
           <input
             type="text"
-            placeholder="Your name"
+            placeholder={t('authFlow.fields.fullNamePlaceholder')}
             autoComplete="name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -121,7 +124,7 @@ export default function AcceptInvitePage() {
         </div>
         <div>
           <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-            Password
+            {t('authFlow.fields.password')}
           </label>
           <input
             type="password"
@@ -137,7 +140,7 @@ export default function AcceptInvitePage() {
         </div>
         <div>
           <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-            Confirm password
+            {t('authFlow.fields.confirmPassword')}
           </label>
           <input
             type="password"
@@ -150,7 +153,7 @@ export default function AcceptInvitePage() {
             minLength={8}
           />
           {confirm && confirm !== password && (
-            <p className="text-[10px] text-[#E83354] mt-1 tracking-wider">Passwords do not match</p>
+            <p className="text-[10px] text-[#E83354] mt-1 tracking-wider">{t('authFlow.fields.mismatchHint')}</p>
           )}
         </div>
         <button
@@ -158,7 +161,7 @@ export default function AcceptInvitePage() {
           disabled={submitting}
           className="w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
         >
-          {submitting ? 'Setting up...' : 'Accept & sign in'}
+          {submitting ? t('authFlow.invite.settingUp') : t('authFlow.invite.submit')}
         </button>
       </form>
     </AuthCard>

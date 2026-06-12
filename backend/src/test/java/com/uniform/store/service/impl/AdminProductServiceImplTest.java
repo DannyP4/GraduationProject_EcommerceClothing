@@ -12,12 +12,14 @@ import com.uniform.store.enums.SaleType;
 import com.uniform.store.exception.BadRequestException;
 import com.uniform.store.exception.ResourceNotFoundException;
 import com.uniform.store.entity.ProductImage;
+import com.uniform.store.entity.ProductTranslation;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.repository.BrandRepository;
 import com.uniform.store.repository.CategoryRepository;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductRepository;
+import com.uniform.store.repository.ProductTranslationRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.service.CloudinaryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +52,7 @@ class AdminProductServiceImplTest {
     @Mock private ProductRepository productRepository;
     @Mock private ProductVariantRepository variantRepository;
     @Mock private ProductImageRepository imageRepository;
+    @Mock private ProductTranslationRepository translationRepository;
     @Mock private BrandRepository brandRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private OrderItemRepository orderItemRepository;
@@ -353,6 +356,62 @@ class AdminProductServiceImplTest {
 
         assertThat(product.getSaleType()).isNull();
         assertThat(product.getSaleValue()).isNull();
+    }
+
+    @Test
+    void create_withTranslations_savesViAndJa() {
+        CreateProductRequest req = new CreateProductRequest();
+        req.setSlug("i18n-tee"); req.setName("Tee");
+        req.setBrandId(10L); req.setCategoryId(20L);
+        req.setGender(Gender.UNISEX); req.setBasePrice(new BigDecimal("100000"));
+        req.setNameVi("Áo thun"); req.setDescriptionVi("Cotton mềm");
+        req.setNameJa("Tシャツ");
+
+        when(productRepository.existsBySlug("i18n-tee")).thenReturn(false);
+        when(brandRepository.findById(10L)).thenReturn(Optional.of(brand));
+        when(categoryRepository.findById(20L)).thenReturn(Optional.of(category));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> {
+            Product p = inv.getArgument(0); p.setId(103L); return p;
+        });
+        when(translationRepository.findByProductIdAndLocale(103L, "vi")).thenReturn(Optional.empty());
+        when(translationRepository.findByProductIdAndLocale(103L, "ja")).thenReturn(Optional.empty());
+
+        AdminProductDetailDto dto = service.create(req);
+
+        assertThat(dto.getNameVi()).isEqualTo("Áo thun");
+        assertThat(dto.getDescriptionVi()).isEqualTo("Cotton mềm");
+        assertThat(dto.getNameJa()).isEqualTo("Tシャツ");
+        verify(translationRepository, org.mockito.Mockito.times(2)).save(any(ProductTranslation.class));
+    }
+
+    @Test
+    void update_setsViTranslation() {
+        UpdateProductRequest req = new UpdateProductRequest();
+        req.setNameVi("Áo thun"); req.setDescriptionVi("Mô tả");
+        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+        when(variantRepository.findByProductIdOrderBySizeAscColorAsc(100L)).thenReturn(List.of());
+        when(imageRepository.findByProductIdOrderByIsPrimaryDescSortOrderAsc(100L)).thenReturn(List.of());
+        when(translationRepository.findByProductIdAndLocale(100L, "vi")).thenReturn(Optional.empty());
+
+        service.update(100L, req);
+
+        verify(translationRepository).save(any(ProductTranslation.class));
+    }
+
+    @Test
+    void update_blankNameVi_deletesTranslation() {
+        ProductTranslation existing = ProductTranslation.builder()
+                .product(product).locale("vi").name("Áo cũ").build();
+        UpdateProductRequest req = new UpdateProductRequest();
+        req.setNameVi("");
+        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+        when(variantRepository.findByProductIdOrderBySizeAscColorAsc(100L)).thenReturn(List.of());
+        when(imageRepository.findByProductIdOrderByIsPrimaryDescSortOrderAsc(100L)).thenReturn(List.of());
+        when(translationRepository.findByProductIdAndLocale(100L, "vi")).thenReturn(Optional.of(existing));
+
+        service.update(100L, req);
+
+        verify(translationRepository).delete(existing);
     }
 
     @Test

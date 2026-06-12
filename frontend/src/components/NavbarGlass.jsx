@@ -12,17 +12,20 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from '../services/notificationService';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../lib/format';
 
 const NAV_LINKS = [
-  { label: 'Shop', to: '/shop' },
-  { label: 'Collections', to: '#' },
-  { label: 'Lookbook', to: '#' },
-  { label: 'About', to: '#' },
+  { key: 'shop', to: '/shop' },
+  { key: 'collections', to: '#' },
+  { key: 'lookbook', to: '#' },
+  { key: 'about', to: '#' },
 ];
 
 export default function NavbarGlass() {
   const { user, status, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-black/10">
@@ -39,15 +42,15 @@ export default function NavbarGlass() {
           {NAV_LINKS.map((item) =>
             item.to === '#' ? (
               <span
-                key={item.label}
+                key={item.key}
                 className="text-[11px] font-bold tracking-[0.12em] uppercase text-black/40 cursor-not-allowed"
-                title="Coming soon"
+                title={t('nav.comingSoon')}
               >
-                {item.label}
+                {t(`nav.${item.key}`)}
               </span>
             ) : (
               <NavLink
-                key={item.label}
+                key={item.key}
                 to={item.to}
                 className={({ isActive }) =>
                   `text-[11px] font-bold tracking-[0.12em] uppercase transition-all relative hover:-translate-y-0.5 hover:text-[#E83354] inline-block ${isActive
@@ -56,7 +59,7 @@ export default function NavbarGlass() {
                   }`
                 }
               >
-                {item.label}
+                {t(`nav.${item.key}`)}
               </NavLink>
             )
           )}
@@ -78,7 +81,7 @@ export default function NavbarGlass() {
               to="/login"
               className="text-[11px] font-bold tracking-[0.1em] uppercase text-black/70 hover:text-[#E83354] transition-colors hidden sm:block"
             >
-              Login
+              {t('nav.login')}
             </Link>
           )}
 
@@ -97,6 +100,7 @@ function NavbarSearch() {
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!expanded) return;
@@ -176,7 +180,7 @@ function NavbarSearch() {
           type="button"
           onClick={() => (expanded ? submit() : setExpanded(true))}
           className="text-black/60 hover:text-[#E83354] transition-all hover:-translate-y-0.5 flex-shrink-0 w-9 h-9 flex items-center justify-center"
-          aria-label={expanded ? 'Submit search' : 'Search'}
+          aria-label={expanded ? t('search.submit') : t('search.label')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -187,7 +191,7 @@ function NavbarSearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search products..."
+          placeholder={t('search.placeholder')}
           className={`bg-transparent text-sm focus:outline-none placeholder:text-black/30 transition-all ${expanded ? 'w-full opacity-100 ml-1' : 'w-0 opacity-0 pointer-events-none'
             }`}
         />
@@ -196,7 +200,7 @@ function NavbarSearch() {
             type="button"
             onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
             className="text-black/30 hover:text-black flex-shrink-0"
-            aria-label="Clear"
+            aria-label={t('search.clear')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -208,16 +212,16 @@ function NavbarSearch() {
       {showDropdown && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-black/10 shadow-xl z-50 max-h-[480px] overflow-y-auto">
           {loading ? (
-            <div className="px-4 py-6 text-center text-[11px] tracking-wider uppercase text-black/40">Searching…</div>
+            <div className="px-4 py-6 text-center text-[11px] tracking-wider uppercase text-black/40">{t('search.searching')}</div>
           ) : results.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm text-black/50 mb-1">No matches for &ldquo;{trimmed}&rdquo;</p>
-              <p className="text-[11px] text-black/40">Try a different keyword</p>
+              <p className="text-sm text-black/50 mb-1">{t('search.noMatches', { query: trimmed })}</p>
+              <p className="text-[11px] text-black/40">{t('search.tryDifferent')}</p>
             </div>
           ) : (
             <>
               <p className="px-4 py-2 text-[10px] font-bold tracking-[0.15em] uppercase text-black/40 border-b border-black/5">
-                {results.length} {results.length === 1 ? 'match' : 'matches'}
+                {t('search.matches', { count: results.length })}
               </p>
               <ul className="divide-y divide-black/5">
                 {results.map((p) => (
@@ -249,7 +253,7 @@ function NavbarSearch() {
                 type="submit"
                 className="w-full px-4 py-3 text-[11px] font-bold tracking-[0.15em] uppercase text-center bg-black text-white hover:bg-[#E83354] transition-colors"
               >
-                View all results →
+                {t('search.viewAll')}
               </button>
             </>
           )}
@@ -263,6 +267,7 @@ function NavbarSearch() {
 
 function CartHover() {
   const { items, cartCount, subtotal, currency } = useCart();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
@@ -287,7 +292,7 @@ function CartHover() {
       onMouseEnter={() => { cancelClose(); setOpen(true); }}
       onMouseLeave={scheduleClose}
     >
-      <Link to="/cart" className="relative text-black/70 hover:text-[#E83354] transition-all hover:-translate-y-0.5 block" aria-label="Cart">
+      <Link to="/cart" className="relative text-black/70 hover:text-[#E83354] transition-all hover:-translate-y-0.5 block" aria-label={t('cart.label')}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
           <line x1="3" y1="6" x2="21" y2="6" />
@@ -303,21 +308,21 @@ function CartHover() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-black/10 shadow-xl py-1 z-50">
           <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between">
-            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">My Cart</p>
+            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">{t('cart.title')}</p>
             <span className="text-[10px] font-bold tracking-wider uppercase bg-black text-white px-2 py-0.5">
-              {cartCount} {cartCount === 1 ? 'item' : 'items'}
+              {t('cart.items', { count: cartCount })}
             </span>
           </div>
 
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm text-black/50 mb-3">Your cart is empty</p>
+              <p className="text-sm text-black/50 mb-3">{t('cart.empty')}</p>
               <Link
                 to="/shop"
                 onClick={() => setOpen(false)}
                 className="inline-block text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
               >
-                Shop Now
+                {t('cart.shopNow')}
               </Link>
             </div>
           ) : (
@@ -343,12 +348,12 @@ function CartHover() {
 
               {remaining > 0 && (
                 <p className="px-4 py-2 text-[10px] tracking-wider text-black/40 text-center border-t border-black/5">
-                  +{remaining} more {remaining === 1 ? 'item' : 'items'} in cart
+                  {t('cart.moreInCart', { count: remaining })}
                 </p>
               )}
 
               <div className="px-4 py-3 border-t border-black/5 flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-black/50">Subtotal</span>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-black/50">{t('cart.subtotal')}</span>
                 <span className="font-['Anton'] text-lg">{formatPrice(subtotal, currency)}</span>
               </div>
 
@@ -358,14 +363,14 @@ function CartHover() {
                   onClick={() => setOpen(false)}
                   className="block text-center text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 py-2 hover:border-black transition-colors"
                 >
-                  View Cart
+                  {t('cart.viewCart')}
                 </Link>
                 <Link
                   to="/checkout"
                   onClick={() => setOpen(false)}
                   className="block text-center text-[11px] font-bold tracking-[0.15em] uppercase bg-[#E83354] text-white py-2 hover:bg-[#c82244] transition-colors"
                 >
-                  Checkout
+                  {t('cart.checkout')}
                 </Link>
               </div>
             </>
@@ -392,6 +397,7 @@ function NotificationBell() {
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
   const [total, setTotal] = useState(0);
+  const { t } = useTranslation();
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
 
@@ -447,7 +453,7 @@ function NotificationBell() {
     >
       <button
         type="button"
-        aria-label="Notifications"
+        aria-label={t('notifications.label')}
         className="relative text-black/70 hover:text-[#E83354] transition-all hover:-translate-y-0.5 block"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -464,11 +470,11 @@ function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-black/10 shadow-xl z-50 max-h-[440px] flex flex-col">
           <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between flex-shrink-0">
-            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">Notifications</p>
+            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">{t('notifications.title')}</p>
             <span className="flex items-center gap-1.5">
               {unread > 0 && (
                 <span className="text-[10px] font-bold tracking-wider uppercase bg-[#E83354] text-white px-2 py-0.5">
-                  {unread} new
+                  {t('notifications.new', { count: unread })}
                 </span>
               )}
               <span className="text-[10px] font-bold tracking-wider uppercase bg-black text-white px-2 py-0.5">
@@ -480,7 +486,7 @@ function NotificationBell() {
                   onClick={onMarkAll}
                   className="text-[10px] font-bold tracking-wider uppercase text-[#E83354] hover:underline ml-1"
                 >
-                  Mark all read
+                  {t('notifications.markAllRead')}
                 </button>
               )}
             </span>
@@ -488,8 +494,8 @@ function NotificationBell() {
 
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center flex-1">
-              <p className="text-sm text-black/50">No notifications yet</p>
-              <p className="text-[11px] text-black/40 mt-1">Order updates will appear here.</p>
+              <p className="text-sm text-black/50">{t('notifications.empty')}</p>
+              <p className="text-[11px] text-black/40 mt-1">{t('notifications.emptyHint')}</p>
             </div>
           ) : (
             <NotificationList items={items} onItemClick={onItemClick} />
@@ -501,6 +507,7 @@ function NotificationBell() {
 }
 
 function NotificationList({ items, onItemClick }) {
+  const { t } = useTranslation();
   const listRef = useAutoHideScrollbar();
   return (
     <ul ref={listRef} className="overflow-y-auto divide-y divide-black/5 flex-1 scrollbar-subtle">
@@ -520,7 +527,7 @@ function NotificationList({ items, onItemClick }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className={`text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 border ${meta.cls}`}>
-                    {meta.label}
+                    {t(`notifications.type.${n.type}`, { defaultValue: meta.label })}
                   </span>
                   {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-[#E83354]" />}
                 </div>
@@ -575,14 +582,15 @@ function IconRefund() {
 }
 
 const MENU_ITEMS = [
-  { to: '/account/profile', label: 'My Profile', icon: IconUser },
-  { to: '/account/orders', label: 'Order History', icon: IconBox },
-  { to: '/account/addresses', label: 'Addresses', icon: IconMap },
+  { to: '/account/profile', key: 'profile', icon: IconUser },
+  { to: '/account/orders', key: 'orders', icon: IconBox },
+  { to: '/account/addresses', key: 'addresses', icon: IconMap },
 ];
 
 function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { t } = useTranslation();
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
 
@@ -646,7 +654,7 @@ function UserMenu({ user, onLogout }) {
           role="menu"
         >
           <div className="px-4 py-3 border-b border-black/5">
-            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">Signed in as</p>
+            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">{t('account.signedInAs')}</p>
             <p className="text-sm font-bold truncate" title={user?.email}>{user?.fullName || user?.email}</p>
             {user?.fullName && <p className="text-[11px] text-black/50 truncate">{user.email}</p>}
           </div>
@@ -659,11 +667,11 @@ function UserMenu({ user, onLogout }) {
               role="menuitem"
             >
               <IconShield />
-              Admin Dashboard
+              {t('account.adminDashboard')}
             </Link>
           )}
 
-          {MENU_ITEMS.map(({ to, label, icon: Icon }) => (
+          {MENU_ITEMS.map(({ to, key, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -672,7 +680,7 @@ function UserMenu({ user, onLogout }) {
               role="menuitem"
             >
               <Icon />
-              {label}
+              {t(`account.${key}`)}
             </Link>
           ))}
 
@@ -684,7 +692,7 @@ function UserMenu({ user, onLogout }) {
               role="menuitem"
             >
               <IconLogout />
-              Sign Out
+              {t('account.signOut')}
             </button>
           </div>
         </div>
@@ -692,23 +700,16 @@ function UserMenu({ user, onLogout }) {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Sign out?"
-        message="You will need to sign in again to access your account, orders and saved addresses."
-        confirmLabel="Sign Out"
-        cancelLabel="Stay Signed In"
+        title={t('account.signOutConfirmTitle')}
+        message={t('account.signOutConfirmMessage')}
+        confirmLabel={t('account.signOut')}
+        cancelLabel={t('account.staySignedIn')}
         tone="danger"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => { setConfirmOpen(false); onLogout(); }}
       />
     </div>
   );
-}
-
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
 }
 
 function IconUser() {

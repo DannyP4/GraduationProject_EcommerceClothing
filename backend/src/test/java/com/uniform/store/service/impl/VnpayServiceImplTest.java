@@ -94,7 +94,7 @@ class VnpayServiceImplTest {
         p.put("vnp_BankCode", "NCB");
         p.put("vnp_BankTranNo", "VNP14393107");
         p.put("vnp_CardType", "ATM");
-        p.put("vnp_OrderInfo", "Thanh toan don hang ORD-TEST-001");
+        p.put("vnp_OrderInfo", "Payment for order ORD-TEST-001");
         p.put("vnp_PayDate", "20260514103000");
         p.put("vnp_ResponseCode", responseCode);
         p.put("vnp_TransactionNo", "14393107");

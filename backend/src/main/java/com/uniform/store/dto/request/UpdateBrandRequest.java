@@ -21,5 +21,7 @@ public class UpdateBrandRequest {
 
     private String descriptionEn;
 
+    private String descriptionJa;
+
     private Boolean isActive;
 }

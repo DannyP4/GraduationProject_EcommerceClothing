@@ -20,7 +20,10 @@ public class UpdateCategoryRequest {
     private String imageUrl;
 
     @Size(max = 150)
-    private String nameEn;
+    private String nameVi;
+
+    @Size(max = 150)
+    private String nameJa;
 
     @PositiveOrZero
     private Integer sortOrder;

@@ -179,6 +179,10 @@ body {
   color: var(--accent-pink);
 }
 
+html[lang="vi"] .hero-title {
+  line-height: 1.12;
+}
+
 .hero-subtitle {
   font-size: 14px;
   font-weight: 500;
@@ -480,6 +484,10 @@ body {
 
 .statement-text .highlight {
   color: var(--accent-pink);
+}
+
+html[lang="vi"] .statement-text {
+  line-height: 1.15;
 }
 
 /* Trending Products */

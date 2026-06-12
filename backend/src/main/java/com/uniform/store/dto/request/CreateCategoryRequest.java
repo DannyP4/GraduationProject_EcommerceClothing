@@ -26,7 +26,10 @@ public class CreateCategoryRequest {
     private String imageUrl;
 
     @Size(max = 150)
-    private String nameEn;
+    private String nameVi;
+
+    @Size(max = 150)
+    private String nameJa;
 
     @PositiveOrZero
     private Integer sortOrder = 0;

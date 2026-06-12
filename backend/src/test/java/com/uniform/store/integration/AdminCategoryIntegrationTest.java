@@ -53,8 +53,8 @@ class AdminCategoryIntegrationTest extends BaseIntegrationTest {
     void create_minimalPayload_persists() throws Exception {
         CreateCategoryRequest req = new CreateCategoryRequest();
         req.setSlug("tees");
-        req.setName("Áo thun");
-        req.setNameEn("T-Shirts");
+        req.setName("T-Shirts");
+        req.setNameVi("Áo thun");
 
         mockMvc.perform(post("/admin/categories")
                         .header("Authorization", "Bearer " + adminJwt)
@@ -62,8 +62,8 @@ class AdminCategoryIntegrationTest extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.slug").value("tees"))
-                .andExpect(jsonPath("$.data.name").value("Áo thun"))
-                .andExpect(jsonPath("$.data.nameEn").value("T-Shirts"))
+                .andExpect(jsonPath("$.data.name").value("T-Shirts"))
+                .andExpect(jsonPath("$.data.nameVi").value("Áo thun"))
                 .andExpect(jsonPath("$.data.productCount").value(0));
 
         assertThat(categoryRepository.existsBySlug("tees")).isTrue();
@@ -99,27 +99,27 @@ class AdminCategoryIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void update_setsEnTranslation_andClearsWhenBlank() throws Exception {
+    void update_setsViTranslation_andClearsWhenBlank() throws Exception {
         Category c = categoryRepository.save(Category.builder()
-                .slug("jackets").name("Áo khoác").sortOrder(0).isActive(true).build());
+                .slug("jackets").name("Jackets").sortOrder(0).isActive(true).build());
 
         UpdateCategoryRequest first = new UpdateCategoryRequest();
-        first.setNameEn("Jackets");
+        first.setNameVi("Áo khoác");
         mockMvc.perform(put("/admin/categories/" + c.getId())
                         .header("Authorization", "Bearer " + adminJwt)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(first)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.nameEn").value("Jackets"));
+                .andExpect(jsonPath("$.data.nameVi").value("Áo khoác"));
 
         UpdateCategoryRequest clear = new UpdateCategoryRequest();
-        clear.setNameEn("");
+        clear.setNameVi("");
         mockMvc.perform(put("/admin/categories/" + c.getId())
                         .header("Authorization", "Bearer " + adminJwt)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(clear)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.nameEn").doesNotExist());
+                .andExpect(jsonPath("$.data.nameVi").doesNotExist());
     }
 
     @Test

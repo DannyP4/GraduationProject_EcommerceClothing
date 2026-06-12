@@ -56,12 +56,13 @@ class AdminBrandServiceImplTest {
     }
 
     @Test
-    void create_persistsViAndEnTranslations() {
+    void create_persistsViEnAndJaTranslations() {
         CreateBrandRequest req = new CreateBrandRequest();
         req.setSlug("atlas");
         req.setName("Atlas");
         req.setDescriptionVi("Mô tả tiếng Việt");
         req.setDescriptionEn("English description");
+        req.setDescriptionJa("日本語の説明");
         when(brandRepository.existsBySlug("atlas")).thenReturn(false);
         when(brandRepository.save(any(Brand.class))).thenAnswer(inv -> {
             Brand b = inv.getArgument(0);
@@ -71,11 +72,12 @@ class AdminBrandServiceImplTest {
         when(brandRepository.findById(2L)).thenReturn(Optional.of(brand));
         when(translationRepository.findByBrandIdAndLocale(2L, "vi")).thenReturn(Optional.empty());
         when(translationRepository.findByBrandIdAndLocale(2L, "en")).thenReturn(Optional.empty());
+        when(translationRepository.findByBrandIdAndLocale(2L, "ja")).thenReturn(Optional.empty());
         when(productRepository.countByBrandIdAndDeletedAtIsNull(2L)).thenReturn(0L);
 
         service.create(req);
 
-        verify(translationRepository, org.mockito.Mockito.times(2)).save(any(BrandTranslation.class));
+        verify(translationRepository, org.mockito.Mockito.times(3)).save(any(BrandTranslation.class));
     }
 
     @Test

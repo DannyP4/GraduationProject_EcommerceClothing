@@ -1,4 +1,5 @@
 import ToggleSwitch from './ToggleSwitch';
+import CollapsibleSection from './CollapsibleSection';
 
 const GENDER_OPTIONS = ['MEN', 'WOMEN', 'UNISEX', 'KIDS'];
 
@@ -47,7 +48,7 @@ export default function ProductBasicsSection({
         </label>
 
         <label className="block">
-          <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name</span>
+          <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name (English)</span>
           <input
             type="text"
             value={values.name}
@@ -175,7 +176,7 @@ export default function ProductBasicsSection({
       </div>
 
       <label className="block">
-        <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description</span>
+        <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description (English)</span>
         <textarea
           value={values.description}
           onChange={(e) => update({ description: e.target.value })}
@@ -184,6 +185,58 @@ export default function ProductBasicsSection({
           className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y ${disabledCls}`}
         />
       </label>
+
+      <CollapsibleSection
+        title="Translations"
+        badge={(values.nameVi || values.nameJa || values.descriptionVi || values.descriptionJa)
+          ? <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E83354]" title="Has translations" />
+          : null}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name · Tiếng Việt</span>
+            <input
+              type="text"
+              value={values.nameVi}
+              onChange={(e) => update({ nameVi: e.target.value })}
+              placeholder="Áo thun"
+              disabled={readOnly}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none ${disabledCls}`}
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name · 日本語</span>
+            <input
+              type="text"
+              value={values.nameJa}
+              onChange={(e) => update({ nameJa: e.target.value })}
+              placeholder="Tシャツ"
+              disabled={readOnly}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none ${disabledCls}`}
+            />
+          </label>
+          <label className="block md:col-span-2">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description · Tiếng Việt</span>
+            <textarea
+              value={values.descriptionVi}
+              onChange={(e) => update({ descriptionVi: e.target.value })}
+              rows={3}
+              disabled={readOnly}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y ${disabledCls}`}
+            />
+          </label>
+          <label className="block md:col-span-2">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description · 日本語</span>
+            <textarea
+              value={values.descriptionJa}
+              onChange={(e) => update({ descriptionJa: e.target.value })}
+              rows={3}
+              disabled={readOnly}
+              className={`mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y ${disabledCls}`}
+            />
+          </label>
+        </div>
+      </CollapsibleSection>
 
       <div>
         <ToggleSwitch checked={values.isActive} onChange={(v) => update({ isActive: v })} disabled={readOnly} />

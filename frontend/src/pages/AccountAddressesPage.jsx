@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import * as addressService from '../services/addressService';
 import AddressFormModal from '../components/AddressFormModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 
-const REGION_LABEL = { NORTH: 'Northern Vietnam', CENTRAL: 'Central Vietnam', SOUTH: 'Southern Vietnam' };
-
 export default function AccountAddressesPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const [addresses, setAddresses] = useState([]);
@@ -27,7 +27,7 @@ export default function AccountAddressesPage() {
       const data = await addressService.listAddresses();
       setAddresses(data ?? []);
     } catch (err) {
-      setError(err.message || 'Could not load addresses.');
+      setError(err.message || t('accountPage.addresses.loadError'));
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function AccountAddressesPage() {
       else if (type === 'setDefault') await addressService.setDefaultAddress(address.id);
       await refresh();
     } catch (err) {
-      setActionMsg({ type: 'error', text: err.message || 'Action failed.' });
+      setActionMsg({ type: 'error', text: err.message || t('accountPage.addresses.actionError') });
     }
   };
 
@@ -77,14 +77,14 @@ export default function AccountAddressesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="font-['Anton'] text-3xl uppercase tracking-tight">Addresses</h2>
-          <p className="text-xs text-black/50 mt-1">Manage where your orders ship to.</p>
+          <h2 className="font-['Anton'] text-3xl uppercase tracking-tight">{t('accountPage.addresses.heading')}</h2>
+          <p className="text-xs text-black/50 mt-1">{t('accountPage.addresses.subtitle')}</p>
         </div>
         <button
           onClick={openCreate}
           className="bg-black text-white text-[11px] font-bold tracking-[0.15em] uppercase px-5 py-3 hover:bg-[#E83354] transition-colors"
         >
-          + Add Address
+          {t('accountPage.addresses.add')}
         </button>
       </div>
 
@@ -92,15 +92,15 @@ export default function AccountAddressesPage() {
       {actionMsg && <Banner msg={actionMsg} />}
 
       {loading ? (
-        <p className="text-sm text-black/40">Loading…</p>
+        <p className="text-sm text-black/40">{t('accountPage.loading')}</p>
       ) : addresses.length === 0 ? (
         <div className="border border-dashed border-black/15 px-6 py-16 text-center">
-          <p className="text-sm text-black/50 mb-4">You have no saved addresses yet.</p>
+          <p className="text-sm text-black/50 mb-4">{t('accountPage.addresses.empty')}</p>
           <button
             onClick={openCreate}
             className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
           >
-            Add your first address
+            {t('accountPage.addresses.addFirst')}
           </button>
         </div>
       ) : (
@@ -120,11 +120,11 @@ export default function AccountAddressesPage() {
                 )}
                 {a.isDefault ? (
                   <span className="text-[10px] font-bold tracking-wider uppercase bg-[#E83354] text-white px-2 py-0.5">
-                    Default
+                    {t('accountPage.addresses.default')}
                   </span>
                 ) : (
                   <span className="text-[10px] font-bold tracking-wider uppercase border border-black/15 text-black/50 px-2 py-0.5">
-                    Other
+                    {t('accountPage.addresses.other')}
                   </span>
                 )}
               </div>
@@ -140,7 +140,7 @@ export default function AccountAddressesPage() {
                 {a.postalCode ? ` ${a.postalCode}` : ''} · {a.country}
                 {a.region && (
                   <span className="block mt-0.5 text-[10px] font-bold tracking-[0.1em] uppercase text-black/45">
-                    {REGION_LABEL[a.region] ?? a.region}
+                    {t(`accountPage.addresses.region.${a.region}`, a.region)}
                   </span>
                 )}
               </div>
@@ -151,19 +151,19 @@ export default function AccountAddressesPage() {
                   disabled={a.isDefault}
                   className={cardBtnClass}
                 >
-                  {a.isDefault ? '★ Default' : 'Set Default'}
+                  {a.isDefault ? t('accountPage.addresses.defaultStar') : t('accountPage.addresses.setDefault')}
                 </button>
                 <button
                   onClick={() => openEdit(a)}
                   className={`${cardBtnClass} ml-auto`}
                 >
-                  Edit
+                  {t('accountPage.addresses.edit')}
                 </button>
                 <button
                   onClick={() => askDelete(a)}
                   className={cardBtnDangerClass}
                 >
-                  Delete
+                  {t('accountPage.addresses.delete')}
                 </button>
               </div>
             </li>
@@ -182,20 +182,20 @@ export default function AccountAddressesPage() {
 
       <ConfirmDialog
         open={confirmDialog?.type === 'delete'}
-        title="Delete this address?"
-        message={confirmDialog?.address && `“${confirmDialog.address.label || confirmDialog.address.line1}” will be removed permanently.`}
-        confirmLabel="Delete"
-        cancelLabel="Keep"
+        title={t('accountPage.addresses.deleteDialog.title')}
+        message={confirmDialog?.address && t('accountPage.addresses.deleteDialog.message', { name: confirmDialog.address.label || confirmDialog.address.line1 })}
+        confirmLabel={t('accountPage.addresses.delete')}
+        cancelLabel={t('accountPage.addresses.deleteDialog.keep')}
         tone="danger"
         onCancel={() => setConfirmDialog(null)}
         onConfirm={runConfirm}
       />
       <ConfirmDialog
         open={confirmDialog?.type === 'setDefault'}
-        title="Set as default?"
-        message={confirmDialog?.address && `“${confirmDialog.address.label || confirmDialog.address.line1}” will be the default for new orders.`}
-        confirmLabel="Set Default"
-        cancelLabel="Cancel"
+        title={t('accountPage.addresses.setDefaultDialog.title')}
+        message={confirmDialog?.address && t('accountPage.addresses.setDefaultDialog.message', { name: confirmDialog.address.label || confirmDialog.address.line1 })}
+        confirmLabel={t('accountPage.addresses.setDefault')}
+        cancelLabel={t('accountPage.addresses.setDefaultDialog.cancel')}
         onCancel={() => setConfirmDialog(null)}
         onConfirm={runConfirm}
       />

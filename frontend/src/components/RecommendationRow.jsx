@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ProductCard from './ProductCard';
 import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
 
@@ -12,6 +13,7 @@ function Chevron({ dir }) {
 
 // rendered only when there are items -> scroll ref is attached on mount.
 export function Carousel({ title, items }) {
+  const { t } = useTranslation();
   const scrollRef = useAutoHideScrollbar();
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -50,7 +52,7 @@ export function Carousel({ title, items }) {
               type="button"
               onClick={() => scrollByCards(-1)}
               disabled={!canLeft}
-              aria-label="Scroll left"
+              aria-label={t('recommend.scrollLeft')}
               className="w-9 h-9 flex items-center justify-center border border-black/20 text-black hover:bg-black hover:text-white transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-black"
             >
               <Chevron dir={-1} />
@@ -59,7 +61,7 @@ export function Carousel({ title, items }) {
               type="button"
               onClick={() => scrollByCards(1)}
               disabled={!canRight}
-              aria-label="Scroll right"
+              aria-label={t('recommend.scrollRight')}
               className="w-9 h-9 flex items-center justify-center border border-black/20 text-black hover:bg-black hover:text-white transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-black"
             >
               <Chevron dir={1} />

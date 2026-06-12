@@ -19,6 +19,7 @@ public class AdminBrandDto {
     private final Boolean isActive;
     private final String descriptionVi;
     private final String descriptionEn;
+    private final String descriptionJa;
     private final Long productCount;
     private final Instant createdAt;
     private final Instant updatedAt;

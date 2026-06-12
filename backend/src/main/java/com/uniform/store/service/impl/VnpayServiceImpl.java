@@ -39,7 +39,7 @@ public class VnpayServiceImpl implements VnpayService {
         params.put("vnp_Amount", vndAmount.movePointRight(2).toBigInteger().toString());
         params.put("vnp_CurrCode", props.getCurrencyCode());
         params.put("vnp_TxnRef", orderNumber);
-        params.put("vnp_OrderInfo", "Thanh toan don hang " + orderNumber);
+        params.put("vnp_OrderInfo", "Payment for order " + orderNumber);
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", props.getLocale());
         params.put("vnp_ReturnUrl", props.getReturnUrl());

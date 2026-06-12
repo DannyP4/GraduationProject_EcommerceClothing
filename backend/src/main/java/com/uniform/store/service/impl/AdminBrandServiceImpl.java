@@ -27,6 +27,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
 
     private static final String LOCALE_VI = "vi";
     private static final String LOCALE_EN = "en";
+    private static final String LOCALE_JA = "ja";
 
     private final BrandRepository brandRepository;
     private final BrandTranslationRepository translationRepository;
@@ -40,9 +41,11 @@ public class AdminBrandServiceImpl implements AdminBrandService {
         List<Long> ids = brands.stream().map(Brand::getId).toList();
         Map<Long, String> viDesc = new HashMap<>();
         Map<Long, String> enDesc = new HashMap<>();
+        Map<Long, String> jaDesc = new HashMap<>();
         for (BrandTranslation t : translationRepository.findByBrandIdIn(ids)) {
             if (LOCALE_VI.equals(t.getLocale())) viDesc.put(t.getBrand().getId(), t.getDescription());
             else if (LOCALE_EN.equals(t.getLocale())) enDesc.put(t.getBrand().getId(), t.getDescription());
+            else if (LOCALE_JA.equals(t.getLocale())) jaDesc.put(t.getBrand().getId(), t.getDescription());
         }
         Map<Long, Long> productCounts = new HashMap<>();
         for (Brand b : brands) {
@@ -50,7 +53,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
         }
 
         return brands.stream()
-                .map(b -> toDto(b, viDesc.get(b.getId()), enDesc.get(b.getId()), productCounts.get(b.getId())))
+                .map(b -> toDto(b, viDesc.get(b.getId()), enDesc.get(b.getId()), jaDesc.get(b.getId()), productCounts.get(b.getId())))
                 .toList();
     }
 
@@ -62,8 +65,10 @@ public class AdminBrandServiceImpl implements AdminBrandService {
                 .map(BrandTranslation::getDescription).orElse(null);
         String en = translationRepository.findByBrandIdAndLocale(id, LOCALE_EN)
                 .map(BrandTranslation::getDescription).orElse(null);
+        String ja = translationRepository.findByBrandIdAndLocale(id, LOCALE_JA)
+                .map(BrandTranslation::getDescription).orElse(null);
         long products = productRepository.countByBrandIdAndDeletedAtIsNull(id);
-        return toDto(b, vi, en, products);
+        return toDto(b, vi, en, ja, products);
     }
 
     @Override
@@ -81,6 +86,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
                 .build());
         upsertTranslation(saved, LOCALE_VI, req.getDescriptionVi());
         upsertTranslation(saved, LOCALE_EN, req.getDescriptionEn());
+        upsertTranslation(saved, LOCALE_JA, req.getDescriptionJa());
         return get(saved.getId());
     }
 
@@ -97,6 +103,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
 
         if (req.getDescriptionVi() != null) upsertTranslation(b, LOCALE_VI, req.getDescriptionVi());
         if (req.getDescriptionEn() != null) upsertTranslation(b, LOCALE_EN, req.getDescriptionEn());
+        if (req.getDescriptionJa() != null) upsertTranslation(b, LOCALE_JA, req.getDescriptionJa());
 
         return get(id);
     }
@@ -134,7 +141,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
         return (s == null || s.isBlank()) ? null : s;
     }
 
-    private static AdminBrandDto toDto(Brand b, String vi, String en, Long productCount) {
+    private static AdminBrandDto toDto(Brand b, String vi, String en, String ja, Long productCount) {
         return AdminBrandDto.builder()
                 .id(b.getId())
                 .slug(b.getSlug())
@@ -144,6 +151,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
                 .isActive(b.getIsActive())
                 .descriptionVi(vi)
                 .descriptionEn(en)
+                .descriptionJa(ja)
                 .productCount(productCount)
                 .createdAt(b.getCreatedAt())
                 .updatedAt(b.getUpdatedAt())

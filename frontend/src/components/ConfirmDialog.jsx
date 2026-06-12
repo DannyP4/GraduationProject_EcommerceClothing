@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function ConfirmDialog({
   open,
-  title = 'Are you sure?',
+  title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   tone = 'default',
   hideCancel = false,
   onConfirm,
   onCancel,
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === 'Escape') onCancel?.(); };
@@ -38,7 +40,7 @@ export default function ConfirmDialog({
         className="bg-white max-w-sm w-full p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="font-['Anton'] text-2xl uppercase tracking-tight mb-2">{title}</h3>
+        <h3 className="font-['Anton'] text-2xl uppercase tracking-tight mb-2">{title ?? t('shared.confirm.title')}</h3>
         {message && <p className="text-sm text-black/60 mb-6">{message}</p>}
         <div className="flex gap-3">
           {!hideCancel && (
@@ -47,7 +49,7 @@ export default function ConfirmDialog({
               onClick={onCancel}
               className="flex-1 border border-black/15 text-[11px] font-bold tracking-[0.15em] uppercase py-3 hover:border-black/40 transition-all"
             >
-              {cancelLabel}
+              {cancelLabel ?? t('shared.confirm.cancel')}
             </button>
           )}
           <button
@@ -55,7 +57,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             className={`flex-1 text-[11px] font-bold tracking-[0.15em] uppercase py-3 transition-colors ${confirmCls}`}
           >
-            {confirmLabel}
+            {confirmLabel ?? t('shared.confirm.confirm')}
           </button>
         </div>
       </div>

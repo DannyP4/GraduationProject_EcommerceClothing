@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import StarRating from './StarRating';
 import ConfirmDialog from './ConfirmDialog';
 import { useToast } from './Toast';
@@ -23,6 +24,7 @@ export default function ReviewsSection({ product, onChanged }) {
   const isLoggedIn = authStatus === 'authenticated';
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [reviews, setReviews] = useState([]);
   const [meta, setMeta] = useState({ totalElements: 0, totalPages: 0, hasNext: false, page: 0 });
@@ -44,11 +46,11 @@ export default function ReviewsSection({ product, onChanged }) {
       setReviews(data.content ?? []);
       setMeta({ totalElements: data.totalElements, totalPages: data.totalPages, hasNext: data.hasNext, page: 0 });
     } catch (err) {
-      setError(err.message || 'Could not load reviews');
+      setError(err.message || t('reviews.errors.load'));
     } finally {
       setLoading(false);
     }
-  }, [productId, sort]);
+  }, [productId, sort, t]);
 
   useEffect(() => { loadFirst(); }, [loadFirst]);
 
@@ -68,7 +70,7 @@ export default function ReviewsSection({ product, onChanged }) {
       setReviews((prev) => [...prev, ...(data.content ?? [])]);
       setMeta({ totalElements: data.totalElements, totalPages: data.totalPages, hasNext: data.hasNext, page: next });
     } catch (err) {
-      toast.error(err.message || 'Could not load more reviews');
+      toast.error(err.message || t('reviews.errors.loadMore'));
     } finally {
       setLoadingMore(false);
     }
@@ -83,10 +85,10 @@ export default function ReviewsSection({ product, onChanged }) {
   const handleSubmit = async (payload) => {
     if (editing) {
       await updateReview(editing.id, payload);
-      toast.success('Review updated');
+      toast.success(t('reviews.toasts.updated'));
     } else {
       await createReview({ ...payload, productId });
-      toast.success('Thanks for your review!');
+      toast.success(t('reviews.toasts.created'));
     }
     setFormOpen(false);
     setEditing(null);
@@ -98,26 +100,26 @@ export default function ReviewsSection({ product, onChanged }) {
     try {
       await deleteReview(confirmDelete.id);
       setConfirmDelete(null);
-      toast.success('Review deleted');
+      toast.success(t('reviews.toasts.deleted'));
       await afterMutation();
     } catch (err) {
-      toast.error(err.message || 'Delete failed');
+      toast.error(err.message || t('reviews.errors.delete'));
     }
   };
 
   const handleHelpful = async (review) => {
-    if (!isLoggedIn) { toast.info('Log in to vote on reviews'); return; }
+    if (!isLoggedIn) { toast.info(t('reviews.toasts.loginToVote')); return; }
     try {
       const res = await setReviewHelpful(review.id, !review.helpfulByMe);
       setReviews((prev) => prev.map((r) =>
         r.id === review.id ? { ...r, helpfulCount: res.helpfulCount, helpfulByMe: res.voted } : r));
     } catch (err) {
-      toast.error(err.message || 'Could not record your vote');
+      toast.error(err.message || t('reviews.errors.vote'));
     }
   };
 
   const openCreate = () => {
-    if (!isLoggedIn) { toast.info('Please log in to write a review'); navigate('/login'); return; }
+    if (!isLoggedIn) { toast.info(t('reviews.toasts.loginToWrite')); navigate('/login'); return; }
     setEditing(null);
     setFormOpen(true);
   };
@@ -130,15 +132,15 @@ export default function ReviewsSection({ product, onChanged }) {
     <section id="reviews" className="mt-6 pt-8 border-t border-black/10">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">Customer Voices</p>
-          <h2 className="font-['Anton'] text-3xl md:text-4xl uppercase tracking-tight">Reviews</h2>
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">{t('reviews.eyebrow')}</p>
+          <h2 className="font-['Anton'] text-3xl md:text-4xl uppercase tracking-tight">{t('reviews.heading')}</h2>
         </div>
         {count > 0 && (
           <div className="flex items-center gap-3">
             <span className="font-['Anton'] text-4xl leading-none">{Number(avg ?? 0).toFixed(1)}</span>
             <div>
               <StarRating value={avg ?? 0} size={16} />
-              <p className="text-[11px] text-black/50 mt-0.5">{count} review{count > 1 ? 's' : ''}</p>
+              <p className="text-[11px] text-black/50 mt-0.5">{t('reviews.count', { count })}</p>
             </div>
           </div>
         )}
@@ -151,17 +153,17 @@ export default function ReviewsSection({ product, onChanged }) {
               onClick={openCreate}
               className="text-[11px] font-bold tracking-[0.15em] uppercase bg-black text-white px-5 py-2.5 hover:bg-[#E83354] transition-colors"
             >
-              Write a Review
+              {t('reviews.writeReview')}
             </button>
           ) : eligibility?.reason === 'ALREADY_REVIEWED' ? (
-            <span className="text-xs text-black/50">You have already reviewed this product.</span>
+            <span className="text-xs text-black/50">{t('reviews.alreadyReviewed')}</span>
           ) : (
             <button
               disabled
-              title="Only customers who purchased and received this item can review it."
+              title={t('reviews.purchaseRequired')}
               className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black/20 text-black/40 px-5 py-2.5 cursor-not-allowed"
             >
-              Write a Review
+              {t('reviews.writeReview')}
             </button>
           )}
         </div>
@@ -171,8 +173,8 @@ export default function ReviewsSection({ product, onChanged }) {
             onChange={(e) => setSort(e.target.value)}
             className="border border-black/15 px-3 py-2 text-xs focus:border-black focus:outline-none bg-white"
           >
-            <option value="newest">Newest</option>
-            <option value="helpful">Most helpful</option>
+            <option value="newest">{t('reviews.sort.newest')}</option>
+            <option value="helpful">{t('reviews.sort.helpful')}</option>
           </select>
         )}
       </div>
@@ -188,13 +190,13 @@ export default function ReviewsSection({ product, onChanged }) {
       {error ? (
         <div className="border border-[#E83354]/30 bg-[#E83354]/5 text-[#E83354] px-4 py-3 text-xs">{error}</div>
       ) : loading ? (
-        <div className="bg-white border border-black/8 px-6 py-12 text-center text-sm text-black/40">Loading reviews…</div>
+        <div className="bg-white border border-black/8 px-6 py-12 text-center text-sm text-black/40">{t('reviews.loading')}</div>
       ) : reviews.length === 0 ? (
         <div className="bg-white border border-dashed border-black/15 px-6 py-12 text-center">
           <div className="inline-flex flex-col items-center gap-2">
             <StarRating value={0} size={18} />
-            <p className="text-sm font-bold uppercase tracking-wider text-black/60">No reviews yet</p>
-            <p className="text-xs text-black/50 max-w-sm">Be the first to share your thoughts on this product.</p>
+            <p className="text-sm font-bold uppercase tracking-wider text-black/60">{t('reviews.empty.title')}</p>
+            <p className="text-xs text-black/50 max-w-sm">{t('reviews.empty.subtitle')}</p>
           </div>
         </div>
       ) : (
@@ -205,14 +207,14 @@ export default function ReviewsSection({ product, onChanged }) {
             ))}
           </div>
           <div className="mt-6 text-center">
-            <p className="text-[11px] text-black/40 mb-3">Showing {reviews.length} of {meta.totalElements}</p>
+            <p className="text-[11px] text-black/40 mb-3">{t('reviews.showing', { shown: reviews.length, total: meta.totalElements })}</p>
             {meta.hasNext && (
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
                 className="text-[11px] font-bold tracking-[0.15em] uppercase border-2 border-black px-6 py-2.5 hover:bg-black hover:text-white transition-colors disabled:opacity-50"
               >
-                {loadingMore ? 'Loading…' : 'Load more reviews'}
+                {loadingMore ? t('reviews.loadingMore') : t('reviews.loadMore')}
               </button>
             )}
           </div>
@@ -221,10 +223,10 @@ export default function ReviewsSection({ product, onChanged }) {
 
       <ConfirmDialog
         open={!!confirmDelete}
-        title="Delete your review?"
-        message="This permanently removes your review and its images. You can write a new one afterwards."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title={t('reviews.deleteDialog.title')}
+        message={t('reviews.deleteDialog.message')}
+        confirmLabel={t('reviews.deleteDialog.confirm')}
+        cancelLabel={t('reviews.deleteDialog.cancel')}
         tone="danger"
         onCancel={() => setConfirmDelete(null)}
         onConfirm={handleDelete}
@@ -234,6 +236,7 @@ export default function ReviewsSection({ product, onChanged }) {
 }
 
 function ReviewCard({ review, onHelpful, onEdit, onDelete }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white border border-black/8 p-5">
       <div className="flex items-start gap-3">
@@ -245,7 +248,7 @@ function ReviewCard({ review, onHelpful, onEdit, onDelete }) {
             <span className="text-sm font-bold">{review.authorName}</span>
             {review.verifiedPurchase && (
               <span className="text-[9px] font-bold tracking-wider uppercase bg-green-600/10 text-green-700 px-1.5 py-0.5">
-                Verified Purchase
+                {t('reviews.verifiedPurchase')}
               </span>
             )}
             <span className="ml-auto text-[11px] text-black/40">{formatDate(review.createdAt)}</span>
@@ -266,7 +269,7 @@ function ReviewCard({ review, onHelpful, onEdit, onDelete }) {
             <div className="flex gap-2 mt-3 flex-wrap">
               {review.images.map((url, i) => (
                 <a key={i} href={url} target="_blank" rel="noreferrer" className="block w-16 h-16 overflow-hidden border border-black/10">
-                  <img src={url} alt="Customer review" className="w-full h-full object-cover" />
+                  <img src={url} alt={t('reviews.imageAlt')} className="w-full h-full object-cover" />
                 </a>
               ))}
             </div>
@@ -277,29 +280,29 @@ function ReviewCard({ review, onHelpful, onEdit, onDelete }) {
               <>
                 <button
                   onClick={() => onEdit(review)}
-                  title="Edit your review"
-                  aria-label="Edit your review"
+                  title={t('reviews.editReview')}
+                  aria-label={t('reviews.editReview')}
                   className="w-7 h-7 inline-flex items-center justify-center border border-black/15 text-black/50 hover:border-black hover:text-black transition-colors"
                 >
                   <PencilIcon />
                 </button>
                 <button
                   onClick={() => onDelete(review)}
-                  title="Delete your review"
-                  aria-label="Delete your review"
+                  title={t('reviews.deleteReview')}
+                  aria-label={t('reviews.deleteReview')}
                   className="w-7 h-7 inline-flex items-center justify-center border border-[#E83354]/30 text-[#E83354] hover:bg-[#E83354] hover:text-white transition-colors"
                 >
                   <TrashMiniIcon />
                 </button>
                 {review.helpfulCount > 0 && (
-                  <span className="text-[11px] text-black/30 ml-1">{review.helpfulCount} found helpful</span>
+                  <span className="text-[11px] text-black/30 ml-1">{t('reviews.foundHelpful', { count: review.helpfulCount })}</span>
                 )}
               </>
             ) : (
               <button
                 onClick={() => onHelpful(review)}
-                title="Mark as helpful"
-                aria-label="Mark as helpful"
+                title={t('reviews.markHelpful')}
+                aria-label={t('reviews.markHelpful')}
                 className={`inline-flex items-center gap-1.5 text-[12px] font-bold border px-2.5 py-1 transition-colors ${
                   review.helpfulByMe
                     ? 'bg-[#E83354] text-white border-[#E83354]'
@@ -319,6 +322,7 @@ function ReviewCard({ review, onHelpful, onEdit, onDelete }) {
 
 function ReviewForm({ initial, onCancel, onSubmit }) {
   const toast = useToast();
+  const { t } = useTranslation();
   const [rating, setRating] = useState(initial?.rating ?? 5);
   const [title, setTitle] = useState(initial?.title ?? '');
   const [body, setBody] = useState(initial?.body ?? '');
@@ -331,7 +335,7 @@ function ReviewForm({ initial, onCancel, onSubmit }) {
     e.target.value = '';
     if (!files.length) return;
     const room = MAX_IMAGES - images.length;
-    if (room <= 0) { toast.error(`A review can have at most ${MAX_IMAGES} images`); return; }
+    if (room <= 0) { toast.error(t('reviews.form.maxImages', { max: MAX_IMAGES })); return; }
     setUploading(true);
     try {
       for (const f of files.slice(0, room)) {
@@ -339,7 +343,7 @@ function ReviewForm({ initial, onCancel, onSubmit }) {
         setImages((prev) => [...prev, img]);
       }
     } catch (err) {
-      toast.error(err.message || 'Image upload failed');
+      toast.error(err.message || t('reviews.form.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -347,7 +351,7 @@ function ReviewForm({ initial, onCancel, onSubmit }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!body.trim()) { toast.error('Please write a few words about the product'); return; }
+    if (!body.trim()) { toast.error(t('reviews.form.bodyRequired')); return; }
     setSubmitting(true);
     try {
       await onSubmit({
@@ -357,7 +361,7 @@ function ReviewForm({ initial, onCancel, onSubmit }) {
         images: images.map((i) => ({ url: i.url, publicId: i.publicId })),
       });
     } catch (err) {
-      toast.error(err.message || 'Could not submit review');
+      toast.error(err.message || t('reviews.form.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -366,44 +370,44 @@ function ReviewForm({ initial, onCancel, onSubmit }) {
   return (
     <form onSubmit={submit} className="bg-white border border-black/15 p-5 mb-6 space-y-4">
       <div>
-        <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">Your rating</label>
+        <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">{t('reviews.form.ratingLabel')}</label>
         <StarRating value={rating} size={28} interactive onChange={setRating} />
       </div>
       <div>
-        <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">Title (optional)</label>
+        <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">{t('reviews.form.titleLabel')}</label>
         <input
           type="text"
           value={title}
           maxLength={255}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Sum it up in a few words"
+          placeholder={t('reviews.form.titlePlaceholder')}
           className="w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
         />
       </div>
       <div>
-        <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">Your review</label>
+        <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">{t('reviews.form.bodyLabel')}</label>
         <textarea
           value={body}
           rows={4}
           maxLength={5000}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="What did you like or dislike? How is the fit and quality?"
+          placeholder={t('reviews.form.bodyPlaceholder')}
           className="w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y"
         />
       </div>
       <div>
         <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 mb-2">
-          Photos (optional, up to {MAX_IMAGES})
+          {t('reviews.form.photosLabel', { max: MAX_IMAGES })}
         </label>
         <div className="flex gap-2 flex-wrap items-center">
           {images.map((img, i) => (
             <div key={i} className="relative w-16 h-16 border border-black/10 overflow-hidden group">
-              <img src={img.url} alt="upload" className="w-full h-full object-cover" />
+              <img src={img.url} alt={t('reviews.form.uploadAlt')} className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
                 className="absolute top-0 right-0 bg-black/70 text-white w-5 h-5 text-xs leading-none flex items-center justify-center"
-                aria-label="Remove image"
+                aria-label={t('reviews.form.removeImage')}
               >
                 ×
               </button>
@@ -423,14 +427,14 @@ function ReviewForm({ initial, onCancel, onSubmit }) {
           disabled={submitting || uploading}
           className="text-[11px] font-bold tracking-[0.15em] uppercase bg-black text-white px-6 py-3 hover:bg-[#E83354] transition-colors disabled:opacity-50"
         >
-          {submitting ? 'Submitting…' : initial ? 'Update review' : 'Submit review'}
+          {submitting ? t('reviews.form.submitting') : initial ? t('reviews.form.update') : t('reviews.form.submit')}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="text-[11px] font-bold tracking-[0.15em] uppercase border border-black/15 px-6 py-3 hover:border-black transition-colors"
         >
-          Cancel
+          {t('reviews.form.cancel')}
         </button>
       </div>
     </form>

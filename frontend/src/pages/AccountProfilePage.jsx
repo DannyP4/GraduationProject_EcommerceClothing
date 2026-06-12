@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import * as profileService from '../services/profileService';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 
 export default function AccountProfilePage() {
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
 
   // Language is selected in the navbar.
@@ -34,9 +36,9 @@ export default function AccountProfilePage() {
         phone: profileForm.phone.trim(),
       });
       await refreshUser();
-      setProfileMsg({ type: 'success', text: 'Profile updated.' });
+      setProfileMsg({ type: 'success', text: t('accountPage.profile.updated') });
     } catch (err) {
-      setProfileMsg({ type: 'error', text: err.message || 'Could not save profile.' });
+      setProfileMsg({ type: 'error', text: err.message || t('accountPage.profile.saveError') });
     } finally {
       setProfileSaving(false);
     }
@@ -46,11 +48,11 @@ export default function AccountProfilePage() {
     e.preventDefault();
     setPwMsg(null);
     if (pwForm.newPassword !== pwForm.confirmNewPassword) {
-      setPwMsg({ type: 'error', text: 'New password and confirmation do not match.' });
+      setPwMsg({ type: 'error', text: t('accountPage.password.mismatch') });
       return;
     }
     if (pwForm.newPassword.length < 8) {
-      setPwMsg({ type: 'error', text: 'New password must be at least 8 characters.' });
+      setPwMsg({ type: 'error', text: t('accountPage.password.tooShort') });
       return;
     }
     setPwSaving(true);
@@ -60,9 +62,9 @@ export default function AccountProfilePage() {
         newPassword: pwForm.newPassword,
       });
       setPwForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
-      setPwMsg({ type: 'success', text: 'Password changed.' });
+      setPwMsg({ type: 'success', text: t('accountPage.password.changed') });
     } catch (err) {
-      setPwMsg({ type: 'error', text: err.message || 'Could not change password.' });
+      setPwMsg({ type: 'error', text: err.message || t('accountPage.password.changeError') });
     } finally {
       setPwSaving(false);
     }
@@ -71,21 +73,21 @@ export default function AccountProfilePage() {
   return (
     <div className="space-y-12">
       <section>
-        <h2 className="font-['Anton'] text-3xl uppercase tracking-tight mb-1">Profile</h2>
-        <p className="text-xs text-black/50 mb-6">Update your name and phone. Language is set in the top navigation.</p>
+        <h2 className="font-['Anton'] text-3xl uppercase tracking-tight mb-1">{t('accountPage.profile.heading')}</h2>
+        <p className="text-xs text-black/50 mb-6">{t('accountPage.profile.subtitle')}</p>
 
         <form onSubmit={handleProfileSubmit} className="space-y-5 max-w-md">
-          <Field label="Email">
+          <Field label={t('accountPage.profile.email')}>
             <input
               type="email"
               value={user?.email ?? ''}
               disabled
               className="w-full border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/40 cursor-not-allowed"
             />
-            <p className="text-[10px] text-black/40 mt-1">Email is the account identifier and cannot be changed here.</p>
+            <p className="text-[10px] text-black/40 mt-1">{t('accountPage.profile.emailHint')}</p>
           </Field>
 
-          <Field label="Full Name" required>
+          <Field label={t('accountPage.profile.fullName')} required>
             <input
               type="text"
               required
@@ -96,7 +98,7 @@ export default function AccountProfilePage() {
             />
           </Field>
 
-          <Field label="Phone">
+          <Field label={t('accountPage.profile.phone')}>
             <input
               type="tel"
               maxLength={20}
@@ -114,17 +116,17 @@ export default function AccountProfilePage() {
             disabled={profileSaving}
             className={btnPrimaryClass}
           >
-            {profileSaving ? 'Saving…' : 'Save Changes'}
+            {profileSaving ? t('accountPage.profile.saving') : t('accountPage.profile.save')}
           </button>
         </form>
       </section>
 
       <section className="border-t border-black/10 pt-10">
-        <h2 className="font-['Anton'] text-3xl uppercase tracking-tight mb-1">Change Password</h2>
-        <p className="text-xs text-black/50 mb-6">Use a password with at least 8 characters, including letters and digits.</p>
+        <h2 className="font-['Anton'] text-3xl uppercase tracking-tight mb-1">{t('accountPage.password.heading')}</h2>
+        <p className="text-xs text-black/50 mb-6">{t('accountPage.password.subtitle')}</p>
 
         <form onSubmit={handlePwSubmit} className="space-y-5 max-w-md" autoComplete="on">
-          <Field label="Current Password" required>
+          <Field label={t('accountPage.password.current')} required>
             <input
               type="password"
               required
@@ -135,7 +137,7 @@ export default function AccountProfilePage() {
             />
           </Field>
 
-          <Field label="New Password" required>
+          <Field label={t('accountPage.password.new')} required>
             <input
               type="password"
               required
@@ -148,7 +150,7 @@ export default function AccountProfilePage() {
             <PasswordStrengthMeter value={pwForm.newPassword} />
           </Field>
 
-          <Field label="Confirm New Password" required>
+          <Field label={t('accountPage.password.confirm')} required>
             <input
               type="password"
               required
@@ -167,7 +169,7 @@ export default function AccountProfilePage() {
             disabled={pwSaving}
             className={btnPrimaryClass}
           >
-            {pwSaving ? 'Updating…' : 'Update Password'}
+            {pwSaving ? t('accountPage.password.updating') : t('accountPage.password.update')}
           </button>
         </form>
       </section>

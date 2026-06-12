@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ToggleSwitch from './ToggleSwitch';
+import CollapsibleSection from './CollapsibleSection';
 
 export default function BrandFormModal({ open, mode, initial, onClose, onSubmit }) {
   const [slug, setSlug] = useState('');
   const [name, setName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
+  const [descriptionEn, setDescriptionEn] = useState('');
+  const [descriptionVi, setDescriptionVi] = useState('');
+  const [descriptionJa, setDescriptionJa] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -17,6 +21,9 @@ export default function BrandFormModal({ open, mode, initial, onClose, onSubmit 
     setName(initial?.name ?? '');
     setLogoUrl(initial?.logoUrl ?? '');
     setWebsiteUrl(initial?.websiteUrl ?? '');
+    setDescriptionEn(initial?.descriptionEn ?? '');
+    setDescriptionVi(initial?.descriptionVi ?? '');
+    setDescriptionJa(initial?.descriptionJa ?? '');
     setIsActive(initial?.isActive ?? true);
     setError(null);
   }, [open, initial]);
@@ -42,9 +49,10 @@ export default function BrandFormModal({ open, mode, initial, onClose, onSubmit 
     }
     setSubmitting(true);
     try {
+      const descriptions = { descriptionEn, descriptionVi, descriptionJa };
       const payload = isEdit
-        ? { name, logoUrl, websiteUrl, isActive }
-        : { slug, name, logoUrl, websiteUrl, isActive };
+        ? { name, logoUrl, websiteUrl, isActive, ...descriptions }
+        : { slug, name, logoUrl, websiteUrl, isActive, ...descriptions };
       await onSubmit?.(payload);
       onClose?.();
     } catch (err) {
@@ -125,6 +133,43 @@ export default function BrandFormModal({ open, mode, initial, onClose, onSubmit 
             className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
           />
         </label>
+
+        <label className="block mb-4">
+          <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description (English)</span>
+          <textarea
+            value={descriptionEn}
+            onChange={(e) => setDescriptionEn(e.target.value)}
+            rows={3}
+            placeholder="Atlas Studio crafts minimalist everyday essentials."
+            className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y"
+          />
+        </label>
+
+        <div className="mb-5">
+          <CollapsibleSection
+            title="Translations"
+            badge={(descriptionVi || descriptionJa) ? <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E83354]" title="Has translations" /> : null}
+          >
+            <label className="block mb-3">
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description · Tiếng Việt</span>
+              <textarea
+                value={descriptionVi}
+                onChange={(e) => setDescriptionVi(e.target.value)}
+                rows={3}
+                className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y"
+              />
+            </label>
+            <label className="block">
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Description · 日本語</span>
+              <textarea
+                value={descriptionJa}
+                onChange={(e) => setDescriptionJa(e.target.value)}
+                rows={3}
+                className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none resize-y"
+              />
+            </label>
+          </CollapsibleSection>
+        </div>
 
         <div className="mb-6">
           <ToggleSwitch checked={isActive} onChange={setIsActive} />

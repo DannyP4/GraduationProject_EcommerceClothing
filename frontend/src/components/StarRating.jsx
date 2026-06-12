@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function Star({ size, className }) {
   return (
@@ -9,6 +10,7 @@ function Star({ size, className }) {
 }
 
 export default function StarRating({ value = 0, max = 5, size = 16, interactive = false, onChange, className = '' }) {
+  const { t } = useTranslation();
   const [hover, setHover] = useState(0);
 
   if (interactive) {
@@ -24,7 +26,7 @@ export default function StarRating({ value = 0, max = 5, size = 16, interactive 
               onClick={() => onChange?.(idx)}
               onMouseEnter={() => setHover(idx)}
               className="p-0.5 leading-none"
-              aria-label={`${idx} star${idx > 1 ? 's' : ''}`}
+              aria-label={t('shared.rating.starCount', { count: idx })}
             >
               <Star size={size} className={idx <= shown ? 'text-amber-500' : 'text-black/15'} />
             </button>
@@ -35,7 +37,7 @@ export default function StarRating({ value = 0, max = 5, size = 16, interactive 
   }
 
   return (
-    <span className={`inline-flex items-center gap-0.5 ${className}`} aria-label={`${value} out of ${max} stars`}>
+    <span className={`inline-flex items-center gap-0.5 ${className}`} aria-label={t('shared.rating.outOf', { value, max })}>
       {Array.from({ length: max }, (_, i) => {
         const fill = Math.max(0, Math.min(1, value - i)) * 100;
         return (

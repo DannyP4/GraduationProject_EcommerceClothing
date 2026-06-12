@@ -29,5 +29,7 @@ public class CreateBrandRequest {
 
     private String descriptionEn;
 
+    private String descriptionJa;
+
     private Boolean isActive = true;
 }

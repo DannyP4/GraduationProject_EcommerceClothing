@@ -59,11 +59,11 @@ class AdminCategoryServiceImplTest {
     }
 
     @Test
-    void create_savesAndPersistsEnTranslation() {
+    void create_savesAndPersistsViTranslation() {
         CreateCategoryRequest req = new CreateCategoryRequest();
         req.setSlug("hoodies");
-        req.setName("Áo hoodies");
-        req.setNameEn("Hoodies");
+        req.setName("Hoodies");
+        req.setNameVi("Áo hoodie");
         when(categoryRepository.existsBySlug("hoodies")).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> {
             Category c = inv.getArgument(0);
@@ -71,7 +71,8 @@ class AdminCategoryServiceImplTest {
             return c;
         });
         when(categoryRepository.findById(2L)).thenReturn(Optional.of(category));
-        when(translationRepository.findByCategoryIdAndLocale(2L, "en")).thenReturn(Optional.empty());
+        when(translationRepository.findByCategoryIdAndLocale(2L, "vi")).thenReturn(Optional.empty());
+        when(translationRepository.findByCategoryIdAndLocale(2L, "ja")).thenReturn(Optional.empty());
         when(productRepository.countByCategoryIdAndDeletedAtIsNull(2L)).thenReturn(0L);
 
         AdminCategoryDto out = service.create(req);

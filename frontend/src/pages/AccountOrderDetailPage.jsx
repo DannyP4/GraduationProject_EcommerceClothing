@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as orderService from '../services/orderService';
 import * as paymentService from '../services/paymentService';
 import { getSimilarToProducts } from '../services/productService';
 import { Carousel } from '../components/RecommendationRow';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatPrice } from '../lib/format';
 
 export default function AccountOrderDetailPage() {
+  const { t, i18n } = useTranslation();
   const { orderNumber } = useParams();
 
   const [order, setOrder] = useState(null);
@@ -25,13 +28,13 @@ export default function AccountOrderDetailPage() {
       const o = await orderService.getOrder(orderNumber);
       setOrder(o);
     } catch (err) {
-      setError(err.message || 'Could not load order.');
+      setError(err.message || t('accountPage.detail.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [orderNumber]);
+  }, [orderNumber, t]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh, i18n.language]);
 
   const [recs, setRecs] = useState([]);
   const orderIdsKey = [...new Set((order?.items ?? []).map((i) => i.productId).filter(Boolean))]
@@ -54,9 +57,9 @@ export default function AccountOrderDetailPage() {
     try {
       const updated = await orderService.cancelOrder(orderNumber);
       setOrder(updated);
-      setActionMsg({ type: 'success', text: 'Order cancelled. Stock has been released.' });
+      setActionMsg({ type: 'success', text: t('accountPage.detail.cancelSuccess') });
     } catch (err) {
-      setActionMsg({ type: 'error', text: err.message || 'Could not cancel order.' });
+      setActionMsg({ type: 'error', text: err.message || t('accountPage.detail.cancelError') });
     } finally {
       setCancelling(false);
     }
@@ -71,9 +74,9 @@ export default function AccountOrderDetailPage() {
         window.location.assign(result.redirectUrl);
         return;
       }
-      setActionMsg({ type: 'error', text: 'Could not obtain a payment URL. Try again.' });
+      setActionMsg({ type: 'error', text: t('accountPage.detail.payUrlError') });
     } catch (err) {
-      setActionMsg({ type: 'error', text: err.message || 'Could not initiate payment.' });
+      setActionMsg({ type: 'error', text: err.message || t('accountPage.detail.payInitError') });
     } finally {
       setRetrying(false);
     }
@@ -85,13 +88,13 @@ export default function AccountOrderDetailPage() {
     && order.payment.provider !== 'COD'
     && order.payment.status !== 'CAPTURED';
 
-  if (loading && !order) return <p className="text-sm text-black/40">Loading…</p>;
+  if (loading && !order) return <p className="text-sm text-black/40">{t('accountPage.loading')}</p>;
   if (error) {
     return (
       <div>
         <Banner type="error">{error}</Banner>
         <Link to="/account/orders" className="text-[11px] font-bold tracking-[0.15em] uppercase underline">
-          ← Back to Orders
+          {t('accountPage.detail.backToOrders')}
         </Link>
       </div>
     );
@@ -102,20 +105,20 @@ export default function AccountOrderDetailPage() {
     <div>
       <div className="mb-6">
         <Link to="/account/orders" className="text-[11px] font-bold tracking-[0.15em] uppercase text-black/50 hover:text-black">
-          ← Order History
+          {t('accountPage.detail.orderHistory')}
         </Link>
         <div className="flex items-center gap-3 mt-2 flex-wrap">
           <h2 className="font-['Anton'] text-3xl uppercase tracking-tight">{order.orderNumber}</h2>
           <StatusBadge status={order.status} />
         </div>
-        <p className="text-xs text-black/50 mt-1">Placed {formatDate(order.placedAt)}</p>
+        <p className="text-xs text-black/50 mt-1">{t('accountPage.detail.placed', { date: formatDate(order.placedAt) })}</p>
       </div>
 
       {actionMsg && <Banner type={actionMsg.type}>{actionMsg.text}</Banner>}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
         <div className="space-y-5">
-          <Section title="Items">
+          <Section title={t('accountPage.detail.items')}>
             <ul className="divide-y divide-black/8">
               {order.items.map((it) => (
                 <ItemRow key={it.id} item={it} currency={order.currency} />
@@ -123,7 +126,7 @@ export default function AccountOrderDetailPage() {
             </ul>
           </Section>
 
-          <Section title="Shipping Address">
+          <Section title={t('accountPage.detail.shippingAddress')}>
             <p className="font-bold text-sm">{order.shippingRecipient}</p>
             <p className="text-xs text-black/60 mb-1">{order.shippingPhone}</p>
             <p className="text-xs text-black/70 leading-relaxed">
@@ -134,13 +137,13 @@ export default function AccountOrderDetailPage() {
             </p>
             {order.notes && (
               <div className="mt-3 pt-3 border-t border-black/8">
-                <p className="text-[10px] font-bold tracking-wider uppercase text-black/40 mb-1">Notes</p>
+                <p className="text-[10px] font-bold tracking-wider uppercase text-black/40 mb-1">{t('accountPage.detail.notes')}</p>
                 <p className="text-xs text-black/70 whitespace-pre-line">{order.notes}</p>
               </div>
             )}
           </Section>
 
-          <Section title="Status Timeline">
+          <Section title={t('accountPage.detail.statusTimeline')}>
             <ul className="space-y-3">
               {order.statusHistory.map((h) => (
                 <li key={h.id} className="flex gap-3 items-start">
@@ -160,26 +163,26 @@ export default function AccountOrderDetailPage() {
 
         <aside className="space-y-4 lg:sticky lg:top-20">
           <div className="bg-[#0A0A0A] text-white p-5">
-            <h3 className="font-['Anton'] text-xl uppercase tracking-wider mb-4">Summary</h3>
+            <h3 className="font-['Anton'] text-xl uppercase tracking-wider mb-4">{t('accountPage.detail.summary')}</h3>
             <div className="space-y-2 mb-4 text-sm">
-              <Row label="Subtotal" value={formatPrice(order.subtotal, order.currency)} />
-              <Row label="Discount" value={`- ${formatPrice(order.discountTotal, order.currency)}`} />
-              <Row label="Shipping" value={formatPrice(order.shippingCost, order.currency)} />
-              <Row label="Tax" value={formatPrice(order.taxTotal, order.currency)} />
+              <Row label={t('accountPage.detail.subtotal')} value={formatPrice(order.subtotal, order.currency)} />
+              <Row label={t('accountPage.detail.discount')} value={`- ${formatPrice(order.discountTotal, order.currency)}`} />
+              <Row label={t('accountPage.detail.shipping')} value={formatPrice(order.shippingCost, order.currency)} />
+              <Row label={t('accountPage.detail.tax')} value={formatPrice(order.taxTotal, order.currency)} />
             </div>
             <div className="border-t border-white/15 pt-3">
               <div className="flex justify-between items-baseline">
-                <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">Total</span>
+                <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">{t('accountPage.detail.total')}</span>
                 <span className="font-['Anton'] text-2xl">{formatPrice(order.grandTotal, order.currency)}</span>
               </div>
             </div>
 
             {order.payment && (
               <div className="mt-4 pt-4 border-t border-white/15">
-                <p className="text-[10px] font-bold tracking-wider uppercase text-white/40 mb-1">Payment</p>
-                <p className="text-sm">{order.payment.provider} · <span className="text-white/60">{order.payment.status}</span></p>
+                <p className="text-[10px] font-bold tracking-wider uppercase text-white/40 mb-1">{t('accountPage.detail.payment')}</p>
+                <p className="text-sm">{order.payment.provider} · <span className="text-white/60">{t(`accountPage.paymentStatus.${order.payment.status}`, order.payment.status)}</span></p>
                 {order.payment.paidAt && (
-                  <p className="text-[10px] text-white/40 mt-0.5">Paid at {formatDate(order.payment.paidAt)}</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">{t('accountPage.detail.paidAt', { date: formatDate(order.payment.paidAt) })}</p>
                 )}
               </div>
             )}
@@ -191,7 +194,7 @@ export default function AccountOrderDetailPage() {
               disabled={retrying}
               className="w-full bg-[#E83354] text-white text-[12px] font-bold tracking-[0.15em] uppercase py-3 hover:bg-[#c82244] transition-colors disabled:opacity-50"
             >
-              {retrying ? 'Redirecting…' : `Continue Paying (${order.payment.provider})`}
+              {retrying ? t('accountPage.detail.redirecting') : t('accountPage.detail.continuePaying', { provider: order.payment.provider })}
             </button>
           )}
 
@@ -201,20 +204,20 @@ export default function AccountOrderDetailPage() {
               disabled={cancelling}
               className="w-full border border-black/20 text-black text-[11px] font-bold tracking-[0.15em] uppercase py-3 hover:border-[#E83354] hover:text-[#E83354] transition-colors disabled:opacity-50"
             >
-              {cancelling ? 'Cancelling…' : 'Cancel Order'}
+              {cancelling ? t('accountPage.detail.cancelling') : t('accountPage.detail.cancelOrder')}
             </button>
           )}
         </aside>
       </div>
 
-      {recs.length > 0 && <Carousel title="You may also like" items={recs} />}
+      {recs.length > 0 && <Carousel title={t('accountPage.detail.youMayAlsoLike')} items={recs} />}
 
       <ConfirmDialog
         open={confirmCancel}
-        title="Cancel this order?"
-        message={`Order ${order.orderNumber} will be cancelled and stock returned. This cannot be undone.`}
-        confirmLabel="Cancel Order"
-        cancelLabel="Keep Order"
+        title={t('accountPage.detail.cancelDialog.title')}
+        message={t('accountPage.detail.cancelDialog.message', { order: order.orderNumber })}
+        confirmLabel={t('accountPage.detail.cancelOrder')}
+        cancelLabel={t('accountPage.detail.cancelDialog.keep')}
         tone="danger"
         onCancel={() => setConfirmCancel(false)}
         onConfirm={doCancel}
@@ -233,6 +236,7 @@ function Section({ title, children }) {
 }
 
 function ItemRow({ item, currency }) {
+  const { t } = useTranslation();
   return (
     <li className="flex gap-3 py-3">
       <Link
@@ -245,8 +249,8 @@ function ItemRow({ item, currency }) {
       </Link>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold uppercase tracking-wider truncate">{item.productName}</p>
-        <p className="text-[11px] text-black/50">{item.variantLabel} · SKU {item.sku}</p>
-        <p className="text-[11px] text-black/50">Qty {item.quantity} × {formatPrice(item.unitPrice, currency)}</p>
+        <p className="text-[11px] text-black/50">{item.variantLabel} · {t('accountPage.detail.sku', { sku: item.sku })}</p>
+        <p className="text-[11px] text-black/50">{t('accountPage.detail.qty', { n: item.quantity })} × {formatPrice(item.unitPrice, currency)}</p>
       </div>
       <span className="text-sm font-bold whitespace-nowrap">
         {formatPrice(item.lineTotal, currency)}
@@ -256,6 +260,7 @@ function ItemRow({ item, currency }) {
 }
 
 function StatusBadge({ status }) {
+  const { t } = useTranslation();
   const styles = {
     PENDING:    'bg-amber-50    text-amber-700  border-amber-300',
     PAID:       'bg-blue-50     text-blue-700   border-blue-300',
@@ -268,7 +273,7 @@ function StatusBadge({ status }) {
   const cls = styles[status] ?? 'bg-black/5 text-black/60 border-black/15';
   return (
     <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 border ${cls}`}>
-      {status}
+      {t(`accountPage.status.${status}`, status)}
     </span>
   );
 }
@@ -287,13 +292,6 @@ function Banner({ type, children }) {
     ? 'border-green-600/30 bg-green-600/10 text-green-700'
     : 'border-[#E83354]/30 bg-[#E83354]/5 text-[#E83354]';
   return <div className={`border px-4 py-3 text-xs mb-4 ${cls}`}>{children}</div>;
-}
-
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
 }
 
 function formatDate(iso) {

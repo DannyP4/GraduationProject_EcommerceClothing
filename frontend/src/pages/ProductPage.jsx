@@ -13,6 +13,8 @@ import BrandCard from '../components/BrandCard';
 import ReviewsSection from '../components/ReviewsSection';
 import RecommendationRow from '../components/RecommendationRow';
 import { goBack } from '../lib/historyBack';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../lib/format';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -22,6 +24,7 @@ export default function ProductPage() {
   const { addItem } = useCart();
   const { status: authStatus } = useAuth();
   const toast = useToast();
+  const { t, i18n } = useTranslation();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -96,13 +99,13 @@ export default function ProductPage() {
     return (
       <PageShell>
         <div className="bg-white border border-[#E83354]/30 px-6 py-16 text-center max-w-xl mx-auto">
-          <p className="text-sm font-bold text-[#E83354] mb-2 uppercase tracking-wider">Product not available</p>
-          <p className="text-xs text-black/60 mb-6">{error || 'This product could not be found.'}</p>
+          <p className="text-sm font-bold text-[#E83354] mb-2 uppercase tracking-wider">{t('product.notAvailable')}</p>
+          <p className="text-xs text-black/60 mb-6">{error || t('product.notFound')}</p>
           <Link
             to={backToShop}
             className="inline-block text-[11px] font-bold tracking-[0.15em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
           >
-            Back to Shop
+            {t('product.backToShop')}
           </Link>
         </div>
       </PageShell>
@@ -117,15 +120,15 @@ export default function ProductPage() {
 
   const validateSelection = () => {
     if (!selectedSize) {
-      toast.error('Please select a size');
+      toast.error(t('product.selectSize'));
       return false;
     }
     if (!selectedVariant) {
-      toast.error('This size/color combination is not available');
+      toast.error(t('product.comboUnavailable'));
       return false;
     }
     if (selectedVariant.stockQuantity != null && quantity > selectedVariant.stockQuantity) {
-      toast.error(`Only ${selectedVariant.stockQuantity} in stock`);
+      toast.error(t('product.onlyInStock', { n: selectedVariant.stockQuantity }));
       return false;
     }
     return true;
@@ -134,7 +137,7 @@ export default function ProductPage() {
   const handleBuyNow = () => {
     if (!validateSelection()) return;
     if (authStatus !== 'authenticated') {
-      toast.error('Please sign in to continue');
+      toast.error(t('product.signInToContinue'));
       navigate('/login', { state: { from: `/product/${id}` } });
       return;
     }
@@ -174,9 +177,9 @@ export default function ProductPage() {
         originalUnitPrice: selectedVariant.salePrice != null ? Number(selectedVariant.price ?? product.basePrice) : undefined,
         currency: product.currency,
       });
-      toast.success(`Added ${quantity} × ${product.name} to cart`);
+      toast.success(t('product.addedToCart', { count: quantity, name: product.name }));
     } catch (err) {
-      toast.error(err.message || 'Could not add to cart');
+      toast.error(err.message || t('product.couldNotAdd'));
     } finally {
       setAdding(false);
     }
@@ -200,9 +203,9 @@ export default function ProductPage() {
   return (
     <PageShell>
       <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] uppercase mb-8">
-        <Link to="/" className="text-[#E83354] hover:text-black transition-colors">Home</Link>
+        <Link to="/" className="text-[#E83354] hover:text-black transition-colors">{t('product.home')}</Link>
         <span className="text-black/30">›</span>
-        <button type="button" onClick={() => goBack(navigate, location, '/shop')} className="text-[#E83354] hover:text-black transition-colors">Shop</button>
+        <button type="button" onClick={() => goBack(navigate, location, '/shop')} className="text-[#E83354] hover:text-black transition-colors">{t('nav.shop')}</button>
         <span className="text-black/30">›</span>
         <span className="text-black/60 normal-case tracking-normal font-normal">{product.name}</span>
       </nav>
@@ -233,7 +236,7 @@ export default function ProductPage() {
               />
             ) : (
               <div className="bg-black/5 flex items-center justify-center text-black/30 text-xs" style={{ aspectRatio: '4/5' }}>
-                No image
+                {t('common.noImage')}
               </div>
             )}
           </div>
@@ -274,7 +277,7 @@ export default function ProductPage() {
             </div>
             {displaySale != null && product.saleEndsAt && (
               <p className="text-[11px] font-bold tracking-wider uppercase text-[#E83354] mt-1.5">
-                Sale ends {new Date(product.saleEndsAt).toLocaleDateString('vi-VN')}
+                {t('product.saleEnds', { date: new Date(product.saleEndsAt).toLocaleDateString(i18n.language) })}
               </p>
             )}
           </div>
@@ -287,7 +290,7 @@ export default function ProductPage() {
           {colors.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold tracking-[0.12em] uppercase">Color</span>
+                <span className="text-sm font-bold tracking-[0.12em] uppercase">{t('product.color')}</span>
                 <span className="text-xs text-black/60 normal-case tracking-normal">{selectedColor}</span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -300,7 +303,7 @@ export default function ProductPage() {
                       type="button"
                       onClick={() => chooseColor(c)}
                       disabled={!enabled && !active}
-                      title={!enabled ? 'Out of stock' : undefined}
+                      title={!enabled ? t('product.outOfStock') : undefined}
                       className={`px-3 py-2 text-[11px] font-bold tracking-wider border transition-all ${active
                         ? 'bg-black text-white border-black'
                         : enabled
@@ -320,7 +323,7 @@ export default function ProductPage() {
           {sizes.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold tracking-[0.12em] uppercase">Size</span>
+                <span className="text-sm font-bold tracking-[0.12em] uppercase">{t('product.size')}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {sizes.map((s) => {
@@ -332,7 +335,7 @@ export default function ProductPage() {
                       type="button"
                       onClick={() => chooseSize(s)}
                       disabled={!enabled && !active}
-                      title={!enabled ? 'Out of stock' : undefined}
+                      title={!enabled ? t('product.outOfStock') : undefined}
                       className={`w-12 h-12 text-[12px] font-bold border transition-all ${active
                         ? 'bg-black text-white border-black'
                         : enabled
@@ -351,10 +354,10 @@ export default function ProductPage() {
           {/* Quantity selector */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-bold tracking-[0.12em] uppercase">Quantity</span>
+              <span className="text-sm font-bold tracking-[0.12em] uppercase">{t('product.quantity')}</span>
               {selectedVariant?.stockQuantity != null && (
                 <span className="text-xs text-black/60">
-                  <span className="font-bold text-black">{selectedVariant.stockQuantity}</span> in stock
+                  {t('product.inStock', { n: selectedVariant.stockQuantity })}
                 </span>
               )}
             </div>
@@ -373,26 +376,26 @@ export default function ProductPage() {
               disabled={adding}
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-[#E83354] text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Buy Now
+              {t('product.buyNow')}
             </button>
             <button
               onClick={handleAddToCart}
               disabled={adding}
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase transition-all bg-black text-white hover:bg-[#E83354] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {adding ? 'Adding…' : '+ Add to Cart'}
+              {adding ? t('product.adding') : t('product.addToCart')}
             </button>
             <button
               onClick={() => navigate('/try-on')}
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase border-2 border-black text-black hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3"
             >
-              <span>👁</span> Virtual Try-On
+              <span>👁</span> {t('product.virtualTryOn')}
             </button>
           </div>
 
           {product.attributes && Object.keys(product.attributes).length > 0 && (
             <div className="border-t border-black/10 pt-5">
-              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-3">Details</h3>
+              <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-3">{t('product.details')}</h3>
               <dl className="divide-y divide-black/5">
                 {Object.entries(product.attributes).map(([k, v]) => (
                   <div key={k} className="grid grid-cols-[140px_1fr] gap-4 py-2.5 items-center">
@@ -410,13 +413,14 @@ export default function ProductPage() {
 
       <ReviewsSection product={product} onChanged={reloadProduct} />
 
-      <RecommendationRow title="Frequently bought together" productId={product.id} fetcher={getFrequentlyBoughtTogether} />
-      <RecommendationRow title="You may also like" productId={product.id} fetcher={getSimilarProducts} />
+      <RecommendationRow title={t('product.fbt')} productId={product.id} fetcher={getFrequentlyBoughtTogether} />
+      <RecommendationRow title={t('product.alsoLike')} productId={product.id} fetcher={getSimilarProducts} />
     </PageShell>
   );
 }
 
 function ProductRatingLine({ product }) {
+  const { t } = useTranslation();
   const count = product.reviewCount ?? 0;
   const avg = product.averageRating;
   const sold = product.soldCount ?? 0;
@@ -427,18 +431,18 @@ function ProductRatingLine({ product }) {
           <StarRating value={avg ?? 0} size={15} />
           <span className="font-bold text-black">{Number(avg ?? 0).toFixed(1)}</span>
           <a href="#reviews" className="text-black/50 hover:text-[#E83354] transition-colors">
-            {count} review{count > 1 ? 's' : ''}
+            {t('product.reviewsCount', { count })}
           </a>
         </>
       ) : (
         <span className="flex items-center gap-2 text-black/40">
-          <StarRating value={0} size={15} /> No reviews yet
+          <StarRating value={0} size={15} /> {t('product.noReviews')}
         </span>
       )}
       {sold > 0 && (
         <>
           <span className="text-black/20">·</span>
-          <span className="text-black/50">{sold} sold</span>
+          <span className="text-black/50">{t('common.sold', { n: sold })}</span>
         </>
       )}
     </div>
@@ -486,9 +490,3 @@ function uniqueValues(items, key) {
   return out;
 }
 
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
-}

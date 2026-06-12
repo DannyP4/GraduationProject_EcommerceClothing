@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
@@ -10,8 +11,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Mirrors BE @Pattern in RegisterRequest — at least one letter and one digit.
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).+$/;
 
-function friendlyOAuthError(code) {
-  return code === 'google_login_failed' ? 'Google sign-in failed. Please try again.' : code;
+function friendlyOAuthError(code, t) {
+  return code === 'google_login_failed' ? t('auth.errors.googleFailed') : code;
 }
 
 function GoogleIcon() {
@@ -26,6 +27,7 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -64,12 +66,12 @@ export default function LoginPage() {
     const oauthError = searchParams.get('oauth_error');
     if (oauthError) {
       oauthErrorShown.current = true;
-      toast.error(friendlyOAuthError(oauthError));
+      toast.error(friendlyOAuthError(oauthError, t));
       const next = new URLSearchParams(searchParams);
       next.delete('oauth_error');
       setSearchParams(next, { replace: true });
     }
-  }, [searchParams, setSearchParams, toast]);
+  }, [searchParams, setSearchParams, toast, t]);
 
   const switchMode = (m) => {
     setMode(m);
@@ -98,30 +100,30 @@ export default function LoginPage() {
     setError('');
 
     if (!EMAIL_REGEX.test(email.trim())) {
-      setError('Please enter a valid email address.');
+      setError(t('auth.errors.invalidEmail'));
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('auth.errors.passwordMinLength'));
       return;
     }
     if (mode === 'signup') {
       if (!fullName.trim()) {
-        setError('Please enter your full name.');
+        setError(t('auth.errors.fullNameRequired'));
         return;
       }
       if (!PASSWORD_RULE.test(password)) {
-        setError('Password must contain at least one letter and one digit.');
+        setError(t('auth.errors.passwordRule'));
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match.');
+        setError(t('auth.errors.passwordMismatch'));
         return;
       }
     }
 
     if (captchaEnabled && !captchaToken) {
-      setError('Please complete the captcha.');
+      setError(t('auth.errors.captchaRequired'));
       return;
     }
 
@@ -139,7 +141,7 @@ export default function LoginPage() {
         return;
       }
       resetCaptcha();
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || t('auth.errors.generic'));
     } finally {
       setSubmitting(false);
     }
@@ -157,7 +159,7 @@ export default function LoginPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          Back
+          {t('auth.back')}
         </Link>
 
         <div className="max-w-sm w-full mx-auto">
@@ -176,18 +178,16 @@ export default function LoginPage() {
                 className={`pb-3 mr-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-all border-b-2 -mb-[1px] ${mode === m ? 'border-black text-black' : 'border-transparent text-black/30 hover:text-black/60'
                   }`}
               >
-                {m === 'login' ? 'Sign In' : 'Create Account'}
+                {m === 'login' ? t('auth.signIn') : t('auth.createAccount')}
               </button>
             ))}
           </div>
 
           <h1 className="text-3xl font-black tracking-tight mb-2">
-            {mode === 'login' ? 'Welcome back.' : 'Join the movement.'}
+            {mode === 'login' ? t('auth.welcomeBack') : t('auth.joinTitle')}
           </h1>
           <p className="text-sm text-black/50 mb-8">
-            {mode === 'login'
-              ? 'Sign in to access your orders and wishlist.'
-              : 'Get early drops, campus-exclusive deals, and more.'}
+            {mode === 'login' ? t('auth.loginSubtitle') : t('auth.signupSubtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -199,11 +199,11 @@ export default function LoginPage() {
             {mode === 'signup' && (
               <div>
                 <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-                  Full Name
+                  {t('auth.fullName')}
                 </label>
                 <input
                   type="text"
-                  placeholder="Long Pham"
+                  placeholder={t('auth.fullNamePlaceholder')}
                   autoComplete="name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -214,11 +214,11 @@ export default function LoginPage() {
             )}
             <div>
               <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 type="email"
-                placeholder="you@gmail.com"
+                placeholder={t('auth.emailPlaceholder')}
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -228,7 +228,7 @@ export default function LoginPage() {
             </div>
             <div>
               <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-                Password
+                {t('auth.password')}
               </label>
               <input
                 type="password"
@@ -247,7 +247,7 @@ export default function LoginPage() {
             {mode === 'signup' && (
               <div>
                 <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-                  Confirm Password
+                  {t('auth.confirmPassword')}
                 </label>
                 <input
                   type="password"
@@ -260,7 +260,7 @@ export default function LoginPage() {
                   minLength={8}
                 />
                 {confirmPassword && confirmPassword !== password && (
-                  <p className="text-[10px] text-[#E83354] mt-1 tracking-wider">Passwords do not match</p>
+                  <p className="text-[10px] text-[#E83354] mt-1 tracking-wider">{t('auth.errors.passwordMismatchShort')}</p>
                 )}
               </div>
             )}
@@ -268,7 +268,7 @@ export default function LoginPage() {
             {mode === 'login' && (
               <div className="text-right">
                 <Link to="/auth/forgot-password" className="text-[13px] font-medium text-black/60 hover:text-[#E83354] transition-colors">
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
             )}
@@ -281,14 +281,14 @@ export default function LoginPage() {
               className="w-full bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
             >
               {submitting
-                ? mode === 'login' ? 'Signing in...' : 'Creating account...'
-                : mode === 'login' ? 'Sign In' : 'Create Account'}
+                ? mode === 'login' ? t('auth.signingIn') : t('auth.creatingAccount')
+                : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
             </button>
           </form>
 
           <div className="my-6 flex items-center gap-4">
             <div className="flex-1 h-px bg-black/10" />
-            <span className="text-[10px] text-black/30 tracking-wider uppercase">or</span>
+            <span className="text-[10px] text-black/30 tracking-wider uppercase">{t('auth.or')}</span>
             <div className="flex-1 h-px bg-black/10" />
           </div>
 
@@ -298,17 +298,17 @@ export default function LoginPage() {
             className="w-full border border-black/20 text-[13px] font-semibold text-black/80 py-3.5 hover:border-black hover:bg-black/[0.02] transition-all flex items-center justify-center gap-3"
           >
             <GoogleIcon />
-            Continue with Google
+            {t('auth.continueWithGoogle')}
           </button>
 
           <p className="text-center text-[13px] text-black/55 mt-8">
-            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            {mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}{' '}
             <button
               type="button"
               onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
               className="font-bold text-[#E83354] hover:underline underline-offset-2 transition-colors"
             >
-              {mode === 'login' ? 'Sign up' : 'Sign in'}
+              {mode === 'login' ? t('auth.signUpAction') : t('auth.signInAction')}
             </button>
           </p>
         </div>
@@ -328,7 +328,7 @@ export default function LoginPage() {
             animation: 'ticker 20s linear infinite',
           }}
         >
-          VESTA CAMPUS LEGEND STREETWEAR
+          VESTA STREETWEAR STATEMENT STYLE
         </div>
 
         {/* Parallax layers */}
@@ -352,10 +352,10 @@ export default function LoginPage() {
           <div className="border border-white/20 p-6 max-w-xs backdrop-blur-sm">
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#E83354] mb-2">SS 2026</p>
             <p className="font-['Anton'] text-3xl text-white tracking-wide leading-tight uppercase">
-              Campus<br />Collection
+              {t('auth.promo.line1')}<br />{t('auth.promo.line2')}
             </p>
             <p className="text-white/50 text-xs mt-3 leading-relaxed">
-              200+ pieces. One mission. Dress like the legend you are.
+              {t('auth.promo.tagline')}
             </p>
           </div>
         </div>

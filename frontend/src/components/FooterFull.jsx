@@ -1,4 +1,11 @@
+import { useTranslation } from 'react-i18next';
+
+const SHOP_LINKS = ['newArrivals', 'tops', 'bottoms', 'outerwear', 'accessories', 'sale'];
+const INFO_LINKS = ['aboutUs', 'sustainability', 'sizeGuide', 'shippingReturns', 'faq', 'contact'];
+const LEGAL_LINKS = ['privacy', 'terms', 'cookies'];
+
 export default function FooterFull() {
+  const { t } = useTranslation();
   return (
     <footer className="bg-[#0A0A0A] text-white pt-16 pb-8">
       <div className="max-w-[1440px] mx-auto px-6">
@@ -7,7 +14,7 @@ export default function FooterFull() {
           <div className="col-span-2 md:col-span-1">
             <div className="font-['Anton'] text-3xl tracking-widest mb-4">VESTA</div>
             <p className="text-white/50 text-sm leading-relaxed mb-6">
-              Campus-born streetwear for the generation that refuses to dress like everyone else.
+              {t('footer.tagline')}
             </p>
             <div className="flex gap-4">
               {['IG', 'TK', 'TW', 'YT'].map((s) => (
@@ -24,11 +31,11 @@ export default function FooterFull() {
 
           {/* Shop col */}
           <div>
-            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">Shop</h4>
+            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">{t('footer.shop')}</h4>
             <ul className="space-y-3">
-              {['New Arrivals', 'Tops', 'Bottoms', 'Outerwear', 'Accessories', 'Sale'].map((l) => (
-                <li key={l}>
-                  <a href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">{l}</a>
+              {SHOP_LINKS.map((k) => (
+                <li key={k}>
+                  <a href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${k}`)}</a>
                 </li>
               ))}
             </ul>
@@ -36,11 +43,11 @@ export default function FooterFull() {
 
           {/* Info col */}
           <div>
-            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">Info</h4>
+            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">{t('footer.info')}</h4>
             <ul className="space-y-3">
-              {['About Us', 'Sustainability', 'Size Guide', 'Shipping & Returns', 'FAQ', 'Contact'].map((l) => (
-                <li key={l}>
-                  <a href="#" className="text-sm text-white/60 hover:text-white transition-colors">{l}</a>
+              {INFO_LINKS.map((k) => (
+                <li key={k}>
+                  <a href="#" className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${k}`)}</a>
                 </li>
               ))}
             </ul>
@@ -48,18 +55,18 @@ export default function FooterFull() {
 
           {/* Newsletter col */}
           <div>
-            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">Stay Updated</h4>
+            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">{t('footer.stayUpdated')}</h4>
             <p className="text-sm text-white/50 mb-4 leading-relaxed">
-              Get early access to drops and exclusive campus deals.
+              {t('footer.newsletterHint')}
             </p>
             <div className="flex">
               <input
                 type="email"
-                placeholder="your@email.com"
+                placeholder={t('footer.emailPlaceholder')}
                 className="flex-1 bg-white/10 border border-white/20 text-white text-sm px-3 py-2.5 focus:outline-none focus:border-white/50 placeholder:text-white/30"
               />
               <button className="bg-[#E83354] text-white text-[10px] font-bold tracking-wider px-4 hover:bg-[#c82244] transition-colors">
-                GO
+                {t('footer.subscribe')}
               </button>
             </div>
           </div>
@@ -68,12 +75,12 @@ export default function FooterFull() {
         {/* Bottom row */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-[11px] text-white/30 tracking-wider">
-            © 2026 VESTA. All rights reserved.
+            {t('footer.rights')}
           </p>
           <div className="flex gap-6">
-            {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((l) => (
-              <a key={l} href="#" className="text-[11px] text-white/30 hover:text-white/60 tracking-wider transition-colors">
-                {l}
+            {LEGAL_LINKS.map((k) => (
+              <a key={k} href="#" className="text-[11px] text-white/30 hover:text-white/60 tracking-wider transition-colors">
+                {t(`footer.links.${k}`)}
               </a>
             ))}
           </div>

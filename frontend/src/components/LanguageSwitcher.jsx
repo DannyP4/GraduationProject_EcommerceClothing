@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'vi', label: 'Tiếng Việt' },
   { code: 'ja', label: '日本語' },
 ];
-const LOCALE_KEY = 'app.locale';
 
 export default function LanguageSwitcher({ tone = 'light' }) {
+  const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [locale, setLocale] = useState(() => localStorage.getItem(LOCALE_KEY) || 'en');
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
 
@@ -22,11 +22,11 @@ export default function LanguageSwitcher({ tone = 'light' }) {
   };
   useEffect(() => () => cancelClose(), []);
 
+  const locale = i18n.resolvedLanguage || i18n.language;
   const pick = (code) => {
-    setLocale(code);
-    localStorage.setItem(LOCALE_KEY, code);
+    i18n.changeLanguage(code);
+    localStorage.setItem('app.locale', code);
     setOpen(false);
-    window.dispatchEvent(new CustomEvent('app:locale-change', { detail: { locale: code } }));
   };
 
   const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0];

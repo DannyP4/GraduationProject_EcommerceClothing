@@ -1,0 +1,712 @@
+{
+  "nav": {
+    "shop": "Shop",
+    "collections": "Collections",
+    "lookbook": "Lookbook",
+    "about": "About",
+    "comingSoon": "Coming soon",
+    "login": "Login"
+  },
+  "search": {
+    "placeholder": "Search products...",
+    "label": "Search",
+    "submit": "Submit search",
+    "clear": "Clear",
+    "searching": "Searching…",
+    "noMatches": "No matches for “{{query}}”",
+    "tryDifferent": "Try a different keyword",
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matches",
+    "viewAll": "View all results →"
+  },
+  "cart": {
+    "label": "Cart",
+    "title": "My Cart",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "empty": "Your cart is empty",
+    "shopNow": "Shop Now",
+    "moreInCart_one": "+{{count}} more item in cart",
+    "moreInCart_other": "+{{count}} more items in cart",
+    "subtotal": "Subtotal",
+    "viewCart": "View Cart",
+    "checkout": "Checkout"
+  },
+  "notifications": {
+    "label": "Notifications",
+    "title": "Notifications",
+    "new": "{{count}} new",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet",
+    "emptyHint": "Order updates will appear here.",
+    "type": {
+      "ORDER_PLACED": "Placed",
+      "ORDER_PAID": "Paid",
+      "ORDER_SHIPPED": "Shipped",
+      "ORDER_DELIVERED": "Delivered",
+      "ORDER_CANCELLED": "Cancelled",
+      "ORDER_REFUNDED": "Refunded"
+    }
+  },
+  "account": {
+    "signedInAs": "Signed in as",
+    "adminDashboard": "Admin Dashboard",
+    "profile": "My Profile",
+    "orders": "Order History",
+    "addresses": "Addresses",
+    "signOut": "Sign Out",
+    "signOutConfirmTitle": "Sign out?",
+    "signOutConfirmMessage": "You will need to sign in again to access your account, orders and saved addresses.",
+    "staySignedIn": "Stay Signed In"
+  },
+  "footer": {
+    "tagline": "Streetwear for the bold — designed to be worn your way.",
+    "shop": "Shop",
+    "info": "Info",
+    "stayUpdated": "Stay Updated",
+    "newsletterHint": "Get early access to drops and exclusive member deals.",
+    "emailPlaceholder": "your@email.com",
+    "subscribe": "GO",
+    "rights": "© 2026 VESTA. All rights reserved.",
+    "links": {
+      "newArrivals": "New Arrivals",
+      "tops": "Tops",
+      "bottoms": "Bottoms",
+      "outerwear": "Outerwear",
+      "accessories": "Accessories",
+      "sale": "Sale",
+      "aboutUs": "About Us",
+      "sustainability": "Sustainability",
+      "sizeGuide": "Size Guide",
+      "shippingReturns": "Shipping & Returns",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    }
+  },
+  "announcement": {
+    "ticker": "⚡ VIRTUAL TRY-ON ON EVERY PIECE · SEASONAL SALE — SELECT STYLES MARKED DOWN · GOT A VOUCHER? APPLY IT AT CHECKOUT · NEW ARRIVALS EVERY WEEK · ",
+    "dismiss": "Dismiss"
+  },
+  "common": {
+    "noImage": "No image",
+    "viewDetails": "View Details →",
+    "sold": "{{n}} sold"
+  },
+  "home": {
+    "eyebrow": "SS 2026 Collection",
+    "heroTitleLine1": "DRESS",
+    "heroTitleLine2": "LIKE A",
+    "heroTitleAccent": "LEGEND",
+    "subtitle": "Statement streetwear for those who dress on their own terms. Limited drops, unlimited style.",
+    "ctaShop": "Shop The Drop",
+    "ctaExplore": "Explore Looks",
+    "editorial": "Editorial",
+    "featured1": "Featured",
+    "featured2": "Lookbooks",
+    "manifesto": "The Manifesto",
+    "statement1": "WEAR YOUR",
+    "statementHi1": "AMBITION.",
+    "statement2": "OWN THE",
+    "statementHi2": "ROOM.",
+    "statement3": "SET THE STANDARD.",
+    "manifestoBody": "Every piece is built to move with you — designed for real life, made to be seen.",
+    "whatsHot": "What's Hot",
+    "trending1": "Trending",
+    "trending2": "Now",
+    "viewAll": "View All",
+    "noProducts": "No products available yet.",
+    "lookbooks": {
+      "campusEssentialsTag": "Everyday Essentials",
+      "campusEssentialsTitle": "Daily Staples",
+      "streetwearTag": "Streetwear",
+      "streetwearTitle": "Urban Edit",
+      "seasonalTag": "Seasonal",
+      "seasonalTitle": "Winter Layers",
+      "minimalTag": "Minimal",
+      "minimalTitle": "Clean Cuts",
+      "retroTag": "Retro",
+      "retroTitle": "Varsity Club"
+    }
+  },
+  "shop": {
+    "sortNewest": "Newest",
+    "sortPriceAsc": "Price: Low to High",
+    "sortPriceDesc": "Price: High to Low",
+    "sortPopular": "Popular",
+    "eyebrowSearch": "Search · {{n}} results",
+    "eyebrowBrand": "Brand · {{n}} items",
+    "eyebrowSeason": "SS 2026 · {{n}} items",
+    "titleResults": "Results for “{{query}}”",
+    "titleBrand": "Brand",
+    "titleAll": "Shop All",
+    "clearSearch": "Clear search",
+    "clearBrand": "Clear brand",
+    "collections": "Collections",
+    "searchCategory": "Search category…",
+    "all": "All",
+    "sortBy": "Sort By",
+    "clearFilters": "Clear Filters",
+    "errorTitle": "Could not load products",
+    "retry": "Retry",
+    "noMatchTitle": "No matches for “{{query}}”",
+    "noMatchBody": "We couldn’t find anything matching that search. Try a different keyword or browse the full catalog.",
+    "backToShop": "Back to Shop",
+    "noProductsTitle": "No products found",
+    "noProductsHint": "Try adjusting your filters",
+    "showing": "Showing {{shown}} of {{total}}",
+    "loadMore": "Load more",
+    "loading": "Loading…"
+  },
+  "product": {
+    "notAvailable": "Product not available",
+    "notFound": "This product could not be found.",
+    "backToShop": "Back to Shop",
+    "home": "Home",
+    "selectSize": "Please select a size",
+    "comboUnavailable": "This size/color combination is not available",
+    "onlyInStock": "Only {{n}} in stock",
+    "signInToContinue": "Please sign in to continue",
+    "couldNotAdd": "Could not add to cart",
+    "addedToCart": "Added {{count}} × {{name}} to cart",
+    "saleEnds": "Sale ends {{date}}",
+    "color": "Color",
+    "size": "Size",
+    "quantity": "Quantity",
+    "inStock": "{{n}} in stock",
+    "outOfStock": "Out of stock",
+    "buyNow": "Buy Now",
+    "adding": "Adding…",
+    "addToCart": "+ Add to Cart",
+    "virtualTryOn": "Virtual Try-On",
+    "details": "Details",
+    "reviewsCount_one": "{{count}} review",
+    "reviewsCount_other": "{{count}} reviews",
+    "noReviews": "No reviews yet",
+    "fbt": "Frequently bought together",
+    "alsoLike": "You may also like"
+  },
+  "reviews": {
+    "eyebrow": "Customer Voices",
+    "heading": "Reviews",
+    "count_one": "{{count}} review",
+    "count_other": "{{count}} reviews",
+    "writeReview": "Write a Review",
+    "alreadyReviewed": "You have already reviewed this product.",
+    "purchaseRequired": "Only customers who purchased and received this item can review it.",
+    "loading": "Loading reviews…",
+    "loadingMore": "Loading…",
+    "loadMore": "Load more reviews",
+    "showing": "Showing {{shown}} of {{total}}",
+    "verifiedPurchase": "Verified Purchase",
+    "imageAlt": "Customer review",
+    "editReview": "Edit your review",
+    "deleteReview": "Delete your review",
+    "markHelpful": "Mark as helpful",
+    "foundHelpful_one": "{{count}} found helpful",
+    "foundHelpful_other": "{{count}} found helpful",
+    "sort": {
+      "newest": "Newest",
+      "helpful": "Most helpful"
+    },
+    "empty": {
+      "title": "No reviews yet",
+      "subtitle": "Be the first to share your thoughts on this product."
+    },
+    "deleteDialog": {
+      "title": "Delete your review?",
+      "message": "This permanently removes your review and its images. You can write a new one afterwards.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "toasts": {
+      "updated": "Review updated",
+      "created": "Thanks for your review!",
+      "deleted": "Review deleted",
+      "loginToVote": "Log in to vote on reviews",
+      "loginToWrite": "Please log in to write a review"
+    },
+    "errors": {
+      "load": "Could not load reviews",
+      "loadMore": "Could not load more reviews",
+      "delete": "Delete failed",
+      "vote": "Could not record your vote"
+    },
+    "form": {
+      "ratingLabel": "Your rating",
+      "titleLabel": "Title (optional)",
+      "titlePlaceholder": "Sum it up in a few words",
+      "bodyLabel": "Your review",
+      "bodyPlaceholder": "What did you like or dislike? How is the fit and quality?",
+      "photosLabel": "Photos (optional, up to {{max}})",
+      "uploadAlt": "upload",
+      "removeImage": "Remove image",
+      "maxImages": "A review can have at most {{max}} images",
+      "uploadFailed": "Image upload failed",
+      "bodyRequired": "Please write a few words about the product",
+      "submitFailed": "Could not submit review",
+      "submitting": "Submitting…",
+      "update": "Update review",
+      "submit": "Submit review",
+      "cancel": "Cancel"
+    }
+  },
+  "brand": {
+    "label": "Brand",
+    "fallbackName": "Brand",
+    "viewStore": "View store",
+    "products": "products",
+    "sold": "sold",
+    "noRatings": "No ratings yet"
+  },
+  "recommend": {
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
+  },
+  "cartPage": {
+    "title": "Your Cart",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "guestCart": "guest cart",
+    "clearAll": "Clear All",
+    "signInPromptLead": "Sign in",
+    "signInPromptRest": "to save this cart across devices.",
+    "signIn": "Sign In",
+    "loading": "Loading cart…",
+    "continueShopping": "Continue Shopping",
+    "youMayAlsoLike": "You may also like",
+    "empty": {
+      "title": "Your cart is empty",
+      "subtitle": "Add some legendary pieces to get started.",
+      "shopNow": "Shop Now"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "subtotal_one": "Subtotal ({{count}} item)",
+      "subtotal_other": "Subtotal ({{count}} items)",
+      "shipping": "Shipping",
+      "tax": "Tax",
+      "calculatedAtCheckout": "Calculated at checkout",
+      "total": "Total",
+      "exclShippingTax": "excl. shipping & tax"
+    },
+    "checkout": {
+      "resolveStock": "Resolve Stock Issues",
+      "signInToCheckout": "Sign in to Checkout",
+      "placeOrder": "Place Order"
+    },
+    "perks": {
+      "secureCheckout": "Secure Checkout",
+      "freeReturns": "Free Returns within 30 Days",
+      "multiplePayments": "Multiple Payment Options"
+    },
+    "item": {
+      "fallbackName": "Product",
+      "tryOn": "Try On",
+      "each": "each",
+      "remove": "Remove",
+      "removeAria": "Remove {{name}} from cart"
+    },
+    "stock": {
+      "onlyLeft": "Only {{n}} left",
+      "low": "Low stock",
+      "out": "Out of stock",
+      "unavailable": "No longer available"
+    },
+    "confirmClear": {
+      "title": "Clear all items?",
+      "message_one": "This will remove all {{count}} item from your cart. This cannot be undone.",
+      "message_other": "This will remove all {{count}} items from your cart. This cannot be undone.",
+      "confirm": "Clear Cart",
+      "cancel": "Keep Items"
+    },
+    "errors": {
+      "updateQty": "Could not update quantity",
+      "removeItem": "Could not remove item",
+      "clearCart": "Could not clear cart"
+    }
+  },
+  "checkout": {
+    "eyebrow": {
+      "buyNow": "Buy now",
+      "cart": "Secure checkout"
+    },
+    "title": "Checkout",
+    "loading": "Loading checkout…",
+    "section": {
+      "shippingAddress": "Shipping address",
+      "items": "Your items",
+      "paymentMethod": "Payment method",
+      "orderNotes": "Order notes"
+    },
+    "optional": "Optional",
+    "needChanges": "Need changes?",
+    "backToProduct": "Back to product",
+    "backToCart": "Back to cart",
+    "continueShopping": "Continue shopping",
+    "notesPlaceholder": "Anything we should know? (e.g. delivery instructions)",
+    "summary": {
+      "title": "Order summary",
+      "subtotal_one": "Subtotal ({{count}} item)",
+      "subtotal_other": "Subtotal ({{count}} items)",
+      "shipping": "Shipping",
+      "free": "Free",
+      "freeOver": "Free over {{amount}}",
+      "tax": "Tax",
+      "taxNote": "Included",
+      "discount": "Discount ({{code}})",
+      "total": "Total"
+    },
+    "qty": "Qty {{n}}",
+    "coupon": {
+      "placeholder": "Coupon code",
+      "apply": "Apply",
+      "remove": "Remove",
+      "applied": "−{{amount}} applied",
+      "invalid": "Invalid coupon code"
+    },
+    "payment": {
+      "cod": {
+        "title": "Cash on delivery",
+        "subtitle": "Pay with cash when your order arrives"
+      },
+      "vnpay": {
+        "title": "VNPAY",
+        "subtitle": "Pay online via VNPAY (ATM, QR, card)"
+      },
+      "stripe": {
+        "title": "Card",
+        "subtitle": "Pay securely with credit or debit card"
+      }
+    },
+    "footnote": {
+      "cod": "You'll pay in cash when your order is delivered.",
+      "vnpay": "You'll be redirected to VNPAY to complete payment.",
+      "stripe": "You'll be redirected to a secure card payment page."
+    },
+    "address": {
+      "loading": "Loading addresses…",
+      "loadError": "Could not load your addresses.",
+      "none": "You don't have any saved addresses yet.",
+      "add": "Add an address",
+      "manage": "Manage addresses",
+      "default": "Default"
+    },
+    "blockedItems_one": "{{count}} item is out of stock or unavailable.",
+    "blockedItems_other": "{{count}} items are out of stock or unavailable.",
+    "fixInCart": "Fix in cart",
+    "placeOrder": "Place order",
+    "placingOrder": "Placing order…",
+    "submitError": "Could not place your order. Please try again.",
+    "empty": {
+      "title": "Nothing to check out",
+      "subtitle": "Your cart is empty. Add something you love first.",
+      "shopNow": "Shop now"
+    },
+    "toast": {
+      "placedSuccess": "Order {{orderNumber}} placed!",
+      "placedRedirect": "Order {{orderNumber}} created — redirecting to payment…"
+    },
+    "confirm": {
+      "title": "Confirm your order",
+      "place": "Place order",
+      "placeAndPay": "Place & pay",
+      "reviewAgain": "Review again",
+      "head_one": "Place this order for {{count}} item totaling {{amount}}",
+      "head_other": "Place this order for {{count}} items totaling {{amount}}",
+      "shipTo": ", shipping to {{recipient}} in {{district}}, {{city}}",
+      "tailCod": ". You'll pay in cash on delivery.",
+      "tailVnpay": ". You'll be redirected to VNPAY to pay.",
+      "tailStripe": ". You'll be redirected to pay by card."
+    }
+  },
+  "accountPage": {
+    "title": "My Account",
+    "loading": "Loading…",
+    "signOut": "Sign Out",
+    "nav": {
+      "profile": "Profile",
+      "orders": "Orders",
+      "addresses": "Addresses"
+    },
+    "signOutDialog": {
+      "title": "Sign out?",
+      "message": "You'll need to sign in again to access your account.",
+      "cancel": "Stay signed in"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "PROCESSING": "Processing",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "CANCELLED": "Cancelled",
+      "REFUNDED": "Refunded"
+    },
+    "paymentStatus": {
+      "PENDING": "Pending",
+      "AUTHORIZED": "Authorized",
+      "CAPTURED": "Paid",
+      "FAILED": "Failed",
+      "REFUNDED": "Refunded"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{page}} of {{total}}"
+    },
+    "profile": {
+      "heading": "Profile",
+      "subtitle": "Manage your personal details.",
+      "email": "Email",
+      "emailHint": "Your email can't be changed.",
+      "fullName": "Full Name",
+      "phone": "Phone",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "updated": "Profile updated.",
+      "saveError": "Couldn't save your profile."
+    },
+    "password": {
+      "heading": "Password",
+      "subtitle": "Choose a strong password to keep your account secure.",
+      "current": "Current Password",
+      "new": "New Password",
+      "confirm": "Confirm New Password",
+      "update": "Update Password",
+      "updating": "Updating…",
+      "changed": "Password changed.",
+      "mismatch": "New passwords don't match.",
+      "tooShort": "Password must be at least 8 characters.",
+      "changeError": "Couldn't change your password."
+    },
+    "orders": {
+      "heading": "Orders",
+      "subtitle": "Track and manage your orders.",
+      "empty": "You haven't placed any orders yet.",
+      "startShopping": "Start Shopping",
+      "viewDetail": "View Detail",
+      "moreItems": "+{{n}} more",
+      "loadError": "Couldn't load your orders."
+    },
+    "detail": {
+      "loadError": "Couldn't load this order.",
+      "backToOrders": "Back to orders",
+      "orderHistory": "← Order History",
+      "placed": "Placed {{date}}",
+      "items": "Items",
+      "shippingAddress": "Shipping Address",
+      "notes": "Notes",
+      "statusTimeline": "Status Timeline",
+      "summary": "Summary",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "shipping": "Shipping",
+      "tax": "Tax",
+      "total": "Total",
+      "payment": "Payment",
+      "paidAt": "Paid {{date}}",
+      "sku": "SKU {{sku}}",
+      "qty": "Qty {{n}}",
+      "continuePaying": "Continue Paying with {{provider}}",
+      "redirecting": "Redirecting…",
+      "cancelOrder": "Cancel Order",
+      "cancelling": "Cancelling…",
+      "cancelSuccess": "Order cancelled.",
+      "cancelError": "Couldn't cancel this order.",
+      "payUrlError": "Couldn't start the payment.",
+      "payInitError": "Couldn't start the payment.",
+      "youMayAlsoLike": "You May Also Like",
+      "cancelDialog": {
+        "title": "Cancel order?",
+        "message": "Are you sure you want to cancel order {{order}}? This can't be undone.",
+        "keep": "Keep order"
+      }
+    },
+    "addresses": {
+      "heading": "Addresses",
+      "subtitle": "Manage your shipping addresses.",
+      "add": "Add Address",
+      "addFirst": "Add Your First Address",
+      "empty": "You haven't added any addresses yet.",
+      "default": "Default",
+      "other": "Other",
+      "defaultStar": "★ Default",
+      "setDefault": "Set Default",
+      "edit": "Edit",
+      "delete": "Delete",
+      "loadError": "Couldn't load your addresses.",
+      "actionError": "Something went wrong. Please try again.",
+      "region": {
+        "NORTH": "Northern Vietnam",
+        "CENTRAL": "Central Vietnam",
+        "SOUTH": "Southern Vietnam"
+      },
+      "deleteDialog": {
+        "title": "Delete address?",
+        "message": "Delete \"{{name}}\"? This can't be undone.",
+        "keep": "Keep"
+      },
+      "setDefaultDialog": {
+        "title": "Set as default?",
+        "message": "Use \"{{name}}\" as your default shipping address?",
+        "cancel": "Cancel"
+      }
+    }
+  },
+  "auth": {
+    "back": "Back",
+    "signIn": "Sign In",
+    "createAccount": "Create Account",
+    "welcomeBack": "Welcome back",
+    "joinTitle": "Join VESTA",
+    "loginSubtitle": "Sign in to continue your journey.",
+    "signupSubtitle": "Create an account to start shopping.",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "Your name",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot password?",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signUpAction": "Sign up",
+    "signInAction": "Sign in",
+    "promo": {
+      "line1": "Wear",
+      "line2": "The Future",
+      "tagline": "Virtual try-on. Real style. Made for the bold."
+    },
+    "strength": {
+      "tooWeak": "Too weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong",
+      "veryStrong": "Very strong"
+    },
+    "verifyBanner": {
+      "message": "Please verify your email address to secure your account.",
+      "resend": "Resend",
+      "sending": "Sending...",
+      "sent": "Verification email sent.",
+      "sendError": "Could not send verification email.",
+      "dismiss": "Dismiss"
+    },
+    "errors": {
+      "googleFailed": "Google sign-in failed. Please try again.",
+      "invalidEmail": "Please enter a valid email address.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "fullNameRequired": "Please enter your full name.",
+      "passwordRule": "Password must contain at least one letter and one number.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordMismatchShort": "Passwords do not match",
+      "captchaRequired": "Please complete the captcha.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "authFlow": {
+    "signIn": "Sign in",
+    "backToSignIn": "Back to sign in",
+    "backToStore": "Back to store",
+    "eyebrow": {
+      "account": "Account"
+    },
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "captcha": "Please complete the verification.",
+      "generic": "Something went wrong. Please try again.",
+      "passwordRule": "Password must be at least 8 characters and include a letter and a number.",
+      "passwordMismatch": "Passwords don't match.",
+      "linkExpired": "This link is invalid or has expired.",
+      "nameRequired": "Please enter your name."
+    },
+    "fields": {
+      "email": "Email",
+      "newPassword": "New password",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Your name",
+      "mismatchHint": "Passwords don't match"
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "lead": "Enter your email and we'll send you a link to reset your password.",
+      "submit": "Send reset link",
+      "sending": "Sending...",
+      "sentTitle": "Check your inbox",
+      "sentLead": {
+        "before": "If an account exists for ",
+        "after": ", you'll receive a password reset link shortly."
+      }
+    },
+    "reset": {
+      "title": "Reset password",
+      "lead": "Choose a new password for your account.",
+      "submit": "Reset password",
+      "updating": "Updating...",
+      "success": "Password updated. Please sign in.",
+      "invalidTitle": "Invalid link",
+      "invalidLead": "This password reset link is missing or invalid. Request a new one to continue.",
+      "requestNew": "Request a new link"
+    },
+    "verify": {
+      "missingToken": "Verification link is missing or invalid.",
+      "verifyingEyebrow": "Verifying",
+      "verifyingTitle": "Verifying your email",
+      "verifyingLead": "Just a moment while we confirm your email address.",
+      "successEyebrow": "Verified",
+      "successTitle": "Email verified",
+      "successLead": "Your email address has been confirmed. You're all set.",
+      "goToAccount": "Go to account",
+      "failedEyebrow": "Verification failed",
+      "failedTitle": "Verification failed"
+    },
+    "invite": {
+      "eyebrow": "Invitation",
+      "title": "Accept your invite",
+      "lead": {
+        "before": "You've been invited to join the team as ",
+        "after": ". Set up your account to get started."
+      },
+      "loadingTitle": "Loading invite",
+      "loadingLead": "Checking your invitation...",
+      "invalidTitle": "Invalid invite",
+      "invalidLead": "This invitation is invalid or has expired. Ask an admin to send a new one.",
+      "invalidError": "This invitation is invalid or has expired.",
+      "success": "Welcome aboard! Your account is ready.",
+      "submit": "Create account",
+      "settingUp": "Setting up..."
+    },
+    "oauth": {
+      "eyebrow": "Signing in",
+      "title": "Completing sign in",
+      "lead": "Hold tight while we finish signing you in with Google."
+    }
+  },
+  "shared": {
+    "close": "Close",
+    "confirm": {
+      "title": "Are you sure?",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "quantity": {
+      "label": "Quantity",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity"
+    },
+    "rating": {
+      "starCount_one": "{{count}} star",
+      "starCount_other": "{{count}} stars",
+      "outOf": "{{value}} out of {{max}} stars"
+    }
+  }
+}

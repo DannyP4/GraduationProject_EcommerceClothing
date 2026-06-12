@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
@@ -8,6 +9,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useCart } from '../context/CartContext';
 import { getProducts, getSimilarToProducts } from '../services/productService';
 import { Carousel } from '../components/RecommendationRow';
+import { formatPrice } from '../lib/format';
 
 export default function CartPage() {
   const {
@@ -23,6 +25,7 @@ export default function CartPage() {
     clearCart,
   } = useCart();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [actionError, setActionError] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -54,7 +57,7 @@ export default function CartPage() {
     try {
       await updateQuantity(item, nextQty);
     } catch (err) {
-      setActionError(err.message || 'Could not update quantity');
+      setActionError(err.message || t('cartPage.errors.updateQty'));
     }
   };
 
@@ -63,7 +66,7 @@ export default function CartPage() {
     try {
       await removeItem(item);
     } catch (err) {
-      setActionError(err.message || 'Could not remove item');
+      setActionError(err.message || t('cartPage.errors.removeItem'));
     }
   };
 
@@ -78,7 +81,7 @@ export default function CartPage() {
     try {
       await clearCart();
     } catch (err) {
-      setActionError(err.message || 'Could not clear cart');
+      setActionError(err.message || t('cartPage.errors.clearCart'));
     }
   };
 
@@ -101,22 +104,22 @@ export default function CartPage() {
           <div>
             <div className="inline-flex items-center gap-2 mb-2">
               <span className="bg-[#E83354] text-white text-[10px] font-bold tracking-[0.15em] uppercase px-2 py-1">
-                {cartCount} {cartCount === 1 ? 'item' : 'items'}
+                {t('cartPage.itemCount', { count: cartCount })}
               </span>
               {!isAuthenticated && items.length > 0 && (
                 <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/40">
-                  · guest cart
+                  · {t('cartPage.guestCart')}
                 </span>
               )}
             </div>
-            <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">Your Cart</h1>
+            <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('cartPage.title')}</h1>
           </div>
           {items.length > 0 && (
             <button
               onClick={askClearAll}
               className="text-[10px] font-bold tracking-[0.15em] uppercase border border-[#E83354] text-[#E83354] bg-[#E83354]/5 px-3 py-2 hover:bg-[#E83354] hover:text-white transition-colors"
             >
-              Clear All
+              {t('cartPage.clearAll')}
             </button>
           )}
         </div>
@@ -124,13 +127,13 @@ export default function CartPage() {
         {!isAuthenticated && items.length > 0 && (
           <div className="mb-6 bg-white border-l-4 border-[#E83354] px-4 py-3 flex items-center justify-between">
             <p className="text-xs text-black/70">
-              <span className="font-bold uppercase tracking-wider">Sign in</span> to save this cart across devices.
+              <span className="font-bold uppercase tracking-wider">{t('cartPage.signInPromptLead')}</span> {t('cartPage.signInPromptRest')}
             </p>
             <button
               onClick={() => navigate('/login', { state: { from: '/cart' } })}
               className="text-[10px] font-bold tracking-[0.15em] uppercase border border-black px-3 py-1.5 hover:bg-black hover:text-white transition-colors"
             >
-              Sign In
+              {t('cartPage.signIn')}
             </button>
           </div>
         )}
@@ -139,16 +142,16 @@ export default function CartPage() {
         {actionError && <Banner type="error">{actionError}</Banner>}
 
         {isLoading && items.length === 0 ? (
-          <div className="text-center py-24 text-black/40 text-sm uppercase tracking-wider">Loading cart…</div>
+          <div className="text-center py-24 text-black/40 text-sm uppercase tracking-wider">{t('cartPage.loading')}</div>
         ) : items.length === 0 ? (
           <div className="text-center py-24 bg-white">
-            <p className="font-['Anton'] text-3xl uppercase mb-4">Your cart is empty</p>
-            <p className="text-black/50 mb-8">Add some legendary pieces to get started.</p>
+            <p className="font-['Anton'] text-3xl uppercase mb-4">{t('cartPage.empty.title')}</p>
+            <p className="text-black/50 mb-8">{t('cartPage.empty.subtitle')}</p>
             <button
               onClick={() => navigate('/shop')}
               className="bg-black text-white text-[12px] font-bold tracking-[0.15em] uppercase px-12 py-4 hover:bg-[#E83354] transition-colors"
             >
-              Shop Now
+              {t('cartPage.empty.shopNow')}
             </button>
           </div>
         ) : (
@@ -171,29 +174,29 @@ export default function CartPage() {
             {/* SUMMARY */}
             <aside className="lg:sticky lg:top-20">
               <div className="bg-[#0A0A0A] text-white p-6">
-                <h2 className="font-['Anton'] text-2xl uppercase tracking-wider mb-6">Order Summary</h2>
+                <h2 className="font-['Anton'] text-2xl uppercase tracking-wider mb-6">{t('cartPage.summary.title')}</h2>
 
                 <div className="space-y-3 mb-6 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-white/60">Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'items'})</span>
+                    <span className="text-white/60">{t('cartPage.summary.subtotal', { count: cartCount })}</span>
                     <span className="font-bold">{formatPrice(subtotal, currency)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/60">Shipping</span>
-                    <span className="text-white/40 text-xs">Calculated at checkout</span>
+                    <span className="text-white/60">{t('cartPage.summary.shipping')}</span>
+                    <span className="text-white/40 text-xs">{t('cartPage.summary.calculatedAtCheckout')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/60">Tax</span>
-                    <span className="text-white/40 text-xs">Calculated at checkout</span>
+                    <span className="text-white/60">{t('cartPage.summary.tax')}</span>
+                    <span className="text-white/40 text-xs">{t('cartPage.summary.calculatedAtCheckout')}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-white/15 pt-4 mb-6">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">Total</span>
+                    <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-white/60">{t('cartPage.summary.total')}</span>
                     <span className="font-['Anton'] text-3xl">{formatPrice(subtotal, currency)}</span>
                   </div>
-                  <p className="text-[10px] text-white/30 mt-1">excl. shipping &amp; tax</p>
+                  <p className="text-[10px] text-white/30 mt-1">{t('cartPage.summary.exclShippingTax')}</p>
                 </div>
 
                 <button
@@ -202,21 +205,25 @@ export default function CartPage() {
                   className="w-full bg-[#E83354] text-white text-[12px] font-bold tracking-[0.15em] uppercase py-4 hover:bg-[#c82244] transition-colors mb-3 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#E83354]"
                 >
                   {hasBlockedItems
-                    ? 'Resolve Stock Issues'
+                    ? t('cartPage.checkout.resolveStock')
                     : !isAuthenticated
-                      ? 'Sign in to Checkout'
-                      : 'Place Order'}
+                      ? t('cartPage.checkout.signInToCheckout')
+                      : t('cartPage.checkout.placeOrder')}
                 </button>
 
                 <button
                   onClick={() => navigate('/shop')}
                   className="w-full border border-white/20 text-white text-[11px] font-bold tracking-[0.1em] uppercase py-3 hover:border-white/50 transition-all"
                 >
-                  Continue Shopping
+                  {t('cartPage.continueShopping')}
                 </button>
 
                 <div className="mt-5 space-y-1.5">
-                  {['Secure Checkout', 'Free Returns within 30 Days', 'Multiple Payment Options'].map((f) => (
+                  {[
+                    t('cartPage.perks.secureCheckout'),
+                    t('cartPage.perks.freeReturns'),
+                    t('cartPage.perks.multiplePayments'),
+                  ].map((f) => (
                     <div key={f} className="flex items-center gap-2 text-[10px] text-white/40">
                       <span className="text-green-400">✓</span> {f}
                     </div>
@@ -227,15 +234,15 @@ export default function CartPage() {
           </div>
         )}
 
-        {recs.length > 0 && <Carousel title="You may also like" items={recs} />}
+        {recs.length > 0 && <Carousel title={t('cartPage.youMayAlsoLike')} items={recs} />}
       </div>
 
       <ConfirmDialog
         open={confirmClear}
-        title="Clear all items?"
-        message={`This will remove all ${cartCount} ${cartCount === 1 ? 'item' : 'items'} from your cart. This cannot be undone.`}
-        confirmLabel="Clear Cart"
-        cancelLabel="Keep Items"
+        title={t('cartPage.confirmClear.title')}
+        message={t('cartPage.confirmClear.message', { count: cartCount })}
+        confirmLabel={t('cartPage.confirmClear.confirm')}
+        cancelLabel={t('cartPage.confirmClear.cancel')}
         tone="danger"
         onCancel={() => setConfirmClear(false)}
         onConfirm={doClearAll}
@@ -247,6 +254,7 @@ export default function CartPage() {
 }
 
 function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, onTryOn }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white p-4 md:p-5 flex gap-4 md:gap-5">
       <div
@@ -265,7 +273,7 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
               onClick={onProductClick}
               className="font-bold text-sm uppercase tracking-wider cursor-pointer hover:text-[#E83354] transition-colors truncate"
             >
-              {item.productName ?? 'Product'}
+              {item.productName ?? t('cartPage.item.fallbackName')}
             </h3>
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {item.size && (
@@ -282,7 +290,7 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
                 onClick={onTryOn}
                 className="text-[9px] font-bold tracking-wider border border-[#E83354] text-[#E83354] px-2 py-0.5 uppercase hover:bg-[#E83354] hover:text-white transition-all"
               >
-                Try On
+                {t('cartPage.item.tryOn')}
               </button>
             </div>
             <p className="text-[11px] text-black/50 mt-1.5 flex items-center gap-1.5 flex-wrap">
@@ -294,7 +302,7 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
               <span className={item.originalUnitPrice != null ? 'text-[#E83354] font-bold' : ''}>
                 {formatPrice(item.unitPrice, item.currency ?? currency)}
               </span>
-              <span>each</span>
+              <span>{t('cartPage.item.each')}</span>
             </p>
             <StockBadge status={item.stockStatus} stock={item.stockQuantity} />
           </div>
@@ -313,14 +321,14 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
           <button
             onClick={onRemove}
             className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-[#E83354] border border-[#E83354]/40 bg-[#E83354]/5 px-3 py-1.5 hover:bg-[#E83354] hover:text-white hover:border-[#E83354] transition-colors"
-            aria-label={`Remove ${item.productName} from cart`}
+            aria-label={t('cartPage.item.removeAria', { name: item.productName })}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6" />
               <path d="M10 11v6M14 11v6" />
             </svg>
-            Remove
+            {t('cartPage.item.remove')}
           </button>
         </div>
       </div>
@@ -329,6 +337,7 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
 }
 
 function StockBadge({ status, stock }) {
+  const { t } = useTranslation();
   if (!status || status === 'IN_STOCK') return null;
   const styles = {
     LOW_STOCK: 'text-amber-700 bg-amber-100',
@@ -336,9 +345,9 @@ function StockBadge({ status, stock }) {
     UNAVAILABLE: 'text-black/60 bg-black/10',
   };
   const label = {
-    LOW_STOCK: stock != null ? `Only ${stock} left` : 'Low stock',
-    OUT_OF_STOCK: 'Out of stock',
-    UNAVAILABLE: 'No longer available',
+    LOW_STOCK: stock != null ? t('cartPage.stock.onlyLeft', { n: stock }) : t('cartPage.stock.low'),
+    OUT_OF_STOCK: t('cartPage.stock.out'),
+    UNAVAILABLE: t('cartPage.stock.unavailable'),
   }[status];
   return (
     <span className={`inline-block mt-1.5 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 ${styles[status]}`}>
@@ -352,11 +361,4 @@ function Banner({ type, children }) {
     ? 'border-green-600/30 bg-green-600/10 text-green-700'
     : 'border-[#E83354]/30 bg-[#E83354]/5 text-[#E83354]';
   return <div className={`border px-4 py-3 text-xs mb-4 ${cls}`}>{children}</div>;
-}
-
-function formatPrice(value, currency) {
-  if (value == null) return '';
-  const num = Number(value);
-  if (currency === 'USD') return `$${num.toFixed(2)}`;
-  return `${num.toLocaleString('vi-VN')} ₫`;
 }

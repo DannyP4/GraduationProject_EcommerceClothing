@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ToggleSwitch from './ToggleSwitch';
+import CollapsibleSection from './CollapsibleSection';
 
 export default function CategoryFormModal({ open, mode, initial, onClose, onSubmit }) {
   const [slug, setSlug] = useState('');
   const [name, setName] = useState('');
+  const [nameVi, setNameVi] = useState('');
+  const [nameJa, setNameJa] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -14,6 +17,8 @@ export default function CategoryFormModal({ open, mode, initial, onClose, onSubm
     if (!open) return;
     setSlug(initial?.slug ?? '');
     setName(initial?.name ?? '');
+    setNameVi(initial?.nameVi ?? '');
+    setNameJa(initial?.nameJa ?? '');
     setImageUrl(initial?.imageUrl ?? '');
     setIsActive(initial?.isActive ?? true);
     setError(null);
@@ -41,8 +46,8 @@ export default function CategoryFormModal({ open, mode, initial, onClose, onSubm
     setSubmitting(true);
     try {
       const payload = isEdit
-        ? { name, imageUrl, isActive }
-        : { slug, name, imageUrl, isActive };
+        ? { name, nameVi, nameJa, imageUrl, isActive }
+        : { slug, name, nameVi, nameJa, imageUrl, isActive };
       await onSubmit?.(payload);
       onClose?.();
     } catch (err) {
@@ -90,7 +95,7 @@ export default function CategoryFormModal({ open, mode, initial, onClose, onSubm
         )}
 
         <label className="block mb-4">
-          <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name</span>
+          <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name (English)</span>
           <input
             type="text"
             value={name}
@@ -100,6 +105,36 @@ export default function CategoryFormModal({ open, mode, initial, onClose, onSubm
             required
           />
         </label>
+
+        <div className="mb-5">
+          <CollapsibleSection
+            title="Translations"
+            badge={(nameVi || nameJa) ? <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E83354]" title="Has translations" /> : null}
+          >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name · Tiếng Việt</span>
+              <input
+                type="text"
+                value={nameVi}
+                onChange={(e) => setNameVi(e.target.value)}
+                placeholder="Áo thun"
+                className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
+              />
+            </label>
+            <label className="block">
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Name · 日本語</span>
+              <input
+                type="text"
+                value={nameJa}
+                onChange={(e) => setNameJa(e.target.value)}
+                placeholder="Tシャツ"
+                className="mt-1 w-full border border-black/15 px-3 py-2 text-sm focus:border-black focus:outline-none"
+              />
+            </label>
+          </div>
+          </CollapsibleSection>
+        </div>
 
         <label className="block mb-5">
           <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-black/50">Image URL</span>

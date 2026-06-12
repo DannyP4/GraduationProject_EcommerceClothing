@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as authService from '../services/authService';
 import AuthCard from '../components/AuthCard';
 import { useAuth } from '../context/AuthContext';
 
 export default function OAuthCallbackPage() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const code = params.get('code') || '';
   const navigate = useNavigate();
@@ -31,8 +33,8 @@ export default function OAuthCallbackPage() {
   }, [code, navigate, adoptSession]);
 
   return (
-    <AuthCard eyebrow="Signing in" title="Almost there...">
-      <p className="text-sm text-black/50">Completing your Google sign-in.</p>
+    <AuthCard eyebrow={t('authFlow.oauth.eyebrow')} title={t('authFlow.oauth.title')}>
+      <p className="text-sm text-black/50">{t('authFlow.oauth.lead')}</p>
     </AuthCard>
   );
 }

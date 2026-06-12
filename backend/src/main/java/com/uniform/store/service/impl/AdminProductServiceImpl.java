@@ -12,6 +12,7 @@ import com.uniform.store.entity.Brand;
 import com.uniform.store.entity.Category;
 import com.uniform.store.entity.Product;
 import com.uniform.store.entity.ProductImage;
+import com.uniform.store.entity.ProductTranslation;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.enums.SaleType;
 import com.uniform.store.exception.BadRequestException;
@@ -21,6 +22,7 @@ import com.uniform.store.repository.CategoryRepository;
 import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.ProductImageRepository;
 import com.uniform.store.repository.ProductRepository;
+import com.uniform.store.repository.ProductTranslationRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import com.uniform.store.service.AdminProductService;
 import com.uniform.store.service.CloudinaryService;
@@ -47,9 +49,13 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     private static final Logger log = LoggerFactory.getLogger(AdminProductServiceImpl.class);
 
+    private static final String LOCALE_VI = "vi";
+    private static final String LOCALE_JA = "ja";
+
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
+    private final ProductTranslationRepository translationRepository;
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final OrderItemRepository orderItemRepository;
@@ -100,7 +106,13 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
         List<ProductVariant> variants = variantRepository.findByProductIdOrderBySizeAscColorAsc(id);
         List<ProductImage> images = imageRepository.findByProductIdOrderByIsPrimaryDescSortOrderAsc(id);
-        return toDetail(product, variants, images);
+        ProductTranslation vi = null;
+        ProductTranslation ja = null;
+        for (ProductTranslation t : translationRepository.findByProductId(id)) {
+            if (LOCALE_VI.equals(t.getLocale())) vi = t;
+            else if (LOCALE_JA.equals(t.getLocale())) ja = t;
+        }
+        return toDetail(product, variants, images, vi, ja);
     }
 
     @Override
@@ -133,7 +145,12 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .publishedAt(req.getPublishedAt())
                 .build());
 
-        return toDetail(saved, List.of(), List.of());
+        upsertProductTranslation(saved, LOCALE_VI, req.getNameVi(), req.getDescriptionVi());
+        upsertProductTranslation(saved, LOCALE_JA, req.getNameJa(), req.getDescriptionJa());
+
+        return toDetail(saved, List.of(), List.of(),
+                transientTranslation(LOCALE_VI, req.getNameVi(), req.getDescriptionVi()),
+                transientTranslation(LOCALE_JA, req.getNameJa(), req.getDescriptionJa()));
     }
 
     @Override
@@ -170,6 +187,13 @@ public class AdminProductServiceImpl implements AdminProductService {
         }
         if (req.getIsActive() != null) product.setIsActive(req.getIsActive());
         if (req.getPublishedAt() != null) product.setPublishedAt(req.getPublishedAt());
+
+        if (req.getNameVi() != null || req.getDescriptionVi() != null) {
+            upsertProductTranslation(product, LOCALE_VI, req.getNameVi(), req.getDescriptionVi());
+        }
+        if (req.getNameJa() != null || req.getDescriptionJa() != null) {
+            upsertProductTranslation(product, LOCALE_JA, req.getNameJa(), req.getDescriptionJa());
+        }
 
         return get(id);
     }
@@ -276,12 +300,17 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .build();
     }
 
-    private static AdminProductDetailDto toDetail(Product p, List<ProductVariant> variants, List<ProductImage> images) {
+    private static AdminProductDetailDto toDetail(Product p, List<ProductVariant> variants, List<ProductImage> images,
+                                                  ProductTranslation vi, ProductTranslation ja) {
         return AdminProductDetailDto.builder()
                 .id(p.getId())
                 .slug(p.getSlug())
                 .name(p.getName())
                 .description(p.getDescription())
+                .nameVi(vi == null ? null : vi.getName())
+                .nameJa(ja == null ? null : ja.getName())
+                .descriptionVi(vi == null ? null : vi.getDescription())
+                .descriptionJa(ja == null ? null : ja.getDescription())
                 .gender(p.getGender())
                 .basePrice(p.getBasePrice())
                 .saleType(p.getSaleType())
@@ -331,6 +360,32 @@ public class AdminProductServiceImpl implements AdminProductService {
                 .createdAt(img.getCreatedAt())
                 .updatedAt(img.getUpdatedAt())
                 .build();
+    }
+
+    private void upsertProductTranslation(Product product, String locale, String name, String description) {
+        String n = blankToNull(name);
+        String d = blankToNull(description);
+        ProductTranslation existing = translationRepository.findByProductIdAndLocale(product.getId(), locale).orElse(null);
+        if (n == null) {
+            if (existing != null) translationRepository.delete(existing);
+            return;
+        }
+        if (existing != null) {
+            existing.setName(n);
+            existing.setDescription(d);
+            existing.setTranslatedAt(Instant.now());
+        } else {
+            translationRepository.save(ProductTranslation.builder()
+                    .product(product).locale(locale).name(n).description(d)
+                    .translatedAt(Instant.now()).build());
+        }
+    }
+
+    private static ProductTranslation transientTranslation(String locale, String name, String description) {
+        String n = blankToNull(name);
+        if (n == null) return null;
+        return ProductTranslation.builder()
+                .locale(locale).name(n).description(blankToNull(description)).build();
     }
 
     private static String blankToNull(String s) {

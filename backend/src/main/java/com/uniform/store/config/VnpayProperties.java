@@ -17,7 +17,7 @@ public class VnpayProperties {
     private String returnUrl;
     private String version = "2.1.0";
     private String currencyCode = "VND";
-    private String locale = "vn";
+    private String locale = "en";
     private String command = "pay";
     private int expireMinutes = 15;
 }
