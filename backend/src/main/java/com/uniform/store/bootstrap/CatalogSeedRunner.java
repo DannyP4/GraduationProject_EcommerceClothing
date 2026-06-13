@@ -8,10 +8,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 
 // loads 2000+ products into the catalog
@@ -40,7 +42,8 @@ public class CatalogSeedRunner implements CommandLineRunner {
             return;
         }
         try (Connection conn = dataSource.getConnection()) {
-            ScriptUtils.executeSqlScript(conn, sql);
+            // UTF-8 so VI/JA load intact
+            ScriptUtils.executeSqlScript(conn, new EncodedResource(sql, StandardCharsets.UTF_8));
             log.info("Catalog seed loaded from {}: {} products now present.", SEED_PATH, productRepository.count());
         } catch (Exception e) {
             log.error("Catalog seed failed from {}: {}", SEED_PATH, e.getMessage());

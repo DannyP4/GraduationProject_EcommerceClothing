@@ -15,6 +15,7 @@ import RecommendationRow from '../components/RecommendationRow';
 import { goBack } from '../lib/historyBack';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../lib/format';
+import { colorLabel } from '../lib/labels';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -64,7 +65,7 @@ export default function ProductPage() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, i18n.language]);
 
   const reloadProduct = useCallback(() => {
     getProductByIdOrSlug(id).then((data) => setProduct(data)).catch(() => {});
@@ -247,7 +248,7 @@ export default function ProductPage() {
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40 mb-2">
             {product.categoryName}
           </p>
-          <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight mb-3">
+          <h1 className="product-title font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight mb-3">
             {product.name}
           </h1>
 
@@ -291,7 +292,7 @@ export default function ProductPage() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-bold tracking-[0.12em] uppercase">{t('product.color')}</span>
-                <span className="text-xs text-black/60 normal-case tracking-normal">{selectedColor}</span>
+                <span className="text-xs text-black/60 normal-case tracking-normal">{colorLabel(t, selectedColor)}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {colors.map((c) => {
@@ -311,7 +312,7 @@ export default function ProductPage() {
                           : 'bg-black/5 text-black/30 border-black/10 line-through cursor-not-allowed'
                         }`}
                     >
-                      {c}
+                      {colorLabel(t, c)}
                     </button>
                   );
                 })}

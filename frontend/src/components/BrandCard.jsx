@@ -48,6 +48,9 @@ export default function BrandCard({ brandId, brandName }) {
             {t('brand.viewStore')}
           </Link>
         </div>
+        {data?.description && (
+          <p className="text-[12px] text-black/55 mt-1.5 leading-relaxed line-clamp-2">{data.description}</p>
+        )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[12px] text-black/60">
           <span><span className="font-bold text-black">{products.toLocaleString('vi-VN')}</span> {t('brand.products')}</span>
           <span className="text-black/20">·</span>

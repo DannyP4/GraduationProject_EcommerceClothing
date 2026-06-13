@@ -311,24 +311,24 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageResponse<OrderSummaryDto> listOrders(String email, Pageable pageable) {
+    public PageResponse<OrderSummaryDto> listOrders(String email, Pageable pageable, String locale) {
         User user = loadUser(email);
 
         int safeSize = Math.min(Math.max(pageable.getPageSize(), 1), MAX_PAGE_SIZE);
         Pageable safe = PageRequest.of(Math.max(pageable.getPageNumber(), 0), safeSize);
 
         Page<Order> page = orderRepository.findByUserIdOrderByPlacedAtDesc(user.getId(), safe);
-        return PageResponse.from(page, orderMapper.toSummaryDtos(page.getContent()));
+        return PageResponse.from(page, orderMapper.toSummaryDtos(page.getContent(), locale));
     }
 
     @Override
-    public OrderDetailDto getOrder(String email, String orderNumber) {
+    public OrderDetailDto getOrder(String email, String orderNumber, String locale) {
         User user = loadUser(email);
         Order order = orderRepository.findByOrderNumberAndUserId(orderNumber, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", orderNumber));
 
         List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId());
-        return orderMapper.toDetailDto(order, items);
+        return orderMapper.toDetailDto(order, items, locale);
     }
 
     @Override

@@ -7,6 +7,7 @@ import { getSimilarToProducts } from '../services/productService';
 import { Carousel } from '../components/RecommendationRow';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatPrice } from '../lib/format';
+import { variantLabel } from '../lib/labels';
 
 export default function AccountOrderDetailPage() {
   const { t, i18n } = useTranslation();
@@ -48,7 +49,7 @@ export default function AccountOrderDetailPage() {
       .then((d) => { if (!cancelled) setRecs(d || []); })
       .catch(() => { if (!cancelled) setRecs([]); });
     return () => { cancelled = true; };
-  }, [orderIdsKey]);
+  }, [orderIdsKey, i18n.language]);
 
   const doCancel = async () => {
     setConfirmCancel(false);
@@ -116,8 +117,8 @@ export default function AccountOrderDetailPage() {
 
       {actionMsg && <Banner type={actionMsg.type}>{actionMsg.text}</Banner>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
-        <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
+        <div className="space-y-5 min-w-0">
           <Section title={t('accountPage.detail.items')}>
             <ul className="divide-y divide-black/8">
               {order.items.map((it) => (
@@ -248,11 +249,11 @@ function ItemRow({ item, currency }) {
         )}
       </Link>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold uppercase tracking-wider truncate">{item.productName}</p>
-        <p className="text-[11px] text-black/50">{item.variantLabel} · {t('accountPage.detail.sku', { sku: item.sku })}</p>
+        <p className="text-sm font-bold uppercase tracking-wider truncate" title={item.productName}>{item.productName}</p>
+        <p className="text-[11px] text-black/50">{variantLabel(t, item.variantLabel)} · {t('accountPage.detail.sku', { sku: item.sku })}</p>
         <p className="text-[11px] text-black/50">{t('accountPage.detail.qty', { n: item.quantity })} × {formatPrice(item.unitPrice, currency)}</p>
       </div>
-      <span className="text-sm font-bold whitespace-nowrap">
+      <span className="text-sm font-bold whitespace-nowrap flex-shrink-0">
         {formatPrice(item.lineTotal, currency)}
       </span>
     </li>

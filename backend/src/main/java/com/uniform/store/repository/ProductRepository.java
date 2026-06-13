@@ -103,7 +103,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
           AND (:minPrice IS NULL OR p.basePrice >= :minPrice)
           AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice)
           AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                               OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))
+                               OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%'))
+                               OR EXISTS (SELECT 1 FROM ProductTranslation pt
+                                          WHERE pt.product = p AND pt.locale = :locale
+                                            AND (LOWER(pt.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                                                 OR LOWER(pt.description) LIKE LOWER(CONCAT('%', :search, '%')))))
         """,
         countQuery = """
         SELECT COUNT(p) FROM Product p
@@ -114,7 +118,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
           AND (:minPrice IS NULL OR p.basePrice >= :minPrice)
           AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice)
           AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                               OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))
+                               OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%'))
+                               OR EXISTS (SELECT 1 FROM ProductTranslation pt
+                                          WHERE pt.product = p AND pt.locale = :locale
+                                            AND (LOWER(pt.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                                                 OR LOWER(pt.description) LIKE LOWER(CONCAT('%', :search, '%')))))
         """)
     Page<Product> searchProducts(
             @Param("categoryId") Long categoryId,
@@ -122,5 +130,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("search") String search,
+            @Param("locale") String locale,
             Pageable pageable);
 }

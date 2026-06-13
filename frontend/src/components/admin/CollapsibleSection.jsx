@@ -19,7 +19,11 @@ export default function CollapsibleSection({ title, badge = null, defaultOpen = 
         {title}
         {badge}
       </button>
-      {open && <div className="mt-4">{children}</div>}
+      <div className={`grid transition-all duration-300 ease-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <div className="pt-4">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }

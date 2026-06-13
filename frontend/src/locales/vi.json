@@ -1,4 +1,16 @@
 {
+  "colors": {
+    "beige": "Be", "black": "Đen", "blue": "Xanh dương", "brown": "Nâu",
+    "burgundy": "Đỏ booc-đô", "charcoal": "Xám than", "coffee brown": "Nâu cà phê",
+    "cream": "Kem", "green": "Xanh lá", "grey": "Xám", "grey melange": "Xám pha",
+    "khaki": "Kaki", "lavender": "Tím oải hương", "magenta": "Hồng cánh sen", "maroon": "Nâu đỏ",
+    "mauve": "Tím nhạt", "multi": "Nhiều màu", "mustard": "Vàng mù tạt", "na": "Không rõ",
+    "navy": "Xanh navy", "navy blue": "Xanh navy", "nude": "Màu nude", "off white": "Trắng ngà",
+    "olive": "Xanh ô liu", "orange": "Cam", "peach": "Hồng đào", "pink": "Hồng",
+    "purple": "Tím", "red": "Đỏ", "rust": "Nâu gỉ", "sand": "Màu cát",
+    "sea green": "Xanh biển", "tan": "Nâu vàng", "teal": "Xanh mòng két", "turquoise blue": "Xanh ngọc",
+    "white": "Trắng", "yellow": "Vàng"
+  },
   "nav": {
     "shop": "Cửa hàng",
     "collections": "Bộ sưu tập",
@@ -43,7 +55,28 @@
       "ORDER_DELIVERED": "Đã giao",
       "ORDER_CANCELLED": "Đã hủy",
       "ORDER_REFUNDED": "Đã hoàn tiền"
+    },
+    "body": {
+      "ORDER_PLACED": "Đơn hàng #{{order}} của bạn đã được đặt.",
+      "ORDER_PAID": "Thanh toán cho đơn hàng #{{order}} đã được xác nhận.",
+      "ORDER_SHIPPED": "Đơn hàng #{{order}} của bạn đang được giao.",
+      "ORDER_DELIVERED": "Đơn hàng #{{order}} của bạn đã được giao.",
+      "ORDER_CANCELLED": "Đơn hàng #{{order}} của bạn đã bị hủy.",
+      "ORDER_REFUNDED": "Đã hoàn tiền cho đơn hàng #{{order}}."
     }
+  },
+  "chat": {
+    "title": "Trợ lý Vesta",
+    "subtitle": "Hỏi về sản phẩm của chúng tôi",
+    "clear": "Xóa cuộc trò chuyện",
+    "minimize": "Thu nhỏ",
+    "open": "Mở trò chuyện",
+    "close": "Đóng trò chuyện",
+    "launcher": "Trò chuyện với Vesta",
+    "placeholder": "Nhập tin nhắn…",
+    "send": "Gửi",
+    "intro": "Xin chào! Mình là trợ lý mua sắm của Vesta. Hãy hỏi về sản phẩm — ví dụ \"áo khoác đen dưới 500k\" — hoặc chính sách giao hàng & đổi trả.",
+    "error": "Xin lỗi, hiện đang gặp trục trặc. Vui lòng thử lại sau giây lát."
   },
   "account": {
     "signedInAs": "Đăng nhập với tên",

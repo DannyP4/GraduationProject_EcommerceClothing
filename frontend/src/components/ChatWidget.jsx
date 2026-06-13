@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { sendChatMessage } from '../services/chatService';
 import useChatHistory from '../hooks/useChatHistory';
 import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
@@ -72,6 +73,7 @@ function ProductRow({ product }) {
 
 export default function ChatWidget() {
   const { pathname } = useLocation();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -103,7 +105,7 @@ export default function ChatWidget() {
     } catch {
       append({
         role: 'assistant',
-        content: "Sorry, I'm having trouble right now. Please try again in a moment.",
+        content: t('chat.error'),
         error: true,
       });
     } finally {
@@ -126,15 +128,15 @@ export default function ChatWidget() {
       >
           <div className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] text-white">
             <div>
-              <p className="text-[11px] font-bold tracking-[0.18em] uppercase">Vesta Assistant</p>
-              <p className="text-[10px] text-white/50">Ask about our products</p>
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase">{t('chat.title')}</p>
+              <p className="text-[10px] text-white/50">{t('chat.subtitle')}</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={clear}
-                aria-label="Clear chat"
-                title="Clear chat"
+                aria-label={t('chat.clear')}
+                title={t('chat.clear')}
                 className="text-white/60 hover:text-white transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -145,8 +147,8 @@ export default function ChatWidget() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Minimize chat"
-                title="Minimize"
+                aria-label={t('chat.minimize')}
+                title={t('chat.minimize')}
                 className="text-white/60 hover:text-white transition-colors"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -159,7 +161,7 @@ export default function ChatWidget() {
           <div ref={msgScrollRef} className="flex-1 overflow-y-auto scrollbar-subtle px-3 py-3 space-y-3 bg-[#F7F7F7]">
             {messages.length === 0 && (
               <Bubble role="assistant">
-                Hi! I&apos;m Vesta&apos;s shopping assistant. Ask about our products - e.g. &quot;black jacket under 500k&quot; - or our shipping &amp; returns policy.
+                {t('chat.intro')}
               </Bubble>
             )}
             {messages.map((m) => (
@@ -193,7 +195,7 @@ export default function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Type your message…"
+              placeholder={t('chat.placeholder')}
               maxLength={1000}
               className="flex-1 px-3 py-2 text-sm border border-black/10 focus:outline-none focus:border-[#E83354]"
             />
@@ -201,7 +203,7 @@ export default function ChatWidget() {
               type="button"
               onClick={send}
               disabled={loading || !input.trim()}
-              aria-label="Send"
+              aria-label={t('chat.send')}
               className="w-9 h-9 flex-shrink-0 flex items-center justify-center bg-[#0A0A0A] text-white hover:bg-[#E83354] disabled:opacity-40 transition-colors"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -215,8 +217,8 @@ export default function ChatWidget() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Close chat' : 'Open chat'}
-        title="Chat with Vesta"
+        aria-label={open ? t('chat.close') : t('chat.open')}
+        title={t('chat.launcher')}
         className="fixed bottom-6 right-6 z-[95] w-14 h-14 rounded-full flex items-center justify-center bg-[#0A0A0A] text-white shadow-lg hover:bg-[#E83354] hover:-translate-y-0.5 transition-all duration-300"
       >
         {open ? (

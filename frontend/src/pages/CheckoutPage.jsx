@@ -8,6 +8,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../lib/format';
+import { colorLabel } from '../lib/labels';
 import * as addressService from '../services/addressService';
 import * as orderService from '../services/orderService';
 import * as couponService from '../services/couponService';
@@ -181,8 +182,8 @@ export default function CheckoutPage() {
         ) : items.length === 0 ? (
           <EmptyCartNotice />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
-            <div className="space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-8 items-start">
+            <div className="space-y-5 min-w-0">
               <Section title={t('checkout.section.shippingAddress')} stepNum={1}>
                 <AddressPicker
                   addresses={addresses}
@@ -435,7 +436,7 @@ function CartReview({ items, currency }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold uppercase tracking-wider truncate">{item.productName}</p>
             <p className="text-[11px] text-black/50">
-              {item.size}{item.color ? ` · ${item.color}` : ''} · {t('checkout.qty', { n: item.quantity })}
+              {item.size}{item.color ? ` · ${colorLabel(t, item.color)}` : ''} · {t('checkout.qty', { n: item.quantity })}
             </p>
           </div>
           <span className="text-sm font-bold whitespace-nowrap">

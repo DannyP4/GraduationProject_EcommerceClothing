@@ -14,6 +14,7 @@ import {
 } from '../services/notificationService';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../lib/format';
+import { colorLabel } from '../lib/labels';
 
 const NAV_LINKS = [
   { key: 'shop', to: '/shop' },
@@ -336,7 +337,7 @@ function CartHover() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold uppercase tracking-wider truncate">{it.productName ?? 'Product'}</p>
                       <p className="text-[10px] text-black/50">
-                        {it.size}{it.color ? ` · ${it.color}` : ''} · ×{it.quantity}
+                        {it.size}{it.color ? ` · ${colorLabel(t, it.color)}` : ''} · ×{it.quantity}
                       </p>
                     </div>
                     <span className="text-xs font-bold whitespace-nowrap">
@@ -506,6 +507,13 @@ function NotificationBell() {
   );
 }
 
+function extractOrderNumber(n) {
+  const fromHref = (n.href || '').match(/\/orders\/([^/?#]+)$/);
+  if (fromHref) return fromHref[1];
+  const fromMsg = (n.message || '').match(/#([A-Za-z0-9-]+)/);
+  return fromMsg ? fromMsg[1] : '';
+}
+
 function NotificationList({ items, onItemClick }) {
   const { t } = useTranslation();
   const listRef = useAutoHideScrollbar();
@@ -531,7 +539,7 @@ function NotificationList({ items, onItemClick }) {
                   </span>
                   {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-[#E83354]" />}
                 </div>
-                <p className="text-xs text-black/80 leading-snug">{n.message}</p>
+                <p className="text-xs text-black/80 leading-snug">{t(`notifications.body.${n.type}`, { order: extractOrderNumber(n), defaultValue: n.message })}</p>
                 {n.createdAt && <p className="text-[10px] text-black/40 mt-1 tracking-wider">{notifTimeAgo(n.createdAt)}</p>}
               </div>
             </Link>

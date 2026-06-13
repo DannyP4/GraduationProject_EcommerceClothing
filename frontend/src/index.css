@@ -490,6 +490,18 @@ html[lang="vi"] .statement-text {
   line-height: 1.15;
 }
 
+html[lang="vi"] .section-title {
+  line-height: 1.12;
+}
+
+html[lang="vi"] .shop-title,
+html[lang="vi"] .account-title,
+html[lang="vi"] .cart-title,
+html[lang="vi"] .product-title {
+  line-height: 1.3;
+  padding-top: 0.16em;
+}
+
 /* Trending Products */
 .trending-grid {
   display: grid;

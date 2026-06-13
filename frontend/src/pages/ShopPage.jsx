@@ -155,7 +155,7 @@ export default function ShopPage() {
                 ? t('shop.eyebrowBrand', { n: loading ? '…' : totalElements })
                 : t('shop.eyebrowSeason', { n: loading ? '…' : totalElements })}
           </p>
-          <h1 className="font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
+          <h1 className="shop-title font-['Anton'] text-5xl md:text-7xl tracking-tight uppercase">
             {query ? t('shop.titleResults', { query }) : activeBrandId ? (brandName || t('shop.titleBrand')) : t('shop.titleAll')}
           </h1>
           {(query || activeBrandId) && (

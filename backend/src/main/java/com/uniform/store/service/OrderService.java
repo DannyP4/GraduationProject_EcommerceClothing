@@ -14,9 +14,9 @@ public interface OrderService {
 
     PlaceOrderResponse placeDirectOrder(String email, DirectOrderRequest req, String clientIp);
 
-    PageResponse<OrderSummaryDto> listOrders(String email, Pageable pageable);
+    PageResponse<OrderSummaryDto> listOrders(String email, Pageable pageable, String locale);
 
-    OrderDetailDto getOrder(String email, String orderNumber);
+    OrderDetailDto getOrder(String email, String orderNumber, String locale);
 
     OrderDetailDto cancelOrder(String email, String orderNumber);
 }

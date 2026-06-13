@@ -84,6 +84,7 @@ export function Carousel({ title, items }) {
 }
 
 export default function RecommendationRow({ title, productId, fetcher }) {
+  const { i18n } = useTranslation();
   const [items, setItems] = useState(null);
 
   useEffect(() => {
@@ -94,7 +95,7 @@ export default function RecommendationRow({ title, productId, fetcher }) {
       .then((data) => { if (!cancelled) setItems(data || []); })
       .catch(() => { if (!cancelled) setItems([]); });
     return () => { cancelled = true; };
-  }, [productId, fetcher]);
+  }, [productId, fetcher, i18n.language]);
 
   if (!items || items.length === 0) return null;
   return <Carousel title={title} items={items} />;

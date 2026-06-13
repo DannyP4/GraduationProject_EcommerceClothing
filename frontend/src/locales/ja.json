@@ -1,4 +1,16 @@
 {
+  "colors": {
+    "beige": "ベージュ", "black": "ブラック", "blue": "ブルー", "brown": "ブラウン",
+    "burgundy": "バーガンディ", "charcoal": "チャコール", "coffee brown": "コーヒーブラウン",
+    "cream": "クリーム", "green": "グリーン", "grey": "グレー", "grey melange": "グレーメランジ",
+    "khaki": "カーキ", "lavender": "ラベンダー", "magenta": "マゼンタ", "maroon": "マルーン",
+    "mauve": "モーブ", "multi": "マルチカラー", "mustard": "マスタード", "na": "不明",
+    "navy": "ネイビー", "navy blue": "ネイビーブルー", "nude": "ヌード", "off white": "オフホワイト",
+    "olive": "オリーブ", "orange": "オレンジ", "peach": "ピーチ", "pink": "ピンク",
+    "purple": "パープル", "red": "レッド", "rust": "ラスト", "sand": "サンド",
+    "sea green": "シーグリーン", "tan": "タン", "teal": "ティール", "turquoise blue": "ターコイズブルー",
+    "white": "ホワイト", "yellow": "イエロー"
+  },
   "nav": {
     "shop": "ショップ",
     "collections": "コレクション",
@@ -43,7 +55,28 @@
       "ORDER_DELIVERED": "配達済み",
       "ORDER_CANCELLED": "キャンセル",
       "ORDER_REFUNDED": "返金済み"
+    },
+    "body": {
+      "ORDER_PLACED": "ご注文 #{{order}} を受け付けました。",
+      "ORDER_PAID": "ご注文 #{{order}} のお支払いが確認されました。",
+      "ORDER_SHIPPED": "ご注文 #{{order}} を発送しました。",
+      "ORDER_DELIVERED": "ご注文 #{{order}} をお届けしました。",
+      "ORDER_CANCELLED": "ご注文 #{{order}} はキャンセルされました。",
+      "ORDER_REFUNDED": "ご注文 #{{order}} の返金を処理しました。"
     }
+  },
+  "chat": {
+    "title": "Vesta アシスタント",
+    "subtitle": "商品についてお尋ねください",
+    "clear": "チャットを消去",
+    "minimize": "最小化",
+    "open": "チャットを開く",
+    "close": "チャットを閉じる",
+    "launcher": "Vesta とチャット",
+    "placeholder": "メッセージを入力…",
+    "send": "送信",
+    "intro": "こんにちは！Vesta のショッピングアシスタントです。商品について — 例「500k以下の黒いジャケット」— または配送・返品ポリシーについてお尋ねください。",
+    "error": "申し訳ありません、現在問題が発生しています。しばらくしてからもう一度お試しください。"
   },
   "account": {
     "signedInAs": "ログイン中",
@@ -64,7 +97,7 @@
     "newsletterHint": "新作の先行案内や限定メンバー特典をお届けします。",
     "emailPlaceholder": "your@email.com",
     "subscribe": "送信",
-    "rights": "© 2026 VESTA. All rights reserved.",
+    "rights": "© 2026 VESTA. 全著作権所有。",
     "links": {
       "newArrivals": "新着",
       "tops": "トップス",

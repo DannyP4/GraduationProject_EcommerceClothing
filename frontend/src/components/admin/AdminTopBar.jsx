@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import AdminNotificationBell from './AdminNotificationBell';
 import AdminUserMenu from './AdminUserMenu';
-import LanguageSwitcher from '../LanguageSwitcher';
 
 export default function AdminTopBar({ user, onSignOutClick }) {
   return (
@@ -20,7 +19,6 @@ export default function AdminTopBar({ user, onSignOutClick }) {
         </div>
 
         <div className="flex items-center gap-4">
-          <LanguageSwitcher />
           <AdminNotificationBell />
           <AdminUserMenu user={user} onSignOutClick={onSignOutClick} />
         </div>

@@ -84,6 +84,7 @@ public class ProductServiceImpl implements ProductService {
                 filter.getMinPrice(),
                 filter.getMaxPrice(),
                 searchTerm,
+                locale,
                 effective);
 
         List<ProductSummaryDto> mapped = buildSummaries(page.getContent(), locale);

@@ -10,6 +10,7 @@ import { useCart } from '../context/CartContext';
 import { getProducts, getSimilarToProducts } from '../services/productService';
 import { Carousel } from '../components/RecommendationRow';
 import { formatPrice } from '../lib/format';
+import { colorLabel } from '../lib/labels';
 
 export default function CartPage() {
   const {
@@ -25,7 +26,7 @@ export default function CartPage() {
     clearCart,
   } = useCart();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [actionError, setActionError] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -45,7 +46,7 @@ export default function CartPage() {
       .then((data) => { if (!cancelled) setRecs(Array.isArray(data) ? data : []); })
       .catch(() => { if (!cancelled) setRecs([]); });
     return () => { cancelled = true; };
-  }, [cartIdsKey]);
+  }, [cartIdsKey, i18n.language]);
 
   const hasBlockedItems = items.some(
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'
@@ -112,7 +113,7 @@ export default function CartPage() {
                 </span>
               )}
             </div>
-            <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('cartPage.title')}</h1>
+            <h1 className="cart-title font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('cartPage.title')}</h1>
           </div>
           {items.length > 0 && (
             <button
@@ -155,7 +156,7 @@ export default function CartPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 items-start">
             {/* CART ITEMS */}
             <div className="space-y-3">
               {items.map((item) => (
@@ -271,6 +272,7 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
           <div className="min-w-0">
             <h3
               onClick={onProductClick}
+              title={item.productName ?? undefined}
               className="font-bold text-sm uppercase tracking-wider cursor-pointer hover:text-[#E83354] transition-colors truncate"
             >
               {item.productName ?? t('cartPage.item.fallbackName')}
@@ -283,7 +285,7 @@ function CartItemRow({ item, currency, onQtyChange, onRemove, onProductClick, on
               )}
               {item.color && (
                 <span className="text-[10px] font-bold tracking-wider bg-black/8 px-2 py-0.5 uppercase">
-                  {item.color}
+                  {colorLabel(t, item.color)}
                 </span>
               )}
               <button

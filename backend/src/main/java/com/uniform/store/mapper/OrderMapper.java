@@ -12,6 +12,7 @@ import com.uniform.store.entity.Order;
 import com.uniform.store.entity.OrderItem;
 import com.uniform.store.entity.Payment;
 import com.uniform.store.entity.ProductImage;
+import com.uniform.store.entity.ProductTranslation;
 import com.uniform.store.entity.ProductVariant;
 import com.uniform.store.entity.User;
 import com.uniform.store.enums.OrderStatus;
@@ -22,10 +23,12 @@ import com.uniform.store.repository.OrderItemRepository;
 import com.uniform.store.repository.OrderStatusHistoryRepository;
 import com.uniform.store.repository.PaymentRepository;
 import com.uniform.store.repository.ProductImageRepository;
+import com.uniform.store.repository.ProductTranslationRepository;
 import com.uniform.store.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +40,24 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderMapper {
 
+    // admin paths use base names
+    private static final String DEFAULT_LOCALE = "en";
+
     private final OrderItemRepository orderItemRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final OrderStatusHistoryRepository statusHistoryRepository;
     private final PaymentRepository paymentRepository;
+    private final ProductTranslationRepository productTranslationRepository;
 
     public OrderDetailDto toDetailDto(Order order, List<OrderItem> items) {
+        return toDetailDto(order, items, DEFAULT_LOCALE);
+    }
+
+    public OrderDetailDto toDetailDto(Order order, List<OrderItem> items, String locale) {
         Map<Long, ProductVariant> variantMap = Map.of();
         Map<Long, String> primaryImages = Map.of();
+        Map<Long, ProductTranslation> translatedNames = Map.of();
 
         if (!items.isEmpty()) {
             List<Long> variantIds = items.stream().map(oi -> oi.getVariant().getId()).distinct().toList();
@@ -63,11 +75,13 @@ public class OrderMapper {
                     imgs.putIfAbsent(img.getProduct().getId(), img.getUrl());
                 }
                 primaryImages = imgs;
+                translatedNames = loadTranslatedNames(productIds, locale);
             }
         }
 
         final Map<Long, ProductVariant> finalVariantMap = variantMap;
         final Map<Long, String> finalPrimaryImages = primaryImages;
+        final Map<Long, ProductTranslation> finalNames = translatedNames;
 
         List<OrderItemDto> itemDtos = items.stream().map(oi -> {
             ProductVariant v = finalVariantMap.get(oi.getVariant().getId());
@@ -82,7 +96,7 @@ public class OrderMapper {
             return OrderItemDto.builder()
                     .id(oi.getId())
                     .variantId(oi.getVariant().getId())
-                    .productName(oi.getProductName())
+                    .productName(displayName(oi, finalVariantMap, finalNames))
                     .variantLabel(oi.getVariantLabel())
                     .sku(oi.getSku())
                     .unitPrice(oi.getUnitPrice())
@@ -144,8 +158,14 @@ public class OrderMapper {
     }
 
     public List<OrderSummaryDto> toSummaryDtos(List<Order> orders) {
+        return toSummaryDtos(orders, DEFAULT_LOCALE);
+    }
+
+    public List<OrderSummaryDto> toSummaryDtos(List<Order> orders, String locale) {
         if (orders.isEmpty()) return List.of();
         SummaryLookup look = buildSummaryLookup(orders);
+        Map<Long, ProductTranslation> names = loadTranslatedNames(look.variantMap.values().stream()
+                .map(v -> v.getProduct().getId()).distinct().toList(), locale);
 
         return orders.stream().map(o -> {
             List<OrderItem> itemList = look.itemsByOrder.getOrDefault(o.getId(), List.of());
@@ -162,10 +182,26 @@ public class OrderMapper {
                     .grandTotal(o.getGrandTotal())
                     .currency(o.getCurrency())
                     .placedAt(o.getPlacedAt())
-                    .firstItemName(first != null ? first.getProductName() : null)
+                    .firstItemName(displayName(first, look.variantMap, names))
                     .thumbnailUrl(thumb)
                     .build();
         }).toList();
+    }
+
+    private Map<Long, ProductTranslation> loadTranslatedNames(Collection<Long> productIds, String locale) {
+        if (productIds.isEmpty()) return Map.of();
+        return productTranslationRepository.findByProductIdInAndLocale(List.copyOf(productIds), locale).stream()
+                .collect(Collectors.toMap(t -> t.getProduct().getId(), Function.identity(), (a, b) -> a));
+    }
+
+    // live product -> locale name; deleted -> snapshot
+    private String displayName(OrderItem item, Map<Long, ProductVariant> variantMap, Map<Long, ProductTranslation> names) {
+        if (item == null) return null;
+        ProductVariant v = variantMap.get(item.getVariant().getId());
+        if (v == null) return item.getProductName();
+        ProductTranslation t = names.get(v.getProduct().getId());
+        if (t != null && t.getName() != null && !t.getName().isBlank()) return t.getName();
+        return v.getProduct().getName();
     }
 
     public List<AdminOrderSummaryDto> toAdminSummaryDtos(List<Order> orders) {

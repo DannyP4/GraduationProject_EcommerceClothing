@@ -36,7 +36,7 @@ export default function AccountLayout() {
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-1">
             {user?.email}
           </p>
-          <h1 className="font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('accountPage.title')}</h1>
+          <h1 className="account-title font-['Anton'] text-5xl md:text-6xl uppercase tracking-tight">{t('accountPage.title')}</h1>
         </div>
 
         <EmailVerificationBanner />

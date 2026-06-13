@@ -1,4 +1,16 @@
 {
+  "colors": {
+    "beige": "Beige", "black": "Black", "blue": "Blue", "brown": "Brown",
+    "burgundy": "Burgundy", "charcoal": "Charcoal", "coffee brown": "Coffee Brown",
+    "cream": "Cream", "green": "Green", "grey": "Grey", "grey melange": "Grey Melange",
+    "khaki": "Khaki", "lavender": "Lavender", "magenta": "Magenta", "maroon": "Maroon",
+    "mauve": "Mauve", "multi": "Multicolor", "mustard": "Mustard", "na": "N/A",
+    "navy": "Navy", "navy blue": "Navy Blue", "nude": "Nude", "off white": "Off White",
+    "olive": "Olive", "orange": "Orange", "peach": "Peach", "pink": "Pink",
+    "purple": "Purple", "red": "Red", "rust": "Rust", "sand": "Sand",
+    "sea green": "Sea Green", "tan": "Tan", "teal": "Teal", "turquoise blue": "Turquoise Blue",
+    "white": "White", "yellow": "Yellow"
+  },
   "nav": {
     "shop": "Shop",
     "collections": "Collections",
@@ -46,7 +58,28 @@
       "ORDER_DELIVERED": "Delivered",
       "ORDER_CANCELLED": "Cancelled",
       "ORDER_REFUNDED": "Refunded"
+    },
+    "body": {
+      "ORDER_PLACED": "Your order #{{order}} has been placed.",
+      "ORDER_PAID": "Payment for order #{{order}} has been confirmed.",
+      "ORDER_SHIPPED": "Your order #{{order}} has been shipped.",
+      "ORDER_DELIVERED": "Your order #{{order}} has been delivered.",
+      "ORDER_CANCELLED": "Your order #{{order}} has been cancelled.",
+      "ORDER_REFUNDED": "A refund has been processed for order #{{order}}."
     }
+  },
+  "chat": {
+    "title": "Vesta Assistant",
+    "subtitle": "Ask about our products",
+    "clear": "Clear chat",
+    "minimize": "Minimize",
+    "open": "Open chat",
+    "close": "Close chat",
+    "launcher": "Chat with Vesta",
+    "placeholder": "Type your message…",
+    "send": "Send",
+    "intro": "Hi! I'm Vesta's shopping assistant. Ask about our products — e.g. \"black jacket under 500k\" — or our shipping & returns policy.",
+    "error": "Sorry, I'm having trouble right now. Please try again in a moment."
   },
   "account": {
     "signedInAs": "Signed in as",
