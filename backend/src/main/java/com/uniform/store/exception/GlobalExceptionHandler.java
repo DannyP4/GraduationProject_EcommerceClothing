@@ -54,6 +54,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Invalid value for '" + ex.getName() + "': expected " + required));
     }
 
+    @ExceptionHandler(TryOnException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTryOn(TryOnException ex) {
+        log.warn("Virtual try-on upstream error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(AccountInactiveException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccountInactive(AccountInactiveException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

@@ -1,218 +1,362 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/Toast';
-import { products } from '../data/products';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { getProductByIdOrSlug, getProducts } from '../services/productService';
+import { uploadTryOnPhoto, createTryOn, getTryOn } from '../services/tryOnService';
+import { formatPrice } from '../lib/format';
 
-const GARMENTS = [
-  { id: 'varsity-bomber', label: 'Varsity Bomber', img: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80' },
-  { id: 'campus-hoodie', label: 'Arch Hoodie', img: 'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600&q=80' },
-  { id: 'track-jacket', label: 'Track Jacket', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80' },
-  { id: 'graphic-tee', label: 'Graphic Tee', img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80' },
-];
+const POLL_INTERVAL_MS = 2500;
+const MAX_POLLS = 60; // ~150s before giving up
 
 export default function TryOnPage() {
+  const { productId } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { t } = useTranslation();
   const toast = useToast();
-  const flashRef = useRef(null);
 
-  const [opacity, setOpacity] = useState(0.85);
-  const [selectedGarment, setSelectedGarment] = useState(GARMENTS[0]);
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [captured, setCaptured] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [loadingProduct, setLoadingProduct] = useState(Boolean(productId));
+  const [pickList, setPickList] = useState([]);
 
-  const handleCapture = () => {
-    if (flashRef.current) {
-      flashRef.current.style.opacity = '1';
-      setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0'; }, 200);
+  const [userImageUrl, setUserImageUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const [job, setJob] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const poll = useRef({ cancelled: false, timer: null });
+
+  useEffect(() => {
+    poll.current.cancelled = true;
+    clearTimeout(poll.current.timer);
+    setJob(null);
+    setError(null);
+    setBusy(false);
+
+    if (!productId) {
+      setProduct(null);
+      setLoadingProduct(false);
+      return;
     }
-    setCaptured(true);
-    setTimeout(() => setCaptured(false), 3000);
+    let cancelled = false;
+    setLoadingProduct(true);
+    getProductByIdOrSlug(productId)
+      .then((p) => { if (!cancelled) setProduct(p); })
+      .catch((e) => { if (!cancelled) toast.error(e.message || t('tryOn.productLoadFailed')); })
+      .finally(() => { if (!cancelled) setLoadingProduct(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
+
+  useEffect(() => {
+    if (productId) return undefined;
+    let cancelled = false;
+    getProducts({ size: 12 })
+      .then((res) => { if (!cancelled) setPickList(res?.content ?? []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [productId]);
+
+  useEffect(() => () => {
+    poll.current.cancelled = true;
+    clearTimeout(poll.current.timer);
+  }, []);
+
+  const garmentImage = product?.images?.[0]?.url || null;
+  const canRender = Boolean(userImageUrl && product && !uploading && !busy);
+
+  const phase = job?.status === 'SUCCEEDED' && job.resultImageUrl ? 'done'
+    : (job?.status === 'FAILED' || error) ? 'error'
+      : (busy || job?.status === 'PROCESSING') ? 'processing'
+        : 'idle';
+
+  const onChoosePhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const { url } = await uploadTryOnPhoto(file);
+      setUserImageUrl(url);
+      setJob(null);
+    } catch (err) {
+      toast.error(err.message || t('tryOn.uploadFailed'));
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleAddToCart = () => {
-    const product = products.find(p => p.id === selectedGarment.id);
-    if (product) {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        size: selectedSize,
-        color: product.colors[0],
-        image: product.images[0],
-      });
-      toast.success(`${product.name} (${selectedSize}) added to cart`);
+  const startPolling = (jobId) => {
+    let attempts = 0;
+    const tick = async () => {
+      if (poll.current.cancelled) return;
+      attempts += 1;
+      try {
+        const j = await getTryOn(jobId);
+        if (poll.current.cancelled) return;
+        setJob(j);
+        if (j.status === 'SUCCEEDED' || j.status === 'FAILED') { setBusy(false); return; }
+      } catch {
+        if (poll.current.cancelled) return; // transient — keep polling
+      }
+      if (attempts >= MAX_POLLS) {
+        setBusy(false);
+        setError(t('tryOn.timeout'));
+        return;
+      }
+      poll.current.timer = setTimeout(tick, POLL_INTERVAL_MS);
+    };
+    poll.current.timer = setTimeout(tick, POLL_INTERVAL_MS);
+  };
+
+  const onTryOn = async () => {
+    if (!userImageUrl) { toast.error(t('tryOn.needPhoto')); return; }
+    if (!product) { toast.error(t('tryOn.needProduct')); return; }
+    setError(null);
+    setBusy(true);
+    setJob(null);
+    poll.current.cancelled = false;
+    try {
+      const j = await createTryOn({ productId: product.id, userImageUrl });
+      setJob(j);
+      if (j.status === 'SUCCEEDED' || j.status === 'FAILED') { setBusy(false); return; }
+      startPolling(j.id);
+    } catch (err) {
+      setBusy(false);
+      setError(err.message || t('tryOn.failedGeneric'));
+      toast.error(err.message || t('tryOn.failedGeneric'));
+    }
+  };
+
+  const tryAgain = () => {
+    poll.current.cancelled = true;
+    clearTimeout(poll.current.timer);
+    setJob(null);
+    setError(null);
+    setBusy(false);
+  };
+
+  const downloadResult = async () => {
+    if (!job?.resultImageUrl) return;
+    try {
+      const resp = await fetch(job.resultImageUrl);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vesta-tryon-${job.id}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(job.resultImageUrl, '_blank', 'noopener');
     }
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative bg-black">
-      {/* Flash overlay */}
-      <div
-        ref={flashRef}
-        className="absolute inset-0 bg-white pointer-events-none z-50"
-        style={{ opacity: 0, transition: 'opacity 0.05s ease' }}
-      />
-
-      {/* Camera background */}
-      <img
-        src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80"
-        alt="Background"
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ filter: 'brightness(0.7)' }}
-      />
-
-      {/* Garment overlay */}
-      <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        style={{ opacity }}
-      >
-        <img
-          src={selectedGarment.img}
-          alt={selectedGarment.label}
-          className="h-[75vh] w-auto object-contain"
-          style={{
-            filter: 'drop-shadow(0 20px 60px rgba(0,0,0,0.5)) saturate(1.2)',
-            mixBlendMode: 'luminosity',
-          }}
-        />
-      </div>
-
-      {/* Top bar */}
-      <div className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/60 to-transparent z-10">
-        <div className="font-['Anton'] text-2xl tracking-widest text-white">VESTA</div>
-        <div className="text-center">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">Virtual Try-On Studio</p>
-          {captured && (
-            <p className="text-[11px] font-bold text-[#F5C842] animate-pulse">📸 Captured!</p>
-          )}
-        </div>
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <button
-          onClick={() => navigate(-1)}
-          className="text-[11px] font-bold tracking-[0.15em] uppercase text-white/70 hover:text-white border border-white/30 px-4 py-2 hover:border-white/70 transition-all flex items-center gap-2"
+          onClick={() => navigate('/')}
+          className="font-['Anton'] text-2xl tracking-widest hover:text-[#E83354] transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Exit Studio
+          VESTA
         </button>
-      </div>
-
-      {/* Left panel — Garment selector */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
-        {GARMENTS.map((g) => (
+        <p className="hidden sm:block text-[10px] font-bold tracking-[0.25em] uppercase text-white/50">
+          {t('tryOn.studio')}
+        </p>
+        <div className="flex items-center gap-4">
+          <LanguageSwitcher tone="dark" />
           <button
-            key={g.id}
-            onClick={() => setSelectedGarment(g)}
-            className={`w-16 h-20 overflow-hidden border-2 transition-all ${
-              selectedGarment.id === g.id
-                ? 'border-[#E83354] scale-105'
-                : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/60'
-            }`}
+            onClick={() => navigate('/shop')}
+            className="text-[11px] font-bold tracking-[0.15em] uppercase text-white/70 hover:text-white border border-white/30 px-4 py-2 hover:border-white/70 transition-all"
           >
-            <img src={g.img} alt={g.label} className="w-full h-full object-cover" />
+            {t('tryOn.backToShop')}
           </button>
-        ))}
-      </div>
-
-      {/* Right panel — Controls */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-52 space-y-4">
-        {/* Garment name */}
-        <div className="bg-black/60 backdrop-blur-md p-4 border border-white/10">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 mb-1">Now Trying</p>
-          <p className="font-['Anton'] text-lg text-white uppercase tracking-wide">{selectedGarment.label}</p>
         </div>
+      </header>
 
-        {/* Size selector */}
-        <div className="bg-black/60 backdrop-blur-md p-4 border border-white/10">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 mb-3">Size</p>
-          <div className="grid grid-cols-3 gap-1.5">
-            {['XS', 'S', 'M', 'L', 'XL'].map((s) => (
-              <button
-                key={s}
-                onClick={() => setSelectedSize(s)}
-                className={`py-1.5 text-[11px] font-bold border transition-all ${
-                  selectedSize === s
-                    ? 'bg-[#E83354] text-white border-[#E83354]'
-                    : 'bg-white/10 text-white border-white/20 hover:border-white/50'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Opacity slider */}
-        <div className="bg-black/60 backdrop-blur-md p-4 border border-white/10">
-          <div className="flex justify-between items-center mb-3">
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50">Opacity</p>
-            <span className="text-[11px] text-white/70 font-bold">{Math.round(opacity * 100)}%</span>
-          </div>
-          <input
-            type="range"
-            min="0.2"
-            max="1"
-            step="0.05"
-            value={opacity}
-            onChange={(e) => setOpacity(parseFloat(e.target.value))}
-            className="w-full accent-[#E83354] cursor-pointer"
-          />
-        </div>
-      </div>
-
-      {/* Bottom controls */}
-      <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-center gap-4 pb-8 bg-gradient-to-t from-black/60 via-black/20 to-transparent pt-16">
-        {/* Add to Cart */}
-        <button
-          onClick={handleAddToCart}
-          className="bg-white text-black text-[11px] font-bold tracking-[0.15em] uppercase px-6 py-3 hover:bg-[#E83354] hover:text-white transition-all"
-        >
-          + Add to Cart
-        </button>
-
-        {/* Capture */}
-        <button
-          onClick={handleCapture}
-          className="w-16 h-16 rounded-full bg-white border-4 border-white/50 hover:scale-110 transition-transform flex items-center justify-center shadow-2xl"
-          aria-label="Capture"
-        >
-          <div className="w-10 h-10 rounded-full bg-white border-2 border-black/10" />
-        </button>
-
-        {/* Share */}
-        <button className="bg-white/10 backdrop-blur text-white text-[11px] font-bold tracking-[0.15em] uppercase px-6 py-3 border border-white/20 hover:bg-white/20 transition-all">
-          Share
-        </button>
-      </div>
-
-      {/* Scan lines overlay for realism */}
-      <div
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px)',
-        }}
-      />
-
-      {/* Corner guides */}
-      {[
-        'top-16 left-6',
-        'top-16 right-6',
-        'bottom-32 left-6',
-        'bottom-32 right-6',
-      ].map((pos, i) => (
-        <div
-          key={i}
-          className={`absolute ${pos} w-8 h-8 pointer-events-none z-10`}
-          style={{
-            borderTop: i < 2 ? '2px solid rgba(255,255,255,0.3)' : 'none',
-            borderBottom: i >= 2 ? '2px solid rgba(255,255,255,0.3)' : 'none',
-            borderLeft: i % 2 === 0 ? '2px solid rgba(255,255,255,0.3)' : 'none',
-            borderRight: i % 2 === 1 ? '2px solid rgba(255,255,255,0.3)' : 'none',
-          }}
+      {!productId ? (
+        <ProductPicker
+          t={t}
+          pickList={pickList}
+          onPick={(p) => navigate(`/try-on/${p.slug || p.id}`)}
         />
-      ))}
+      ) : loadingProduct ? (
+        <div className="py-32 text-center text-white/40 text-xs uppercase tracking-[0.25em]">
+          {t('tryOn.loading')}
+        </div>
+      ) : !product ? (
+        <div className="py-32 text-center">
+          <p className="text-sm text-white/60 mb-6">{t('tryOn.productLoadFailed')}</p>
+          <Link to="/shop" className="text-[11px] font-bold tracking-[0.15em] uppercase border border-white/40 px-5 py-3 hover:bg-white hover:text-black transition-all">
+            {t('tryOn.browseProducts')}
+          </Link>
+        </div>
+      ) : (
+        <main className="max-w-[1100px] mx-auto px-6 py-8">
+          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+            {/* Your photo */}
+            <section className="bg-white/[0.04] border border-white/10 p-5">
+              <h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/80 mb-1">
+                {t('tryOn.yourPhoto')}
+              </h2>
+              <p className="text-[11px] text-white/40 mb-4">{t('tryOn.uploadHint')}</p>
+              <div className="aspect-[3/4] bg-black/40 border border-dashed border-white/15 overflow-hidden flex items-center justify-center">
+                {userImageUrl ? (
+                  <img src={userImageUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white/30 text-[11px] uppercase tracking-[0.2em]">{t('tryOn.noPhoto')}</span>
+                )}
+              </div>
+              <label className="mt-4 block text-center cursor-pointer bg-white text-black text-[11px] font-bold tracking-[0.15em] uppercase px-4 py-3 hover:bg-[#E83354] hover:text-white transition-all">
+                <input type="file" accept="image/*" className="hidden" onChange={onChoosePhoto} disabled={uploading} />
+                {uploading ? t('tryOn.uploading') : userImageUrl ? t('tryOn.replacePhoto') : t('tryOn.choosePhoto')}
+              </label>
+            </section>
+
+            {/* Garment */}
+            <section className="bg-white/[0.04] border border-white/10 p-5">
+              <h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/80 mb-4">
+                {t('tryOn.garment')}
+              </h2>
+              <div className="aspect-[3/4] bg-white overflow-hidden flex items-center justify-center">
+                {garmentImage ? (
+                  <img src={garmentImage} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-black/30 text-[11px] uppercase tracking-[0.2em]">{t('tryOn.noPhoto')}</span>
+                )}
+              </div>
+              <div className="mt-4">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">{product.categoryName}</p>
+                <p className="font-bold text-sm mt-0.5">{product.name}</p>
+                <p className="font-['Anton'] text-lg mt-1">
+                  {formatPrice(product.salePrice ?? product.basePrice, product.currency)}
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/try-on')}
+                className="mt-3 text-[10px] font-bold tracking-[0.15em] uppercase text-white/50 hover:text-white underline underline-offset-4 transition-colors"
+              >
+                {t('tryOn.changeProduct')}
+              </button>
+            </section>
+          </div>
+
+          {phase === 'idle' && (
+            <div>
+              <button
+                onClick={onTryOn}
+                disabled={!canRender}
+                className="w-full py-5 bg-[#E83354] text-white text-[12px] font-bold tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {t('tryOn.tryItOn')}
+              </button>
+              {!userImageUrl && (
+                <p className="text-center text-[11px] text-white/40 mt-3">{t('tryOn.needPhoto')}</p>
+              )}
+            </div>
+          )}
+
+          {phase === 'processing' && (
+            <div className="bg-white/[0.04] border border-white/10 py-16 flex flex-col items-center">
+              <div className="w-10 h-10 border-2 border-white/20 border-t-[#E83354] rounded-full animate-spin" />
+              <p className="mt-5 text-[12px] font-bold tracking-[0.2em] uppercase">{t('tryOn.rendering')}</p>
+              <p className="mt-2 text-[11px] text-white/40">{t('tryOn.processingHint')}</p>
+            </div>
+          )}
+
+          {phase === 'error' && (
+            <div className="bg-[#E83354]/10 border border-[#E83354]/40 py-12 px-6 text-center">
+              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-[#E83354] mb-2">{t('tryOn.failedTitle')}</p>
+              <p className="text-[12px] text-white/60 mb-6">{error || job?.errorMessage || t('tryOn.failedGeneric')}</p>
+              <button
+                onClick={tryAgain}
+                className="text-[11px] font-bold tracking-[0.15em] uppercase border border-white/40 px-5 py-3 hover:bg-white hover:text-black transition-all"
+              >
+                {t('tryOn.tryAgain')}
+              </button>
+            </div>
+          )}
+
+          {phase === 'done' && (
+            <div className="bg-white/[0.04] border border-white/10 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/80">{t('tryOn.result')}</h2>
+                {job.cached && (
+                  <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-white/40">{t('tryOn.cached')}</span>
+                )}
+              </div>
+              <div className="bg-black/40 flex items-center justify-center">
+                <img src={job.resultImageUrl} alt={t('tryOn.result')} className="max-h-[70vh] w-auto object-contain" />
+              </div>
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  onClick={downloadResult}
+                  className="py-3 bg-white text-black text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-[#E83354] hover:text-white transition-all"
+                >
+                  {t('tryOn.download')}
+                </button>
+                <Link
+                  to={`/product/${product.slug || product.id}`}
+                  className="py-3 text-center border border-white/40 text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-white hover:text-black transition-all"
+                >
+                  {t('tryOn.viewProduct')}
+                </Link>
+                <button
+                  onClick={tryAgain}
+                  className="py-3 border border-white/40 text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-white hover:text-black transition-all"
+                >
+                  {t('tryOn.tryAnother')}
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      )}
     </div>
+  );
+}
+
+function ProductPicker({ t, pickList, onPick }) {
+  return (
+    <main className="max-w-[1100px] mx-auto px-6 py-10">
+      <h1 className="font-['Anton'] text-4xl uppercase tracking-tight mb-1">{t('tryOn.title')}</h1>
+      <p className="text-[12px] text-white/50 mb-8">{t('tryOn.pickHint')}</p>
+      {pickList.length === 0 ? (
+        <div className="py-20 text-center">
+          <Link to="/shop" className="text-[11px] font-bold tracking-[0.15em] uppercase border border-white/40 px-5 py-3 hover:bg-white hover:text-black transition-all">
+            {t('tryOn.browseProducts')}
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {pickList.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onPick(p)}
+              className="group text-left bg-white/[0.04] border border-white/10 overflow-hidden hover:border-white/40 transition-all"
+            >
+              <div className="aspect-[4/5] bg-white overflow-hidden">
+                {p.primaryImageUrl ? (
+                  <img src={p.primaryImageUrl} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-black/20" />
+                )}
+              </div>
+              <div className="p-3">
+                <p className="text-[12px] font-bold uppercase tracking-wide line-clamp-2 min-h-[2.25rem]">{p.name}</p>
+                <p className="font-['Anton'] text-base mt-1">{formatPrice(p.salePrice ?? p.basePrice, p.currency)}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </main>
   );
 }

@@ -70,7 +70,22 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/try-on" element={<TryOnPage />} />
+            <Route
+              path="/try-on"
+              element={
+                <ProtectedRoute>
+                  <TryOnPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/try-on/:productId"
+              element={
+                <ProtectedRoute>
+                  <TryOnPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/payment/vnpay/return" element={<VnpayReturnPage />} />
             <Route
               path="/payment/stripe/success"

@@ -53,6 +53,34 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     }
 
     @Override
+    public CloudinaryUploadResult uploadImageFromUrl(String remoteUrl, String folder, String filenameHint) {
+        if (remoteUrl == null || remoteUrl.isBlank()) {
+            throw new BadRequestException("Remote image url is empty");
+        }
+        String targetFolder = (folder == null || folder.isBlank()) ? uploadFolder : folder;
+        String publicId = sanitize(filenameHint) + "-" + UUID.randomUUID().toString().substring(0, 8);
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = cloudinary.uploader().upload(remoteUrl, ObjectUtils.asMap(
+                    "folder", targetFolder,
+                    "public_id", publicId,
+                    "resource_type", "image",
+                    "overwrite", false,
+                    "unique_filename", false));
+            return CloudinaryUploadResult.builder()
+                    .publicId((String) result.get("public_id"))
+                    .secureUrl((String) result.get("secure_url"))
+                    .width(toInt(result.get("width")))
+                    .height(toInt(result.get("height")))
+                    .format((String) result.get("format"))
+                    .bytes(toLong(result.get("bytes")))
+                    .build();
+        } catch (IOException e) {
+            throw new BadRequestException("Cloudinary remote upload failed: " + e.getMessage());
+        }
+    }
+
+    @Override
     public CloudinarySignatureDto generateSignedUploadParams(String folder, String filenameHint) {
         String targetFolder = (folder == null || folder.isBlank()) ? uploadFolder : folder;
         String publicId = sanitize(filenameHint) + "-" + UUID.randomUUID().toString().substring(0, 8);

@@ -148,6 +148,14 @@ app:
     api-key: ${CLOUDINARY_API_KEY:}
     api-secret: ${CLOUDINARY_API_SECRET:}
     upload-folder: uniform/products
+  tryon:
+    fal:
+      enabled: ${TRYON_ENABLED:true}
+      api-key: ${FAL_KEY:}
+      base-url: ${FAL_BASE_URL:https://queue.fal.run}
+      model: ${FAL_TRYON_MODEL:fal-ai/fashn/tryon/v1.6}
+      connect-timeout-seconds: 10
+      read-timeout-seconds: 60
   ai:
     gemini:
       api-key: ${GEMINI_API_KEY:}

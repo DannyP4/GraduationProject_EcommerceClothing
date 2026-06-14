@@ -167,7 +167,7 @@ export default function CartPage() {
                   onQtyChange={(qty) => handleQty(item, qty)}
                   onRemove={() => handleRemove(item)}
                   onProductClick={() => item.productSlug && navigate(`/product/${item.productSlug}`)}
-                  onTryOn={() => navigate('/try-on')}
+                  onTryOn={() => navigate(`/try-on/${item.productSlug || item.productId}`)}
                 />
               ))}
             </div>

@@ -387,7 +387,7 @@ export default function ProductPage() {
               {adding ? t('product.adding') : t('product.addToCart')}
             </button>
             <button
-              onClick={() => navigate('/try-on')}
+              onClick={() => navigate(`/try-on/${product.slug || product.id}`)}
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase border-2 border-black text-black hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3"
             >
               <span>👁</span> {t('product.virtualTryOn')}
