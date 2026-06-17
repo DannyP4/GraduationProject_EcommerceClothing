@@ -86,6 +86,7 @@
     "adminDashboard": "Admin Dashboard",
     "profile": "My Profile",
     "orders": "Order History",
+    "wishlist": "Wishlist",
     "addresses": "Addresses",
     "signOut": "Sign Out",
     "signOutConfirmTitle": "Sign out?",
@@ -495,6 +496,7 @@
     "nav": {
       "profile": "Profile",
       "orders": "Orders",
+      "wishlist": "Wishlist",
       "addresses": "Addresses"
     },
     "signOutDialog": {
@@ -619,8 +621,55 @@
         "title": "Set as default?",
         "message": "Use \"{{name}}\" as your default shipping address?",
         "cancel": "Cancel"
+      },
+      "form": {
+        "titleAdd": "Add Address",
+        "titleEdit": "Edit Address",
+        "close": "Close",
+        "label": "Label",
+        "labelPlaceholder": "Home / Office",
+        "recipient": "Recipient",
+        "phone": "Phone",
+        "phonePlaceholder": "0901234567",
+        "line1": "Address Line",
+        "line1Placeholder": "House number, street",
+        "ward": "Ward",
+        "district": "District",
+        "city": "City",
+        "country": "Country",
+        "countryPlaceholder": "VN",
+        "regionLabel": "Region",
+        "selectRegion": "Select region…",
+        "shippingFeeHint": "Determines the shipping fee.",
+        "postalCode": "Postal Code",
+        "setDefault": "Set as default address",
+        "cancel": "Cancel",
+        "save": "Save",
+        "add": "Add",
+        "saving": "Saving…",
+        "saveError": "Could not save address."
       }
     }
+  },
+  "wishlist": {
+    "add": "Add to wishlist",
+    "remove": "Remove from wishlist",
+    "added": "Added to wishlist",
+    "removed": "Removed from wishlist",
+    "signInRequired": "Please sign in to use your wishlist.",
+    "error": "Something went wrong. Please try again.",
+    "addToWishlist": "Add to Wishlist",
+    "inWishlist": "In Wishlist",
+    "heading": "Wishlist",
+    "subtitle": "Products you've saved for later.",
+    "empty": "Your wishlist is empty.",
+    "startShopping": "Start Shopping",
+    "loadError": "Couldn't load your wishlist.",
+    "clearAll": "Clear All",
+    "cleared": "Wishlist cleared",
+    "clearConfirmTitle": "Clear wishlist?",
+    "clearConfirmMessage": "Remove all {{n}} items from your wishlist? This can't be undone.",
+    "clearCancel": "Keep"
   },
   "auth": {
     "back": "Back",

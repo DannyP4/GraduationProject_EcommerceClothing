@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../lib/format';
+import WishlistButton from './WishlistButton';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, hideWishlist = false }) {
   const { t } = useTranslation();
   const onSale = product.salePrice != null;
   return (
@@ -16,6 +17,7 @@ export default function ProductCard({ product }) {
             -{product.discountPercent}%
           </span>
         )}
+        {!hideWishlist && <WishlistButton productId={product.id} productSlug={product.slug} />}
         {product.primaryImageUrl ? (
           <img
             src={product.primaryImageUrl}

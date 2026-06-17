@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
 import FooterFull from '../components/FooterFull';
+import WishlistButton from '../components/WishlistButton';
 import { getProducts, getCategories, getBrands } from '../services/productService';
 import useScrollRestore from '../lib/useScrollRestore';
 import useAutoHideScrollbar from '../lib/useAutoHideScrollbar';
@@ -309,6 +310,7 @@ export default function ShopPage() {
                         -{product.discountPercent}%
                       </span>
                     )}
+                    <WishlistButton productId={product.id} productSlug={product.slug} />
                     {product.primaryImageUrl ? (
                       <img
                         src={product.primaryImageUrl}

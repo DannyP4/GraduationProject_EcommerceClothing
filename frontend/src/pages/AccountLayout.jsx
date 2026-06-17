@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 const NAV = [
   { to: '/account/profile', key: 'nav.profile' },
   { to: '/account/orders', key: 'nav.orders' },
+  { to: '/account/wishlist', key: 'nav.wishlist' },
   { to: '/account/addresses', key: 'nav.addresses' },
 ];
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const EMPTY = {
   label: '',
@@ -15,6 +16,8 @@ const EMPTY = {
 };
 
 export default function AddressFormModal({ open, mode, initial, defaults, onClose, onSubmit }) {
+  const { t } = useTranslation();
+  const tf = (key) => t(`accountPage.addresses.form.${key}`);
   const [form, setForm] = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -76,7 +79,7 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
       await onSubmit(payload);
       onClose();
     } catch (err) {
-      setError(err.message || 'Could not save address.');
+      setError(err.message || tf('saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -87,12 +90,12 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
       <div className="bg-white max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-black/10">
           <h3 className="font-['Anton'] text-2xl uppercase tracking-tight">
-            {mode === 'edit' ? 'Edit Address' : 'Add Address'}
+            {mode === 'edit' ? tf('titleEdit') : tf('titleAdd')}
           </h3>
           <button
             onClick={onClose}
             className="text-black/50 hover:text-black text-2xl leading-none"
-            aria-label="Close"
+            aria-label={tf('close')}
           >
             ×
           </button>
@@ -100,29 +103,29 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <FieldRow>
-            <FieldText label="Label" placeholder="Home / Office" value={form.label} onChange={handleChange('label')} maxLength={50} />
-            <FieldText label="Recipient" required value={form.recipient} onChange={handleChange('recipient')} maxLength={150} />
+            <FieldText label={tf('label')} placeholder={tf('labelPlaceholder')} value={form.label} onChange={handleChange('label')} maxLength={50} />
+            <FieldText label={tf('recipient')} required value={form.recipient} onChange={handleChange('recipient')} maxLength={150} />
           </FieldRow>
 
-          <FieldText label="Phone" required type="tel" placeholder="0901234567"
+          <FieldText label={tf('phone')} required type="tel" placeholder={tf('phonePlaceholder')}
                      value={form.phone} onChange={handleChange('phone')} maxLength={20} />
 
-          <FieldText label="Address Line" required placeholder="Số nhà, tên đường"
+          <FieldText label={tf('line1')} required placeholder={tf('line1Placeholder')}
                      value={form.line1} onChange={handleChange('line1')} maxLength={255} />
 
           <FieldRow>
-            <FieldText label="Ward" value={form.ward} onChange={handleChange('ward')} maxLength={100} />
-            <FieldText label="District" required value={form.district} onChange={handleChange('district')} maxLength={100} />
+            <FieldText label={tf('ward')} value={form.ward} onChange={handleChange('ward')} maxLength={100} />
+            <FieldText label={tf('district')} required value={form.district} onChange={handleChange('district')} maxLength={100} />
           </FieldRow>
 
           <FieldRow>
-            <FieldText label="City" required value={form.city} onChange={handleChange('city')} maxLength={100} />
-            <FieldText label="Country" placeholder="VN" value={form.country} onChange={handleChange('country')} maxLength={2} />
+            <FieldText label={tf('city')} required value={form.city} onChange={handleChange('city')} maxLength={100} />
+            <FieldText label={tf('country')} placeholder={tf('countryPlaceholder')} value={form.country} onChange={handleChange('country')} maxLength={2} />
           </FieldRow>
 
           <div>
             <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-              Region<span className="text-[#E83354]"> *</span>
+              {tf('regionLabel')}<span className="text-[#E83354]"> *</span>
             </label>
             <select
               required
@@ -130,20 +133,20 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
               onChange={handleChange('region')}
               className="w-full border border-black/15 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-black transition-colors"
             >
-              <option value="">Select region…</option>
-              <option value="NORTH">Northern Vietnam</option>
-              <option value="CENTRAL">Central Vietnam</option>
-              <option value="SOUTH">Southern Vietnam</option>
+              <option value="">{tf('selectRegion')}</option>
+              <option value="NORTH">{t('accountPage.addresses.region.NORTH')}</option>
+              <option value="CENTRAL">{t('accountPage.addresses.region.CENTRAL')}</option>
+              <option value="SOUTH">{t('accountPage.addresses.region.SOUTH')}</option>
             </select>
-            <p className="text-[10px] text-black/40 mt-1">Determines the shipping fee.</p>
+            <p className="text-[10px] text-black/40 mt-1">{tf('shippingFeeHint')}</p>
           </div>
 
-          <FieldText label="Postal Code" value={form.postalCode} onChange={handleChange('postalCode')} maxLength={20} />
+          <FieldText label={tf('postalCode')} value={form.postalCode} onChange={handleChange('postalCode')} maxLength={20} />
 
           {mode !== 'edit' && (
             <label className="flex items-center gap-2 text-xs">
               <input type="checkbox" checked={form.isDefault} onChange={handleChange('isDefault')} />
-              <span className="text-black/70">Set as default address</span>
+              <span className="text-black/70">{tf('setDefault')}</span>
             </label>
           )}
 
@@ -157,14 +160,14 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
               onClick={onClose}
               className="flex-1 border border-black/15 text-[11px] font-bold tracking-[0.15em] uppercase py-3 hover:border-black/40 transition-all"
             >
-              Cancel
+              {tf('cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="flex-1 bg-black text-white text-[11px] font-bold tracking-[0.15em] uppercase py-3 hover:bg-[#E83354] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-black"
             >
-              {submitting ? 'Saving…' : mode === 'edit' ? 'Save' : 'Add'}
+              {submitting ? tf('saving') : mode === 'edit' ? tf('save') : tf('add')}
             </button>
           </div>
         </form>

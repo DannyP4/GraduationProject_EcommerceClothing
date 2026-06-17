@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './components/Toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -25,6 +26,7 @@ import AccountProfilePage from './pages/AccountProfilePage';
 import AccountAddressesPage from './pages/AccountAddressesPage';
 import AccountOrdersPage from './pages/AccountOrdersPage';
 import AccountOrderDetailPage from './pages/AccountOrderDetailPage';
+import AccountWishlistPage from './pages/AccountWishlistPage';
 import VnpayReturnPage from './pages/VnpayReturnPage';
 import StripeSuccessPage from './pages/StripeSuccessPage';
 import StripeCancelPage from './pages/StripeCancelPage';
@@ -47,6 +49,7 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <WishlistProvider>
         <ToastProvider>
         <BrowserRouter>
           <ScrollToTop />
@@ -107,6 +110,7 @@ export default function App() {
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<AccountProfilePage />} />
               <Route path="addresses" element={<AccountAddressesPage />} />
+              <Route path="wishlist" element={<AccountWishlistPage />} />
               <Route path="orders" element={<AccountOrdersPage />} />
               <Route path="orders/:orderNumber" element={<AccountOrderDetailPage />} />
             </Route>
@@ -139,6 +143,7 @@ export default function App() {
           <ChatWidget />
         </BrowserRouter>
         </ToastProvider>
+        </WishlistProvider>
       </CartProvider>
     </AuthProvider>
   );

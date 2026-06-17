@@ -8,6 +8,8 @@ import { useToast } from '../components/Toast';
 import { getProductByIdOrSlug, getSimilarProducts, getFrequentlyBoughtTogether } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
+import HeartIcon from '../components/HeartIcon';
 import StarRating from '../components/StarRating';
 import BrandCard from '../components/BrandCard';
 import ReviewsSection from '../components/ReviewsSection';
@@ -24,6 +26,7 @@ export default function ProductPage() {
   const backToShop = location.state?.backTo || '/shop';
   const { addItem } = useCart();
   const { status: authStatus } = useAuth();
+  const { isWishlisted, toggle: toggleWishlist } = useWishlist();
   const toast = useToast();
   const { t, i18n } = useTranslation();
 
@@ -36,6 +39,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +189,26 @@ export default function ProductPage() {
       setAdding(false);
     }
   };
+
+  const handleWishlist = async () => {
+    if (authStatus !== 'authenticated') {
+      toast.error(t('wishlist.signInRequired'));
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
+    }
+    if (wishlistBusy) return;
+    setWishlistBusy(true);
+    try {
+      const nowWished = await toggleWishlist(product.id);
+      toast.success(nowWished ? t('wishlist.added') : t('wishlist.removed'));
+    } catch {
+      toast.error(t('wishlist.error'));
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
+
+  const wished = isWishlisted(product.id);
 
   const comboAvailable = (c, s) => availableCombos.has(`${c}|${s}`);
   const colorEnabled = (c) => (selectedSize ? comboAvailable(c, selectedSize) : sizes.some((s) => comboAvailable(c, s)));
@@ -391,6 +415,19 @@ export default function ProductPage() {
               className="w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase border-2 border-black text-black hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3"
             >
               <span>👁</span> {t('product.virtualTryOn')}
+            </button>
+            <button
+              onClick={handleWishlist}
+              disabled={wishlistBusy}
+              aria-pressed={wished}
+              className={`w-full py-4 text-[12px] font-bold tracking-[0.15em] uppercase border-2 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed ${
+                wished
+                  ? 'border-[#E83354] text-[#E83354] hover:bg-[#E83354] hover:text-white'
+                  : 'border-black text-black hover:bg-black hover:text-white'
+              }`}
+            >
+              <HeartIcon filled={wished} size={16} />
+              {wished ? t('wishlist.inWishlist') : t('wishlist.addToWishlist')}
             </button>
           </div>
 

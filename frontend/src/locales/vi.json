@@ -83,6 +83,7 @@
     "adminDashboard": "Trang quản trị",
     "profile": "Hồ sơ của tôi",
     "orders": "Lịch sử đơn hàng",
+    "wishlist": "Yêu thích",
     "addresses": "Địa chỉ",
     "signOut": "Đăng xuất",
     "signOutConfirmTitle": "Đăng xuất?",
@@ -483,6 +484,7 @@
     "nav": {
       "profile": "Hồ sơ",
       "orders": "Đơn hàng",
+      "wishlist": "Yêu thích",
       "addresses": "Địa chỉ"
     },
     "signOutDialog": {
@@ -607,8 +609,55 @@
         "title": "Đặt làm mặc định?",
         "message": "Dùng \"{{name}}\" làm địa chỉ giao hàng mặc định?",
         "cancel": "Hủy"
+      },
+      "form": {
+        "titleAdd": "Thêm địa chỉ",
+        "titleEdit": "Sửa địa chỉ",
+        "close": "Đóng",
+        "label": "Nhãn",
+        "labelPlaceholder": "Nhà / Văn phòng",
+        "recipient": "Người nhận",
+        "phone": "Số điện thoại",
+        "phonePlaceholder": "0901234567",
+        "line1": "Địa chỉ",
+        "line1Placeholder": "Số nhà, tên đường",
+        "ward": "Phường/Xã",
+        "district": "Quận/Huyện",
+        "city": "Tỉnh/Thành phố",
+        "country": "Quốc gia",
+        "countryPlaceholder": "VN",
+        "regionLabel": "Khu vực",
+        "selectRegion": "Chọn khu vực…",
+        "shippingFeeHint": "Quyết định phí vận chuyển.",
+        "postalCode": "Mã bưu chính",
+        "setDefault": "Đặt làm địa chỉ mặc định",
+        "cancel": "Hủy",
+        "save": "Lưu",
+        "add": "Thêm",
+        "saving": "Đang lưu…",
+        "saveError": "Không thể lưu địa chỉ."
       }
     }
+  },
+  "wishlist": {
+    "add": "Thêm vào yêu thích",
+    "remove": "Xóa khỏi yêu thích",
+    "added": "Đã thêm vào yêu thích",
+    "removed": "Đã xóa khỏi yêu thích",
+    "signInRequired": "Vui lòng đăng nhập để dùng danh sách yêu thích.",
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "addToWishlist": "Thêm vào yêu thích",
+    "inWishlist": "Đã yêu thích",
+    "heading": "Yêu thích",
+    "subtitle": "Những sản phẩm bạn đã lưu lại.",
+    "empty": "Danh sách yêu thích của bạn đang trống.",
+    "startShopping": "Bắt đầu mua sắm",
+    "loadError": "Không thể tải danh sách yêu thích.",
+    "clearAll": "Xóa tất cả",
+    "cleared": "Đã xóa toàn bộ danh sách yêu thích",
+    "clearConfirmTitle": "Xóa toàn bộ wishlist?",
+    "clearConfirmMessage": "Xóa tất cả {{n}} sản phẩm khỏi danh sách yêu thích? Hành động này không thể hoàn tác.",
+    "clearCancel": "Giữ lại"
   },
   "auth": {
     "back": "Quay lại",

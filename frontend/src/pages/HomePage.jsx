@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import NavbarGlass from '../components/NavbarGlass';
 import AnnouncementBar from '../components/AnnouncementBar';
 import FooterFull from '../components/FooterFull';
+import WishlistButton from '../components/WishlistButton';
 import { getProducts } from '../services/productService';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../lib/format';
@@ -208,6 +209,7 @@ function TrendingGrid({ loading, products, onClick }) {
           onClick={() => onClick(product)}
         >
           <div className="relative overflow-hidden" style={{ paddingTop: '125%' }}>
+            <WishlistButton productId={product.id} productSlug={product.slug} />
             {product.primaryImageUrl ? (
               <img
                 src={product.primaryImageUrl}

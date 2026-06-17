@@ -83,6 +83,7 @@
     "adminDashboard": "管理ダッシュボード",
     "profile": "プロフィール",
     "orders": "注文履歴",
+    "wishlist": "お気に入り",
     "addresses": "住所",
     "signOut": "ログアウト",
     "signOutConfirmTitle": "ログアウトしますか？",
@@ -483,6 +484,7 @@
     "nav": {
       "profile": "プロフィール",
       "orders": "注文",
+      "wishlist": "お気に入り",
       "addresses": "住所"
     },
     "signOutDialog": {
@@ -607,8 +609,55 @@
         "title": "デフォルトに設定しますか？",
         "message": "「{{name}}」をデフォルトの配送先住所として使用しますか？",
         "cancel": "キャンセル"
+      },
+      "form": {
+        "titleAdd": "住所を追加",
+        "titleEdit": "住所を編集",
+        "close": "閉じる",
+        "label": "ラベル",
+        "labelPlaceholder": "自宅 / オフィス",
+        "recipient": "受取人",
+        "phone": "電話番号",
+        "phonePlaceholder": "0901234567",
+        "line1": "住所",
+        "line1Placeholder": "番地、通り名",
+        "ward": "区/町",
+        "district": "郡/地区",
+        "city": "都市/省",
+        "country": "国",
+        "countryPlaceholder": "VN",
+        "regionLabel": "地域",
+        "selectRegion": "地域を選択…",
+        "shippingFeeHint": "送料が決まります。",
+        "postalCode": "郵便番号",
+        "setDefault": "デフォルトの住所に設定",
+        "cancel": "キャンセル",
+        "save": "保存",
+        "add": "追加",
+        "saving": "保存中…",
+        "saveError": "住所を保存できませんでした。"
       }
     }
+  },
+  "wishlist": {
+    "add": "お気に入りに追加",
+    "remove": "お気に入りから削除",
+    "added": "お気に入りに追加しました",
+    "removed": "お気に入りから削除しました",
+    "signInRequired": "お気に入りを利用するにはログインしてください。",
+    "error": "エラーが発生しました。もう一度お試しください。",
+    "addToWishlist": "お気に入りに追加",
+    "inWishlist": "お気に入り登録済み",
+    "heading": "お気に入り",
+    "subtitle": "後で見るために保存した商品。",
+    "empty": "お気に入りは空です。",
+    "startShopping": "ショッピングを始める",
+    "loadError": "お気に入りを読み込めませんでした。",
+    "clearAll": "すべて削除",
+    "cleared": "お気に入りをすべて削除しました",
+    "clearConfirmTitle": "お気に入りをすべて削除しますか？",
+    "clearConfirmMessage": "{{n}}件すべてをお気に入りから削除しますか？この操作は取り消せません。",
+    "clearCancel": "保持"
   },
   "auth": {
     "back": "戻る",
