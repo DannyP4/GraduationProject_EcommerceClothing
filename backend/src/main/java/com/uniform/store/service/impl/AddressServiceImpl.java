@@ -58,6 +58,9 @@ public class AddressServiceImpl implements AddressService {
                 .country(req.getCountry() != null ? req.getCountry() : DEFAULT_COUNTRY)
                 .postalCode(req.getPostalCode())
                 .region(req.getRegion())
+                .ghnProvinceId(req.getGhnProvinceId())
+                .ghnDistrictId(req.getGhnDistrictId())
+                .ghnWardCode(req.getGhnWardCode())
                 .isDefault(shouldBeDefault)
                 .build();
 
@@ -81,6 +84,9 @@ public class AddressServiceImpl implements AddressService {
         if (req.getCountry() != null) address.setCountry(req.getCountry());
         if (req.getPostalCode() != null) address.setPostalCode(req.getPostalCode());
         if (req.getRegion() != null) address.setRegion(req.getRegion());
+        if (req.getGhnProvinceId() != null) address.setGhnProvinceId(req.getGhnProvinceId());
+        if (req.getGhnDistrictId() != null) address.setGhnDistrictId(req.getGhnDistrictId());
+        if (req.getGhnWardCode() != null) address.setGhnWardCode(req.getGhnWardCode());
 
         return toDto(addressRepository.save(address));
     }
@@ -142,6 +148,9 @@ public class AddressServiceImpl implements AddressService {
                 .country(a.getCountry())
                 .postalCode(a.getPostalCode())
                 .region(a.getRegion())
+                .ghnProvinceId(a.getGhnProvinceId())
+                .ghnDistrictId(a.getGhnDistrictId())
+                .ghnWardCode(a.getGhnWardCode())
                 .isDefault(a.isDefault())
                 .build();
     }

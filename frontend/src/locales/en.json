@@ -647,7 +647,13 @@
         "save": "Save",
         "add": "Add",
         "saving": "Saving…",
-        "saveError": "Could not save address."
+        "saveError": "Could not save address.",
+        "province": "Province / City",
+        "selectProvince": "Select province…",
+        "selectDistrict": "Select district…",
+        "selectWard": "Select ward…",
+        "loadingOptions": "Loading…",
+        "selectLocationError": "Please select province, district and ward."
       }
     }
   },

@@ -635,7 +635,13 @@
         "save": "Lưu",
         "add": "Thêm",
         "saving": "Đang lưu…",
-        "saveError": "Không thể lưu địa chỉ."
+        "saveError": "Không thể lưu địa chỉ.",
+        "province": "Tỉnh / Thành phố",
+        "selectProvince": "Chọn tỉnh/thành…",
+        "selectDistrict": "Chọn quận/huyện…",
+        "selectWard": "Chọn phường/xã…",
+        "loadingOptions": "Đang tải…",
+        "selectLocationError": "Vui lòng chọn tỉnh/thành, quận/huyện và phường/xã."
       }
     }
   },

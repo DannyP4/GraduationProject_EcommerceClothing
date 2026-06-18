@@ -635,7 +635,13 @@
         "save": "保存",
         "add": "追加",
         "saving": "保存中…",
-        "saveError": "住所を保存できませんでした。"
+        "saveError": "住所を保存できませんでした。",
+        "province": "省 / 市",
+        "selectProvince": "省/市を選択…",
+        "selectDistrict": "区/郡を選択…",
+        "selectWard": "町/区を選択…",
+        "loadingOptions": "読み込み中…",
+        "selectLocationError": "省/市・区/郡・町/区を選択してください。"
       }
     }
   },

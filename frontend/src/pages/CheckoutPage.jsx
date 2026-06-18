@@ -107,7 +107,11 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!selectedAddressId) { setShipping({ fee: 0, freeThreshold: null }); return undefined; }
     let cancelled = false;
-    shippingService.getQuote({ region: selectedAddress?.region, subtotal })
+    const a = selectedAddress;
+    const quote = (a?.ghnDistrictId && a?.ghnWardCode)
+      ? shippingService.getGhnQuote({ toDistrictId: a.ghnDistrictId, toWardCode: a.ghnWardCode, quantity: cartCount, subtotal })
+      : shippingService.getQuote({ region: a?.region, subtotal });
+    quote
       .then((q) => {
         if (cancelled || !q) return;
         setShipping({
@@ -117,7 +121,7 @@ export default function CheckoutPage() {
       })
       .catch(() => { if (!cancelled) setShipping({ fee: 0, freeThreshold: null }); });
     return () => { cancelled = true; };
-  }, [selectedAddressId, selectedAddress?.region, subtotal]);
+  }, [selectedAddressId, selectedAddress?.ghnDistrictId, selectedAddress?.ghnWardCode, selectedAddress?.region, subtotal, cartCount]);
 
   const blockedItems = items.filter(
     (i) => i.stockStatus === 'OUT_OF_STOCK' || i.stockStatus === 'UNAVAILABLE'

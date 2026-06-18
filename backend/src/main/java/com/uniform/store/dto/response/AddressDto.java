@@ -24,5 +24,8 @@ public class AddressDto {
     private String country;
     private String postalCode;
     private ShippingRegion region;
+    private Integer ghnProvinceId;
+    private Integer ghnDistrictId;
+    private String ghnWardCode;
     private Boolean isDefault;
 }

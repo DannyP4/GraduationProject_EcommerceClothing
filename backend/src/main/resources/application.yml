@@ -101,6 +101,15 @@ app:
     central: 30000
     south: 35000
     free-threshold: 500000
+    ghn:
+      enabled: ${GHN_ENABLED:true}
+      base-url: ${GHN_BASE_URL:https://dev-online-gateway.ghn.vn}
+      token: ${GHN_API_KEY:}
+      shop-id: ${GHN_SHOP_ID:}
+      from-district-id: ${GHN_FROM_DISTRICT_ID:3695}
+      from-ward-code: ${GHN_FROM_WARD_CODE:}
+      service-type-id: ${GHN_SERVICE_TYPE_ID:2}
+      default-item-weight-grams: ${GHN_DEFAULT_ITEM_WEIGHT_GRAMS:500}
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
   mail:

@@ -38,4 +38,11 @@ public class UpdateAddressRequest {
     private String postalCode;
 
     private ShippingRegion region;
+
+    private Integer ghnProvinceId;
+
+    private Integer ghnDistrictId;
+
+    @Size(max = 20)
+    private String ghnWardCode;
 }

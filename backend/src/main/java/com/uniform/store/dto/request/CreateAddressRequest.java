@@ -47,6 +47,13 @@ public class CreateAddressRequest {
     // Region tier for shipping (NORTH/CENTRAL/SOUTH).
     private ShippingRegion region;
 
+    private Integer ghnProvinceId;
+
+    private Integer ghnDistrictId;
+
+    @Size(max = 20)
+    private String ghnWardCode;
+
     // If true (or this is the user's first address), set as default and un-flag others.
     private Boolean isDefault;
 }

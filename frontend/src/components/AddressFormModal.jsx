@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import * as shippingService from '../services/shippingService';
+import SearchableSelect from './SearchableSelect';
 
 const EMPTY = {
   label: '',
@@ -9,9 +11,11 @@ const EMPTY = {
   ward: '',
   district: '',
   city: '',
+  ghnProvinceId: '',
+  ghnDistrictId: '',
+  ghnWardCode: '',
   country: 'VN',
   postalCode: '',
-  region: '',
   isDefault: false,
 };
 
@@ -19,35 +23,61 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
   const { t } = useTranslation();
   const tf = (key) => t(`accountPage.addresses.form.${key}`);
   const [form, setForm] = useState(EMPTY);
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!open) return;
-    if (mode === 'edit' && initial) {
-      setForm({
-        label: initial.label ?? '',
-        recipient: initial.recipient ?? '',
-        phone: initial.phone ?? '',
-        line1: initial.line1 ?? '',
-        ward: initial.ward ?? '',
-        district: initial.district ?? '',
-        city: initial.city ?? '',
-        country: initial.country ?? 'VN',
-        postalCode: initial.postalCode ?? '',
-        region: initial.region ?? '',
-        // Default flag is changed via the dedicated /default endpoint, not via PATCH.
-        isDefault: false,
-      });
-    } else {
-      // Pre-fill from profile so first-address creation is fast.
-      setForm({
-        ...EMPTY,
-        recipient: defaults?.recipient ?? '',
-        phone: defaults?.phone ?? '',
-      });
-    }
+    if (!open) return undefined;
+    let cancelled = false;
     setError(null);
+
+    const base = (mode === 'edit' && initial) ? {
+      label: initial.label ?? '',
+      recipient: initial.recipient ?? '',
+      phone: initial.phone ?? '',
+      line1: initial.line1 ?? '',
+      ward: initial.ward ?? '',
+      district: initial.district ?? '',
+      city: initial.city ?? '',
+      ghnProvinceId: initial.ghnProvinceId != null ? String(initial.ghnProvinceId) : '',
+      ghnDistrictId: initial.ghnDistrictId != null ? String(initial.ghnDistrictId) : '',
+      ghnWardCode: initial.ghnWardCode ?? '',
+      country: initial.country ?? 'VN',
+      postalCode: initial.postalCode ?? '',
+      isDefault: false,
+    } : {
+      ...EMPTY,
+      recipient: defaults?.recipient ?? '',
+      phone: defaults?.phone ?? '',
+    };
+    setForm(base);
+    setDistricts([]);
+    setWards([]);
+
+    (async () => {
+      try {
+        const provs = await shippingService.getProvinces();
+        if (cancelled) return;
+        setProvinces(provs || []);
+        if (base.ghnProvinceId) {
+          const ds = await shippingService.getDistricts(base.ghnProvinceId);
+          if (!cancelled) setDistricts(ds || []);
+        }
+        if (base.ghnDistrictId) {
+          const ws = await shippingService.getWards(base.ghnDistrictId);
+          if (!cancelled) setWards(ws || []);
+        }
+      } catch {
+        if (!cancelled) setProvinces([]);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [open, mode, initial, defaults]);
 
   if (!open) return null;
@@ -57,8 +87,38 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const selectProvince = async (id) => {
+    const p = provinces.find((x) => String(x.id) === String(id));
+    setForm((f) => ({ ...f, ghnProvinceId: String(id), city: p?.name ?? '', ghnDistrictId: '', district: '', ghnWardCode: '', ward: '' }));
+    setDistricts([]);
+    setWards([]);
+    setLoadingDistricts(true);
+    try { setDistricts((await shippingService.getDistricts(id)) || []); }
+    catch { setDistricts([]); }
+    finally { setLoadingDistricts(false); }
+  };
+
+  const selectDistrict = async (id) => {
+    const d = districts.find((x) => String(x.id) === String(id));
+    setForm((f) => ({ ...f, ghnDistrictId: String(id), district: d?.name ?? '', ghnWardCode: '', ward: '' }));
+    setWards([]);
+    setLoadingWards(true);
+    try { setWards((await shippingService.getWards(id)) || []); }
+    catch { setWards([]); }
+    finally { setLoadingWards(false); }
+  };
+
+  const selectWard = (code) => {
+    const w = wards.find((x) => String(x.code) === String(code));
+    setForm((f) => ({ ...f, ghnWardCode: String(code), ward: w?.name ?? '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.ghnProvinceId || !form.ghnDistrictId || !form.ghnWardCode) {
+      setError(tf('selectLocationError'));
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
@@ -67,14 +127,15 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
         recipient: form.recipient.trim(),
         phone: form.phone.trim(),
         line1: form.line1.trim(),
-        ward: form.ward?.trim() || null,
-        district: form.district.trim(),
-        city: form.city.trim(),
+        ward: form.ward || null,
+        district: form.district,
+        city: form.city,
         country: form.country?.trim().toUpperCase() || 'VN',
         postalCode: form.postalCode?.trim() || null,
-        region: form.region || null,
+        ghnProvinceId: form.ghnProvinceId ? Number(form.ghnProvinceId) : null,
+        ghnDistrictId: form.ghnDistrictId ? Number(form.ghnDistrictId) : null,
+        ghnWardCode: form.ghnWardCode || null,
       };
-      // Only the create flow can set isDefault inline (PATCH ignores it intentionally).
       if (mode !== 'edit') payload.isDefault = !!form.isDefault;
       await onSubmit(payload);
       onClose();
@@ -110,38 +171,39 @@ export default function AddressFormModal({ open, mode, initial, defaults, onClos
           <FieldText label={tf('phone')} required type="tel" placeholder={tf('phonePlaceholder')}
                      value={form.phone} onChange={handleChange('phone')} maxLength={20} />
 
+          <SearchableSelect
+            label={tf('province')} required
+            value={form.ghnProvinceId} onChange={selectProvince}
+            options={provinces.map((p) => ({ value: p.id, label: p.name }))}
+            placeholder={tf('selectProvince')}
+          />
+
+          <FieldRow>
+            <SearchableSelect
+              label={tf('district')} required
+              value={form.ghnDistrictId} onChange={selectDistrict}
+              options={districts.map((d) => ({ value: d.id, label: d.name }))}
+              placeholder={tf('selectDistrict')}
+              loading={loadingDistricts} loadingPlaceholder={tf('loadingOptions')}
+              disabled={!form.ghnProvinceId || loadingDistricts}
+            />
+            <SearchableSelect
+              label={tf('ward')} required
+              value={form.ghnWardCode} onChange={selectWard}
+              options={wards.map((w) => ({ value: w.code, label: w.name }))}
+              placeholder={tf('selectWard')}
+              loading={loadingWards} loadingPlaceholder={tf('loadingOptions')}
+              disabled={!form.ghnDistrictId || loadingWards}
+            />
+          </FieldRow>
+
           <FieldText label={tf('line1')} required placeholder={tf('line1Placeholder')}
                      value={form.line1} onChange={handleChange('line1')} maxLength={255} />
 
           <FieldRow>
-            <FieldText label={tf('ward')} value={form.ward} onChange={handleChange('ward')} maxLength={100} />
-            <FieldText label={tf('district')} required value={form.district} onChange={handleChange('district')} maxLength={100} />
-          </FieldRow>
-
-          <FieldRow>
-            <FieldText label={tf('city')} required value={form.city} onChange={handleChange('city')} maxLength={100} />
             <FieldText label={tf('country')} placeholder={tf('countryPlaceholder')} value={form.country} onChange={handleChange('country')} maxLength={2} />
+            <FieldText label={tf('postalCode')} value={form.postalCode} onChange={handleChange('postalCode')} maxLength={20} />
           </FieldRow>
-
-          <div>
-            <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-black/50 mb-1.5">
-              {tf('regionLabel')}<span className="text-[#E83354]"> *</span>
-            </label>
-            <select
-              required
-              value={form.region}
-              onChange={handleChange('region')}
-              className="w-full border border-black/15 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-black transition-colors"
-            >
-              <option value="">{tf('selectRegion')}</option>
-              <option value="NORTH">{t('accountPage.addresses.region.NORTH')}</option>
-              <option value="CENTRAL">{t('accountPage.addresses.region.CENTRAL')}</option>
-              <option value="SOUTH">{t('accountPage.addresses.region.SOUTH')}</option>
-            </select>
-            <p className="text-[10px] text-black/40 mt-1">{tf('shippingFeeHint')}</p>
-          </div>
-
-          <FieldText label={tf('postalCode')} value={form.postalCode} onChange={handleChange('postalCode')} maxLength={20} />
 
           {mode !== 'edit' && (
             <label className="flex items-center gap-2 text-xs">
@@ -195,3 +257,4 @@ function FieldText({ label, required, ...rest }) {
     </div>
   );
 }
+

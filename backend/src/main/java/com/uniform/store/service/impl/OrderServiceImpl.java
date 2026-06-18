@@ -191,7 +191,13 @@ public class OrderServiceImpl implements OrderService {
             subtotal = subtotal.add(lineTotal);
         }
 
-        BigDecimal shippingCost = shippingService.fee(address.getRegion(), subtotal);
+        BigDecimal shippingCost;
+        if (address.getGhnDistrictId() != null && address.getGhnWardCode() != null) {
+            int totalQty = lines.stream().mapToInt(LineRequest::quantity).sum();
+            shippingCost = shippingService.ghnFee(address.getGhnDistrictId(), address.getGhnWardCode(), totalQty, subtotal);
+        } else {
+            shippingCost = shippingService.fee(address.getRegion(), subtotal);
+        }
         BigDecimal taxTotal = BigDecimal.ZERO;
         BigDecimal discountTotal = BigDecimal.ZERO;
         CouponService.CouponApplication couponApp = null;
