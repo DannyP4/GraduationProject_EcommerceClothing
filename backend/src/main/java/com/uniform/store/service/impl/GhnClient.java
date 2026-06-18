@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,7 +29,13 @@ public class GhnClient {
 
     private static final String MASTER = "/shiip/public-api/master-data";
     private static final String FEE = "/shiip/public-api/v2/shipping-order/fee";
+    private static final String CREATE = "/shiip/public-api/v2/shipping-order/create";
+    private static final String DETAIL = "/shiip/public-api/v2/shipping-order/detail";
     private static final Collator VI_COLLATOR = Collator.getInstance(Locale.forLanguageTag("vi"));
+
+    // Seller bears the GHN fee
+    private static final int PAYMENT_TYPE_SELLER = 1;
+    private static final String REQUIRED_NOTE = "KHONGCHOXEMHANG";
 
     private final RestClient ghnRestClient;
     private final GhnProperties props;
@@ -38,6 +45,10 @@ public class GhnClient {
         if (name == null || name.isBlank()) return true;
         String lower = name.toLowerCase(Locale.ROOT);
         return lower.contains("test") || lower.contains("alert") || name.matches(".*\\s\\d+$");
+    }
+
+    public static boolean isDeliveredStatus(String status) {
+        return "delivered".equalsIgnoreCase(status);
     }
 
     public boolean isEnabled() {
@@ -111,6 +122,84 @@ public class GhnClient {
         }
         return Optional.empty();
     }
+
+    public Optional<String> createOrder(CreateOrderCommand cmd) {
+        if (!isEnabled()) {
+            return Optional.empty();
+        }
+        int unitWeight = Math.max(props.getDefaultItemWeightGrams(), 1);
+        int totalWeight = cmd.items().stream().mapToInt(GhnItem::quantity).sum() * unitWeight;
+        List<Map<String, Object>> items = cmd.items().stream()
+                .map(i -> Map.<String, Object>of(
+                        "name", i.name(),
+                        "quantity", i.quantity(),
+                        "weight", unitWeight))
+                .toList();
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("payment_type_id", PAYMENT_TYPE_SELLER);
+        body.put("required_note", REQUIRED_NOTE);
+        body.put("to_name", cmd.toName());
+        body.put("to_phone", cmd.toPhone());
+        body.put("to_address", cmd.toAddress());
+        body.put("to_ward_code", cmd.toWardCode());
+        body.put("to_district_id", cmd.toDistrictId());
+        body.put("cod_amount", cmd.codAmount());
+        body.put("content", cmd.content());
+        body.put("weight", Math.max(totalWeight, 1));
+        body.put("length", 20);
+        body.put("width", 20);
+        body.put("height", 10);
+        body.put("service_type_id", props.getServiceTypeId());
+        body.put("items", items);
+
+        try {
+            JsonNode resp = ghnRestClient.post().uri(CREATE)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(JsonNode.class);
+            if (resp != null && resp.path("code").asInt() == 200) {
+                String code = resp.path("data").path("order_code").asText(null);
+                if (code != null && !code.isBlank()) {
+                    return Optional.of(code);
+                }
+            }
+            log.warn("GHN create-order unavailable: {}", resp != null ? resp.path("message").asText() : "null response");
+        } catch (RestClientException e) {
+            log.warn("GHN create-order call failed: {}", e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    public Optional<String> getOrderStatus(String orderCode) {
+        if (!isEnabled() || orderCode == null || orderCode.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            JsonNode resp = ghnRestClient.post().uri(DETAIL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("order_code", orderCode))
+                    .retrieve()
+                    .body(JsonNode.class);
+            if (resp != null && resp.path("code").asInt() == 200) {
+                String status = resp.path("data").path("status").asText(null);
+                if (status != null && !status.isBlank()) {
+                    return Optional.of(status);
+                }
+            }
+            log.warn("GHN detail unavailable for {}: {}", orderCode,
+                    resp != null ? resp.path("message").asText() : "null response");
+        } catch (RestClientException e) {
+            log.warn("GHN detail call failed for {}: {}", orderCode, e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    public record GhnItem(String name, int quantity) {}
+
+    public record CreateOrderCommand(int toDistrictId, String toWardCode, String toName, String toPhone,
+                                     String toAddress, long codAmount, String content, List<GhnItem> items) {}
 
     private JsonNode fetch(String uri) {
         try {

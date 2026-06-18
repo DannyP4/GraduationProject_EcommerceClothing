@@ -547,6 +547,16 @@
       "moreItems": "他 +{{n}} 点",
       "loadError": "注文を読み込めませんでした。"
     },
+    "timelineNote": {
+      "orderPlaced": "注文を受け付けました（{{provider}}）",
+      "paymentCaptured": "支払いを受領しました（{{provider}}）",
+      "storeUpdated": "ストアが更新しました",
+      "storeCancelled": "ストアによりキャンセルされました",
+      "cancelledByCustomer": "お客様によりキャンセルされました",
+      "autoCancelled": "自動キャンセル：時間内に支払いが完了しませんでした",
+      "autoDelivered": "配送完了（GHNが確認）",
+      "refunded": "返金が処理されました"
+    },
     "detail": {
       "loadError": "この注文を読み込めませんでした。",
       "backToOrders": "注文一覧へ戻る",
@@ -554,6 +564,8 @@
       "placed": "注文日 {{date}}",
       "items": "商品",
       "shippingAddress": "配送先住所",
+      "trackShipment": "配送を追跡",
+      "trackingCode": "追跡番号: {{code}}",
       "notes": "備考",
       "statusTimeline": "ステータス履歴",
       "summary": "概要",

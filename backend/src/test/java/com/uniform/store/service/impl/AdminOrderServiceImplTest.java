@@ -63,6 +63,7 @@ class AdminOrderServiceImplTest {
     @Mock PaymentRepository paymentRepository;
     @Mock CouponService couponService;
     @Mock ApplicationEventPublisher eventPublisher;
+    @Mock GhnClient ghnClient;
 
     AdminOrderServiceImpl adminOrderService;
 
@@ -77,7 +78,7 @@ class AdminOrderServiceImplTest {
         adminOrderService = new AdminOrderServiceImpl(
                 orderRepository, orderItemRepository, statusHistoryRepository,
                 variantRepository, userRepository, orderMapper, paymentRepository, couponService,
-                eventPublisher);
+                eventPublisher, ghnClient);
 
         adminUser = User.builder()
                 .email("admin@uniform.test")
@@ -239,6 +240,64 @@ class AdminOrderServiceImplTest {
     }
 
     @Test
+    void transition_toShipped_withGhnAddress_createsGhnOrderAndStoresCode() {
+        order.setStatus(OrderStatus.PROCESSING);
+        order.setGhnDistrictId(3440);
+        order.setGhnWardCode("13010");
+        when(orderRepository.findByOrderNumber("UNF-20260520-0001")).thenReturn(Optional.of(order));
+        when(userRepository.findByEmail("admin@uniform.test")).thenReturn(Optional.of(adminUser));
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(700L)).thenReturn(List.of(orderItem));
+        when(orderMapper.toAdminDetailDto(any(), any())).thenReturn(stubDetailDto(OrderStatus.SHIPPED, false));
+        when(ghnClient.isEnabled()).thenReturn(true);
+        when(ghnClient.createOrder(any())).thenReturn(Optional.of("LXAUDG"));
+
+        adminOrderService.transitionOrder("UNF-20260520-0001", OrderStatus.SHIPPED, null, "admin@uniform.test");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.SHIPPED);
+        assertThat(order.getGhnOrderCode()).isEqualTo("LXAUDG");
+
+        ArgumentCaptor<GhnClient.CreateOrderCommand> cap =
+                ArgumentCaptor.forClass(GhnClient.CreateOrderCommand.class);
+        verify(ghnClient).createOrder(cap.capture());
+        assertThat(cap.getValue().toDistrictId()).isEqualTo(3440);
+        assertThat(cap.getValue().toWardCode()).isEqualTo("13010");
+        assertThat(cap.getValue().items()).hasSize(1);
+    }
+
+    @Test
+    void transition_toShipped_ghnReturnsEmpty_stillTransitionsWithoutCode() {
+        order.setStatus(OrderStatus.PROCESSING);
+        order.setGhnDistrictId(3440);
+        order.setGhnWardCode("13010");
+        when(orderRepository.findByOrderNumber("UNF-20260520-0001")).thenReturn(Optional.of(order));
+        when(userRepository.findByEmail("admin@uniform.test")).thenReturn(Optional.of(adminUser));
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(700L)).thenReturn(List.of(orderItem));
+        when(orderMapper.toAdminDetailDto(any(), any())).thenReturn(stubDetailDto(OrderStatus.SHIPPED, false));
+        when(ghnClient.isEnabled()).thenReturn(true);
+        when(ghnClient.createOrder(any())).thenReturn(Optional.empty());
+
+        adminOrderService.transitionOrder("UNF-20260520-0001", OrderStatus.SHIPPED, null, "admin@uniform.test");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.SHIPPED);
+        assertThat(order.getGhnOrderCode()).isNull();
+    }
+
+    @Test
+    void transition_toShipped_noGhnAddress_skipsGhnCreate() {
+        order.setStatus(OrderStatus.PROCESSING);
+        when(orderRepository.findByOrderNumber("UNF-20260520-0001")).thenReturn(Optional.of(order));
+        when(userRepository.findByEmail("admin@uniform.test")).thenReturn(Optional.of(adminUser));
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(700L)).thenReturn(List.of(orderItem));
+        when(orderMapper.toAdminDetailDto(any(), any())).thenReturn(stubDetailDto(OrderStatus.SHIPPED, false));
+        when(ghnClient.isEnabled()).thenReturn(true);
+
+        adminOrderService.transitionOrder("UNF-20260520-0001", OrderStatus.SHIPPED, null, "admin@uniform.test");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.SHIPPED);
+        verify(ghnClient, never()).createOrder(any());
+    }
+
+    @Test
     void cancel_processingOrder_restoresStockAndAppendsAdminNote() {
         order.setStatus(OrderStatus.PROCESSING);
 
@@ -284,6 +343,38 @@ class AdminOrderServiceImplTest {
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(dto.getRequiresRefund()).as("requiresRefund flag set for captured payment").isTrue();
+    }
+
+    @Test
+    void markDeliveredFromGhn_shippedCod_setsDeliveredAndCapturesPayment() {
+        order.setStatus(OrderStatus.SHIPPED);
+        Payment cod = Payment.builder().order(order).provider(PaymentProvider.COD)
+                .status(PaymentStatus.PENDING).amount(new BigDecimal("500000")).currency("VND").build();
+        when(orderRepository.findById(700L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByOrderIdOrderByIdDesc(700L)).thenReturn(Optional.of(cod));
+
+        boolean result = adminOrderService.markDeliveredFromGhn(700L);
+
+        assertThat(result).isTrue();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(cod.getStatus()).isEqualTo(PaymentStatus.CAPTURED);
+        assertThat(cod.getPaidAt()).isNotNull();
+
+        ArgumentCaptor<OrderStatusHistory> cap = ArgumentCaptor.forClass(OrderStatusHistory.class);
+        verify(statusHistoryRepository).save(cap.capture());
+        assertThat(cap.getValue().getStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(cap.getValue().getChangedByUserId()).as("system actor, no user").isNull();
+    }
+
+    @Test
+    void markDeliveredFromGhn_notShipped_returnsFalseAndLeavesOrder() {
+        when(orderRepository.findById(700L)).thenReturn(Optional.of(order));
+
+        boolean result = adminOrderService.markDeliveredFromGhn(700L);
+
+        assertThat(result).isFalse();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        verify(statusHistoryRepository, never()).save(any());
     }
 
     private AdminOrderDetailDto stubDetailDto(OrderStatus status, boolean requiresRefund) {

@@ -93,6 +93,15 @@ public class Order extends BaseEntity {
     @Column(name = "shipping_region", length = 10)
     private ShippingRegion shippingRegion;
 
+    @Column(name = "ghn_order_code", length = 50)
+    private String ghnOrderCode;
+
+    @Column(name = "ghn_district_id")
+    private Integer ghnDistrictId;
+
+    @Column(name = "ghn_ward_code", length = 20)
+    private String ghnWardCode;
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 

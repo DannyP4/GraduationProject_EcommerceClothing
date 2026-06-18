@@ -21,4 +21,13 @@ class GhnClientTest {
         assertThat(GhnClient.isMockProvinceName("Bà Rịa - Vũng Tàu")).isFalse();
         assertThat(GhnClient.isMockProvinceName("Lào Cai")).isFalse();
     }
+
+    @Test
+    void isDeliveredStatus_onlyDeliveredCountsCaseInsensitive() {
+        assertThat(GhnClient.isDeliveredStatus("delivered")).isTrue();
+        assertThat(GhnClient.isDeliveredStatus("DELIVERED")).isTrue();
+        assertThat(GhnClient.isDeliveredStatus("delivering")).isFalse();
+        assertThat(GhnClient.isDeliveredStatus("ready_to_pick")).isFalse();
+        assertThat(GhnClient.isDeliveredStatus(null)).isFalse();
+    }
 }

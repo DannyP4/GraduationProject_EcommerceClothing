@@ -16,4 +16,6 @@ public interface AdminOrderService {
     AdminOrderDetailDto transitionOrder(String orderNumber, OrderStatus targetStatus, String note, String actorEmail);
 
     AdminOrderDetailDto cancelOrder(String orderNumber, String reason, String actorEmail);
+
+    boolean markDeliveredFromGhn(Long orderId);
 }

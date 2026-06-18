@@ -110,6 +110,10 @@ app:
       from-ward-code: ${GHN_FROM_WARD_CODE:}
       service-type-id: ${GHN_SERVICE_TYPE_ID:2}
       default-item-weight-grams: ${GHN_DEFAULT_ITEM_WEIGHT_GRAMS:500}
+      status-sync:
+        enabled: ${GHN_STATUS_SYNC_ENABLED:true}
+        interval-ms: ${GHN_STATUS_SYNC_INTERVAL_MS:900000}
+        initial-delay-ms: ${GHN_STATUS_SYNC_INITIAL_DELAY_MS:120000}
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
   mail:

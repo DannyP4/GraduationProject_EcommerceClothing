@@ -9,6 +9,8 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { formatPrice } from '../lib/format';
 import { variantLabel } from '../lib/labels';
 
+const GHN_TRACKING_URL = 'https://tracking.ghn.dev/?order_code=';
+
 export default function AccountOrderDetailPage() {
   const { t, i18n } = useTranslation();
   const { orderNumber } = useParams();
@@ -136,6 +138,20 @@ export default function AccountOrderDetailPage() {
               {order.shippingCity}
               {order.shippingPostalCode ? ` ${order.shippingPostalCode}` : ''} · {order.shippingCountry}
             </p>
+            {order.ghnOrderCode && (
+              <div className="mt-3 pt-3 border-t border-black/8">
+                <a
+                  href={`${GHN_TRACKING_URL}${order.ghnOrderCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] uppercase text-[#E83354] hover:underline"
+                >
+                  {t('accountPage.detail.trackShipment')}
+                  <span aria-hidden>↗</span>
+                </a>
+                <p className="text-[11px] text-black/50 mt-1">{t('accountPage.detail.trackingCode', { code: order.ghnOrderCode })}</p>
+              </div>
+            )}
             {order.notes && (
               <div className="mt-3 pt-3 border-t border-black/8">
                 <p className="text-[10px] font-bold tracking-wider uppercase text-black/40 mb-1">{t('accountPage.detail.notes')}</p>
@@ -154,7 +170,7 @@ export default function AccountOrderDetailPage() {
                       <StatusBadge status={h.status} />
                       <span className="text-[10px] text-black/40">{formatDate(h.changedAt)}</span>
                     </div>
-                    {h.note && <p className="text-xs text-black/60 mt-1">{h.note}</p>}
+                    {h.note && <p className="text-xs text-black/60 mt-1">{localizeTimelineNote(h.note, t)}</p>}
                   </div>
                 </li>
               ))}
@@ -293,6 +309,26 @@ function Banner({ type, children }) {
     ? 'border-green-600/30 bg-green-600/10 text-green-700'
     : 'border-[#E83354]/30 bg-[#E83354]/5 text-[#E83354]';
   return <div className={`border px-4 py-3 text-xs mb-4 ${cls}`}>{children}</div>;
+}
+
+function localizeTimelineNote(note, t) {
+  if (!note) return '';
+  const tn = (key, opts) => t(`accountPage.timelineNote.${key}`, opts);
+  const exact = {
+    'Cancelled by customer': 'cancelledByCustomer',
+    'Auto-cancelled: payment not completed in time': 'autoCancelled',
+    'Auto-updated: GHN reported delivered': 'autoDelivered',
+  };
+  if (exact[note]) return tn(exact[note]);
+
+  const placed = note.match(/^Order placed \((\w+)\)$/);
+  if (placed) return tn('orderPlaced', { provider: placed[1] });
+  if (/^VNPAY captured/i.test(note)) return tn('paymentCaptured', { provider: 'VNPAY' });
+  if (/^Stripe payment captured/i.test(note)) return tn('paymentCaptured', { provider: 'Stripe' });
+  if (note.startsWith('Transitioned by')) return tn('storeUpdated');
+  if (note.startsWith('Admin cancel by')) return tn('storeCancelled');
+  if (note.startsWith('Refunded by')) return tn('refunded');
+  return note;
 }
 
 function formatDate(iso) {

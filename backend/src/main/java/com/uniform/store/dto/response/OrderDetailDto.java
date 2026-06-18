@@ -43,6 +43,8 @@ public class OrderDetailDto {
     private String shippingPostalCode;
     private ShippingRegion shippingRegion;
 
+    private String ghnOrderCode;
+
     private String notes;
     private Instant placedAt;
 

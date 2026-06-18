@@ -547,6 +547,16 @@
       "moreItems": "+{{n}} sản phẩm khác",
       "loadError": "Không thể tải đơn hàng."
     },
+    "timelineNote": {
+      "orderPlaced": "Đã đặt đơn ({{provider}})",
+      "paymentCaptured": "Đã nhận thanh toán ({{provider}})",
+      "storeUpdated": "Cửa hàng cập nhật trạng thái",
+      "storeCancelled": "Cửa hàng đã hủy đơn",
+      "cancelledByCustomer": "Bạn đã hủy đơn",
+      "autoCancelled": "Tự động hủy: chưa thanh toán kịp thời",
+      "autoDelivered": "Đã giao thành công (GHN xác nhận)",
+      "refunded": "Đã xử lý hoàn tiền"
+    },
     "detail": {
       "loadError": "Không thể tải đơn hàng này.",
       "backToOrders": "Quay lại đơn hàng",
@@ -554,6 +564,8 @@
       "placed": "Đặt ngày {{date}}",
       "items": "Sản phẩm",
       "shippingAddress": "Địa chỉ giao hàng",
+      "trackShipment": "Theo dõi đơn hàng",
+      "trackingCode": "Mã vận đơn: {{code}}",
       "notes": "Ghi chú",
       "statusTimeline": "Tiến trình đơn hàng",
       "summary": "Tóm tắt",

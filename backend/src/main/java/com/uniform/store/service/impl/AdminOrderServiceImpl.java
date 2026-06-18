@@ -56,6 +56,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final PaymentRepository paymentRepository;
     private final CouponService couponService;
     private final ApplicationEventPublisher eventPublisher;
+    private final GhnClient ghnClient;
 
     @Override
     public PageResponse<AdminOrderSummaryDto> listOrders(AdminOrderFilter filter, Pageable pageable) {
@@ -104,6 +105,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 .build());
 
         if (targetStatus == OrderStatus.SHIPPED) {
+            createGhnShipment(order, provider);
             eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.SHIPPED));
         } else if (targetStatus == OrderStatus.DELIVERED) {
             eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.DELIVERED));
@@ -158,6 +160,37 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         return orderMapper.toAdminDetailDto(order, items);
     }
 
+    @Override
+    @Transactional
+    public boolean markDeliveredFromGhn(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        // May have moved past SHIPPED since the poll scan.
+        if (order == null || order.getStatus() != OrderStatus.SHIPPED) {
+            return false;
+        }
+        Payment payment = paymentRepository.findFirstByOrderIdOrderByIdDesc(orderId).orElse(null);
+
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
+
+        if (payment != null && payment.getProvider() == PaymentProvider.COD
+                && payment.getStatus() != PaymentStatus.CAPTURED) {
+            payment.setStatus(PaymentStatus.CAPTURED);
+            payment.setPaidAt(Instant.now());
+            paymentRepository.save(payment);
+        }
+
+        statusHistoryRepository.save(OrderStatusHistory.builder()
+                .order(order)
+                .status(OrderStatus.DELIVERED)
+                .note("Auto-updated: GHN reported delivered")
+                .changedByUserId(null)
+                .build());
+
+        eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.DELIVERED));
+        return true;
+    }
+
     private Specification<Order> buildSpec(AdminOrderFilter filter) {
         Specification<Order> spec = null;
         if (filter == null) return null;
@@ -172,6 +205,31 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         if (a == null) return b;
         if (b == null) return a;
         return a.and(b);
+    }
+
+    // Create GHN shipment
+    private void createGhnShipment(Order order, PaymentProvider provider) {
+        if (!ghnClient.isEnabled() || order.getGhnOrderCode() != null
+                || order.getGhnDistrictId() == null || order.getGhnWardCode() == null) {
+            return;
+        }
+        List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId());
+        if (items.isEmpty()) {
+            return;
+        }
+        long codAmount = provider == PaymentProvider.COD ? order.getGrandTotal().longValue() : 0L;
+        List<GhnClient.GhnItem> ghnItems = items.stream()
+                .map(oi -> new GhnClient.GhnItem(oi.getProductName(), oi.getQuantity()))
+                .toList();
+        GhnClient.CreateOrderCommand cmd = new GhnClient.CreateOrderCommand(
+                order.getGhnDistrictId(), order.getGhnWardCode(),
+                order.getShippingRecipient(), order.getShippingPhone(), order.getShippingLine1(),
+                codAmount, order.getOrderNumber(), ghnItems);
+
+        ghnClient.createOrder(cmd).ifPresent(code -> {
+            order.setGhnOrderCode(code);
+            orderRepository.save(order);
+        });
     }
 
     private User loadActor(String email) {

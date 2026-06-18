@@ -24,6 +24,10 @@ app:
   orders:
     auto-cancel:
       enabled: false
+  shipping:
+    ghn:
+      status-sync:
+        enabled: false
   ai:
     embeddings:
       auto-reconcile:

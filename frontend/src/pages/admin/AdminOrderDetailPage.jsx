@@ -5,6 +5,8 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import { goBack } from '../../lib/historyBack';
 import * as adminOrderService from '../../services/adminOrderService';
 
+const GHN_TRACKING_URL = 'https://tracking.ghn.dev/?order_code=';
+
 export default function AdminOrderDetailPage() {
   const { orderNumber } = useParams();
   const location = useLocation();
@@ -173,6 +175,19 @@ export default function AdminOrderDetailPage() {
               {order.shippingWard ? `, ${order.shippingWard}` : ''}, {order.shippingDistrict}, {order.shippingCity}
               {order.shippingPostalCode ? ` ${order.shippingPostalCode}` : ''} · {order.shippingCountry}
             </p>
+            {order.ghnOrderCode && (
+              <div className="mt-3 pt-3 border-t border-black/8">
+                <p className="text-[10px] font-bold tracking-wider uppercase text-black/40 mb-1">GHN Shipment</p>
+                <a
+                  href={`${GHN_TRACKING_URL}${order.ghnOrderCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-[#E83354] hover:underline"
+                >
+                  {order.ghnOrderCode} ↗
+                </a>
+              </div>
+            )}
             {order.notes && (
               <div className="mt-3 pt-3 border-t border-black/8">
                 <p className="text-[10px] font-bold tracking-wider uppercase text-black/40 mb-1">Customer Notes</p>

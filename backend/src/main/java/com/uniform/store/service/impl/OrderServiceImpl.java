@@ -226,6 +226,8 @@ public class OrderServiceImpl implements OrderService {
                 .shippingCountry(address.getCountry())
                 .shippingPostalCode(address.getPostalCode())
                 .shippingRegion(address.getRegion())
+                .ghnDistrictId(address.getGhnDistrictId())
+                .ghnWardCode(address.getGhnWardCode())
                 .notes(notes)
                 .placedAt(Instant.now())
                 .build();

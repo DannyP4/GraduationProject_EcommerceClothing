@@ -37,6 +37,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     List<Order> findByStatusInOrderByPlacedAtDescIdDesc(Collection<OrderStatus> statuses, Pageable pageable);
 
+    List<Order> findByStatusAndGhnOrderCodeIsNotNull(OrderStatus status);
+
     // Excludes COD, only unpaid online-gateway orders go stale.
     @Query("SELECT o.id FROM Order o WHERE o.status = :pending AND o.placedAt < :cutoff "
             + "AND EXISTS (SELECT 1 FROM Payment p WHERE p.order = o AND p.provider <> :cod) "
