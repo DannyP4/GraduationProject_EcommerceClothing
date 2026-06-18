@@ -18,6 +18,12 @@ import AcceptInvitePage from './pages/AcceptInvitePage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import ShopPage from './pages/ShopPage';
 import ProductPage from './pages/ProductPage';
+import CollectionsPage from './pages/CollectionsPage';
+import LookbookPage from './pages/LookbookPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import FaqPage from './pages/FaqPage';
+import ShippingReturnsPage from './pages/ShippingReturnsPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import TryOnPage from './pages/TryOnPage';
@@ -64,6 +70,12 @@ export default function App() {
             <Route path="/auth/oauth/callback" element={<OAuthCallbackPage />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/lookbook" element={<LookbookPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/shipping-returns" element={<ShippingReturnsPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route
               path="/checkout"

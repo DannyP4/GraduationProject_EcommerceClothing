@@ -57,3 +57,7 @@ volumes:
   mysql_data:
     driver: local
 # docker compose -f /docker-compose.yml up -d --build backend
+# docker compose up -d --build 
+# docker compose ps
+# docker compose up -d --build backend -> sua backend
+# docker compose up -d --force-recreate backend -> sua env 

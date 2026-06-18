@@ -1,7 +1,15 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 const SHOP_LINKS = ['newArrivals', 'tops', 'bottoms', 'outerwear', 'accessories', 'sale'];
-const INFO_LINKS = ['aboutUs', 'sustainability', 'sizeGuide', 'shippingReturns', 'faq', 'contact'];
+const INFO_LINKS = [
+  { key: 'aboutUs', to: '/about' },
+  { key: 'sustainability' },
+  { key: 'sizeGuide' },
+  { key: 'shippingReturns', to: '/shipping-returns' },
+  { key: 'faq', to: '/faq' },
+  { key: 'contact', to: '/contact' },
+];
 const LEGAL_LINKS = ['privacy', 'terms', 'cookies'];
 
 export default function FooterFull() {
@@ -35,7 +43,7 @@ export default function FooterFull() {
             <ul className="space-y-3">
               {SHOP_LINKS.map((k) => (
                 <li key={k}>
-                  <a href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${k}`)}</a>
+                  <Link to="/shop" className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${k}`)}</Link>
                 </li>
               ))}
             </ul>
@@ -45,9 +53,13 @@ export default function FooterFull() {
           <div>
             <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-5">{t('footer.info')}</h4>
             <ul className="space-y-3">
-              {INFO_LINKS.map((k) => (
-                <li key={k}>
-                  <a href="#" className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${k}`)}</a>
+              {INFO_LINKS.map(({ key, to }) => (
+                <li key={key}>
+                  {to ? (
+                    <Link to={to} className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${key}`)}</Link>
+                  ) : (
+                    <a href="#" className="text-sm text-white/60 hover:text-white transition-colors">{t(`footer.links.${key}`)}</a>
+                  )}
                 </li>
               ))}
             </ul>

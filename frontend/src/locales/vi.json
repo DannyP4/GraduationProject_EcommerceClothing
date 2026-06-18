@@ -1,4 +1,112 @@
 {
+  "pages": {
+    "about": {
+      "heroKicker": "Câu chuyện của chúng tôi",
+      "heroTitle": "Mặc đẹp mỗi ngày",
+      "heroSubtitle": "Vesta là thương hiệu thời trang hiện đại, kết hợp những món đồ tủ bền vững với công nghệ — bao gồm phòng thử đồ ảo giúp bạn thấy dáng mặc trước khi mua.",
+      "storyKicker": "Chúng tôi là ai",
+      "storyTitle": "Xoay quanh dáng mặc",
+      "storyP1": "Vesta khởi đầu từ một ý tưởng đơn giản: mua quần áo trực tuyến nên tự tin như khi đứng trước gương. Chúng tôi tuyển chọn những món đồ đa năng, may chỉn chu và đi kèm các công cụ giúp bạn bớt phải đoán.",
+      "storyP2": "Từ phòng thử đồ ảo đến giao hàng nhanh có theo dõi, mọi khâu đều được thiết kế để giúp bạn tìm được thứ vừa vặn — với cơ thể, phong cách và ngày của bạn.",
+      "valuesKicker": "Giá trị cốt lõi",
+      "valuesTitle": "Giá trị của chúng tôi",
+      "values": [
+        { "title": "Chất lượng có chọn lọc", "desc": "Mỗi món được chọn vì chất vải, dáng mặc và độ bền — ít hơn nhưng tốt hơn, để bạn dùng đi dùng lại." },
+        { "title": "Thử trước khi mua", "desc": "Thử đồ ảo bằng AI cho bạn xem trước trang phục trên chính mình, giảm đổi trả và phân vân." },
+        { "title": "Phục vụ minh bạch", "desc": "Giá rõ ràng, theo dõi đơn theo thời gian thực và chính sách đổi trả công bằng." }
+      ],
+      "projectKicker": "Đồ án tốt nghiệp",
+      "projectTitle": "Về đồ án này",
+      "projectBody": "Vesta là đồ án tốt nghiệp full-stack: nền tảng thương mại điện tử thời trang tích hợp thử đồ ảo bằng AI, xây dựng với React và Spring Boot.",
+      "authorLabel": "Tác giả",
+      "studentIdLabel": "Mã số sinh viên",
+      "schoolLabel": "Chương trình",
+      "school": "HEDSPI — Đại học Bách khoa Hà Nội",
+      "emailLabel": "Liên hệ"
+    },
+    "collections": {
+      "heroKicker": "Tuyển chọn",
+      "heroTitle": "Bộ sưu tập",
+      "heroSubtitle": "Mua theo tâm trạng và dịp — những tuyển chọn gom từ khắp tủ đồ.",
+      "shopNow": "Mua ngay",
+      "items": [
+        { "title": "Áo khoác", "desc": "Áo khoác & lớp mặc cho mọi mùa" },
+        { "title": "Áo sơ mi thường ngày", "desc": "Từ công sở chỉn chu đến cuối tuần thư thái" },
+        { "title": "Đầm", "desc": "Những thiết kế mặc là đẹp" },
+        { "title": "Denim", "desc": "Chiếc quần jeans bạn mặc mãi" }
+      ]
+    },
+    "lookbook": {
+      "heroKicker": "Editorial",
+      "heroTitle": "Lookbook",
+      "heroSubtitle": "Gợi ý phối đồ theo mùa — bắt trọn trên sàn và ngoài phố.",
+      "cta": "Mua theo set",
+      "items": [
+        { "caption": "Lớp lang phố thị" },
+        { "caption": "Tailoring mềm mại" },
+        { "caption": "Thoải mái đường phố" },
+        { "caption": "Set dạ tiệc" },
+        { "caption": "Đơn sắc" },
+        { "caption": "Ngày nghỉ" },
+        { "caption": "Câu chuyện denim" },
+        { "caption": "Cuối tuần" },
+        { "caption": "Chân dung phố" },
+        { "caption": "Quý ông lịch lãm" },
+        { "caption": "Sắc pastel" },
+        { "caption": "Sang trọng tối giản" }
+      ]
+    },
+    "contact": {
+      "heroKicker": "Chào bạn",
+      "heroTitle": "Liên hệ",
+      "heroSubtitle": "Thắc mắc về đơn hàng, size hay đổi trả? Chúng tôi luôn sẵn sàng hỗ trợ.",
+      "emailLabel": "Email",
+      "addressLabel": "Cửa hàng",
+      "address": "211 Khương Trung, Quận Thanh Xuân, Hà Nội, Việt Nam",
+      "hoursLabel": "Giờ làm việc",
+      "hours": "Thứ 2–6: 9:00 – 18:00\nThứ 7: 9:00 – 12:00",
+      "formTitle": "Gửi lời nhắn",
+      "nameLabel": "Họ tên",
+      "emailFieldLabel": "Email của bạn",
+      "messageLabel": "Nội dung",
+      "send": "Gửi lời nhắn",
+      "mailSubject": "Khách hàng cần hỗ trợ",
+      "mailHint": "Thao tác này mở ứng dụng email với nội dung đã điền sẵn."
+    },
+    "faq": {
+      "heroKicker": "Trợ giúp",
+      "heroTitle": "Câu hỏi thường gặp",
+      "heroSubtitle": "Giải đáp nhanh những điều khách hàng hay hỏi nhất.",
+      "items": [
+        { "q": "Thử đồ ảo hoạt động thế nào?", "a": "Mở một sản phẩm bất kỳ và bấm “Thử đồ”. Tải lên ảnh của bạn, AI sẽ ghép trang phục lên người để bạn xem trước dáng mặc trước khi mua." },
+        { "q": "Cửa hàng nhận những hình thức thanh toán nào?", "a": "Chúng tôi nhận Thanh toán khi nhận hàng (COD), VNPAY và thẻ quốc tế qua Stripe." },
+        { "q": "Phí giao hàng bao nhiêu?", "a": "Giao hàng do GHN đảm nhận, phí được tính theo địa chỉ của bạn khi thanh toán. Đơn từ 500.000₫ được miễn phí ship." },
+        { "q": "Theo dõi đơn hàng ở đâu?", "a": "Vào Tài khoản → Đơn hàng. Khi đơn được giao cho đơn vị vận chuyển, bạn sẽ thấy trạng thái và liên kết theo dõi GHN tự động cập nhật." },
+        { "q": "Tôi có hủy được đơn không?", "a": "Có — khi đơn còn ở trạng thái Chờ xử lý, bạn có thể tự hủy ở trang chi tiết đơn. Sau đó, hãy liên hệ để chúng tôi hỗ trợ." },
+        { "q": "Chính sách đổi trả thế nào?", "a": "Sản phẩm chưa qua sử dụng, còn tem mác có thể đổi trả trong vòng 7 ngày kể từ khi nhận hàng. Xem chi tiết tại trang Giao hàng & Đổi trả." }
+      ]
+    },
+    "shipping": {
+      "heroKicker": "Vận hành",
+      "heroTitle": "Giao hàng & Đổi trả",
+      "heroSubtitle": "Cách chúng tôi đưa đơn đến tay bạn — và xử lý khi có gì đó chưa ổn.",
+      "shipKicker": "Giao hàng",
+      "shipTitle": "Giao hàng",
+      "shipItems": [
+        { "title": "Giao toàn quốc qua GHN", "desc": "Chúng tôi giao khắp Việt Nam qua Giao Hàng Nhanh (GHN). Phí ship được tính theo địa chỉ nhận khi bạn thanh toán." },
+        { "title": "Miễn phí cho đơn từ 500.000₫", "desc": "Đơn có tạm tính từ 500.000₫ trở lên được miễn phí giao. Dưới mức đó áp dụng phí GHN theo khu vực." },
+        { "title": "Thời gian giao", "desc": "Hầu hết đơn đến trong 2–5 ngày làm việc tùy tỉnh thành. Bạn sẽ thấy ngày giao dự kiến khi đơn được gửi đi." },
+        { "title": "Theo dõi trực tiếp", "desc": "Sau khi đơn được gửi, trạng thái tự đồng bộ từ GHN và liên kết theo dõi hiện ở trang chi tiết đơn." }
+      ],
+      "returnKicker": "An tâm mua sắm",
+      "returnTitle": "Đổi trả",
+      "returnItems": [
+        { "title": "Đổi trả trong 7 ngày", "desc": "Sản phẩm chưa sử dụng, còn nguyên trạng và tem mác có thể đổi trả trong vòng 7 ngày kể từ khi nhận hàng." },
+        { "title": "Cách yêu cầu", "desc": "Liên hệ với chúng tôi kèm mã đơn và sản phẩm muốn đổi trả, chúng tôi sẽ hướng dẫn các bước tiếp theo." },
+        { "title": "Hoàn tiền", "desc": "Sau khi nhận và kiểm tra hàng trả, tiền được hoàn về phương thức thanh toán ban đầu. Đơn COD được hoàn qua chuyển khoản." }
+      ]
+    }
+  },
   "colors": {
     "beige": "Be", "black": "Đen", "blue": "Xanh dương", "brown": "Nâu",
     "burgundy": "Đỏ booc-đô", "charcoal": "Xám than", "coffee brown": "Nâu cà phê",

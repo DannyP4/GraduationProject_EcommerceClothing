@@ -18,9 +18,9 @@ import { colorLabel } from '../lib/labels';
 
 const NAV_LINKS = [
   { key: 'shop', to: '/shop' },
-  { key: 'collections', to: '#' },
-  { key: 'lookbook', to: '#' },
-  { key: 'about', to: '#' },
+  { key: 'collections', to: '/collections' },
+  { key: 'lookbook', to: '/lookbook' },
+  { key: 'about', to: '/about' },
 ];
 
 export default function NavbarGlass() {

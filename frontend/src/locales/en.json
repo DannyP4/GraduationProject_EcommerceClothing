@@ -1,4 +1,112 @@
 {
+  "pages": {
+    "about": {
+      "heroKicker": "Our Story",
+      "heroTitle": "We dress the everyday",
+      "heroSubtitle": "Vesta is a modern fashion house blending timeless wardrobe staples with technology — including a virtual try-on studio that lets you see the fit before you buy.",
+      "storyKicker": "Who we are",
+      "storyTitle": "Built around the fit",
+      "storyP1": "Vesta started with a simple idea: shopping for clothes online should feel as confident as standing in front of a mirror. We curate versatile, well-made pieces and pair them with tools that take the guesswork out of buying.",
+      "storyP2": "From our virtual try-on studio to fast, trackable delivery, every part of the experience is designed to help you find what fits — your body, your style, and your day.",
+      "valuesKicker": "What we stand for",
+      "valuesTitle": "Our values",
+      "values": [
+        { "title": "Considered quality", "desc": "Each piece is chosen for fabric, fit and longevity — fewer, better things you'll reach for again and again." },
+        { "title": "Try before you buy", "desc": "Our AI virtual try-on lets you preview garments on yourself, reducing returns and second-guessing." },
+        { "title": "Honest service", "desc": "Transparent pricing, real-time order tracking and a return policy that treats you fairly." }
+      ],
+      "projectKicker": "Academic project",
+      "projectTitle": "About this project",
+      "projectBody": "Vesta is a full-stack graduation thesis: a fashion e-commerce platform with an integrated AI virtual try-on, built with React and Spring Boot.",
+      "authorLabel": "Author",
+      "studentIdLabel": "Student ID",
+      "schoolLabel": "Program",
+      "school": "HEDSPI — Hanoi University of Science and Technology",
+      "emailLabel": "Contact"
+    },
+    "collections": {
+      "heroKicker": "Curated edits",
+      "heroTitle": "Collections",
+      "heroSubtitle": "Shop by mood and moment — edits pulled together from across the wardrobe.",
+      "shopNow": "Shop now",
+      "items": [
+        { "title": "Outerwear", "desc": "Jackets & layers for every season" },
+        { "title": "Everyday Shirts", "desc": "From crisp office to easy weekend" },
+        { "title": "Dresses", "desc": "Effortless one-and-done pieces" },
+        { "title": "Denim", "desc": "The jeans you'll live in" }
+      ]
+    },
+    "lookbook": {
+      "heroKicker": "Editorial",
+      "heroTitle": "Lookbook",
+      "heroSubtitle": "Styling inspiration from the season — captured on and off the street.",
+      "cta": "Shop the looks",
+      "items": [
+        { "caption": "Urban layers" },
+        { "caption": "Soft tailoring" },
+        { "caption": "Street ease" },
+        { "caption": "Evening edit" },
+        { "caption": "Monochrome" },
+        { "caption": "Off-duty" },
+        { "caption": "Denim story" },
+        { "caption": "Weekend" },
+        { "caption": "City portrait" },
+        { "caption": "Tailored man" },
+        { "caption": "Pastel mood" },
+        { "caption": "Quiet luxury" }
+      ]
+    },
+    "contact": {
+      "heroKicker": "Say hello",
+      "heroTitle": "Contact",
+      "heroSubtitle": "Questions about an order, sizing or a return? We're here to help.",
+      "emailLabel": "Email",
+      "addressLabel": "Studio",
+      "address": "211 Khương Trung, Thanh Xuân District, Hà Nội, Vietnam",
+      "hoursLabel": "Hours",
+      "hours": "Mon–Fri: 9:00 – 18:00\nSat: 9:00 – 12:00",
+      "formTitle": "Send a message",
+      "nameLabel": "Name",
+      "emailFieldLabel": "Your email",
+      "messageLabel": "Message",
+      "send": "Send message",
+      "mailSubject": "Customer enquiry",
+      "mailHint": "This opens your email app with the message ready to send."
+    },
+    "faq": {
+      "heroKicker": "Help",
+      "heroTitle": "FAQ",
+      "heroSubtitle": "Quick answers to the things customers ask most.",
+      "items": [
+        { "q": "How does the virtual try-on work?", "a": "Open any product and tap “Try on”. Upload a photo of yourself and our AI renders the garment on you, so you can preview the fit before buying." },
+        { "q": "What payment methods do you accept?", "a": "We accept Cash on Delivery (COD), VNPAY and international cards via Stripe." },
+        { "q": "How much is shipping?", "a": "Delivery is handled by GHN and the fee is calculated from your address at checkout. Orders over 500,000₫ ship free." },
+        { "q": "How do I track my order?", "a": "Go to Account → Orders. Once an order ships you'll see its status and a GHN tracking link that updates automatically." },
+        { "q": "Can I cancel my order?", "a": "Yes — while an order is still Pending you can cancel it yourself from the order detail page. After that, contact us and we'll help." },
+        { "q": "What is your return policy?", "a": "Unworn items with tags can be returned within 7 days of delivery. See the Shipping & Returns page for the full policy." }
+      ]
+    },
+    "shipping": {
+      "heroKicker": "Logistics",
+      "heroTitle": "Shipping & Returns",
+      "heroSubtitle": "How we get your order to you — and what happens if something isn't right.",
+      "shipKicker": "Delivery",
+      "shipTitle": "Shipping",
+      "shipItems": [
+        { "title": "Nationwide delivery via GHN", "desc": "We ship across Vietnam through Giao Hàng Nhanh (GHN). Your shipping fee is calculated from your delivery address at checkout." },
+        { "title": "Free over 500,000₫", "desc": "Orders with a subtotal of 500,000₫ or more ship free. Below that, the GHN rate for your area applies." },
+        { "title": "Delivery time", "desc": "Most orders arrive within 2–5 business days depending on your province. You'll see an estimated delivery date once the order ships." },
+        { "title": "Live tracking", "desc": "After your order ships, the status syncs automatically from GHN and a tracking link appears on your order detail page." }
+      ],
+      "returnKicker": "Peace of mind",
+      "returnTitle": "Returns",
+      "returnItems": [
+        { "title": "7-day returns", "desc": "Unworn items in original condition with tags attached can be returned within 7 days of delivery." },
+        { "title": "How to request", "desc": "Contact us with your order number and the items you'd like to return, and we'll guide you through the next steps." },
+        { "title": "Refunds", "desc": "Once your return is received and checked, refunds are issued to your original payment method. COD orders are refunded by bank transfer." }
+      ]
+    }
+  },
   "colors": {
     "beige": "Beige", "black": "Black", "blue": "Blue", "brown": "Brown",
     "burgundy": "Burgundy", "charcoal": "Charcoal", "coffee brown": "Coffee Brown",
