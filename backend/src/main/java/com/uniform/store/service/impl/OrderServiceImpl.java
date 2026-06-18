@@ -44,6 +44,7 @@ import com.uniform.store.service.ShippingService;
 import com.uniform.store.service.StripeService;
 import com.uniform.store.service.VnpayService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +89,9 @@ public class OrderServiceImpl implements OrderService {
     private final OrderCouponRepository orderCouponRepository;
     private final ShippingService shippingService;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Value("${app.orders.pending-timeout-minutes:30}")
+    private long pendingTimeoutMinutes;
 
     @Override
     @Transactional
@@ -343,6 +348,30 @@ public class OrderServiceImpl implements OrderService {
                     "Only PENDING orders can be cancelled. Current status: " + order.getStatus());
         }
 
+        List<OrderItem> items = cancelPendingOrder(order, "Cancelled by customer", user.getId());
+        return orderMapper.toDetailDto(order, items);
+    }
+
+    @Override
+    public List<Long> findStalePendingOrderIds() {
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(pendingTimeoutMinutes));
+        return orderRepository.findStalePendingPayableOrderIds(
+                OrderStatus.PENDING, cutoff, PaymentProvider.COD, PaymentStatus.CAPTURED);
+    }
+
+    @Override
+    @Transactional
+    public boolean autoCancelStaleOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        // May have been paid or cancelled since the candidate query.
+        if (order == null || order.getStatus() != OrderStatus.PENDING) {
+            return false;
+        }
+        cancelPendingOrder(order, "Auto-cancelled: payment not completed in time", null);
+        return true;
+    }
+
+    private List<OrderItem> cancelPendingOrder(Order order, String note, Long changedByUserId) {
         List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId());
 
         List<Long> variantIds = items.stream().map(oi -> oi.getVariant().getId()).distinct().toList();
@@ -354,7 +383,7 @@ public class OrderServiceImpl implements OrderService {
             ProductVariant v = variants.get(oi.getVariant().getId());
             if (v == null) {
                 throw new IllegalStateException(
-                        "Variant " + oi.getVariant().getId() + " not found while cancelling order " + orderNumber);
+                        "Variant " + oi.getVariant().getId() + " not found while cancelling order " + order.getOrderNumber());
             }
             v.setStockQuantity(v.getStockQuantity() + oi.getQuantity());
         }
@@ -366,8 +395,8 @@ public class OrderServiceImpl implements OrderService {
         statusHistoryRepository.save(OrderStatusHistory.builder()
                 .order(order)
                 .status(OrderStatus.CANCELLED)
-                .note("Cancelled by customer")
-                .changedByUserId(user.getId())
+                .note(note)
+                .changedByUserId(changedByUserId)
                 .build());
 
         eventPublisher.publishEvent(new OrderEmailEvent(order.getId(), OrderEmailType.CANCELLED));
@@ -378,7 +407,7 @@ public class OrderServiceImpl implements OrderService {
             paymentRepository.save(p);
         });
 
-        return orderMapper.toDetailDto(order, items);
+        return items;
     }
 
     private User loadUser(String email) {

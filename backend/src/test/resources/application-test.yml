@@ -21,6 +21,9 @@ app:
     enabled: false
   catalog-seed:
     enabled: false
+  orders:
+    auto-cancel:
+      enabled: false
   ai:
     embeddings:
       auto-reconcile:

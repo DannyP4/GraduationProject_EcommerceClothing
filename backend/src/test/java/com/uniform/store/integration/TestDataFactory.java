@@ -309,6 +309,57 @@ public class TestDataFactory {
     }
 
     @Transactional
+    public Order createPendingOrder(User customer, ProductVariant variant, int qty,
+                                    PaymentProvider provider, PaymentStatus paymentStatus, Instant placedAt) {
+        long n = COUNTER.incrementAndGet();
+        BigDecimal unit = variant.getProduct().getBasePrice();
+        BigDecimal subtotal = unit.multiply(BigDecimal.valueOf(qty)).setScale(4, RoundingMode.HALF_UP);
+        BigDecimal shipping = new BigDecimal("30000").setScale(4, RoundingMode.HALF_UP);
+        BigDecimal grand = subtotal.add(shipping).setScale(4, RoundingMode.HALF_UP);
+
+        Order order = orderRepository.save(Order.builder()
+                .orderNumber(String.format("PEND-%05d", 10000 + n))
+                .user(customer)
+                .status(OrderStatus.PENDING)
+                .subtotal(subtotal)
+                .discountTotal(BigDecimal.ZERO.setScale(4))
+                .shippingCost(shipping)
+                .taxTotal(BigDecimal.ZERO.setScale(4))
+                .grandTotal(grand)
+                .currency("VND")
+                .shippingRecipient(customer.getFullName())
+                .shippingPhone("0900000000")
+                .shippingLine1("1 Test St")
+                .shippingDistrict("Quan 1")
+                .shippingCity("HCM")
+                .shippingCountry("VN")
+                .placedAt(placedAt)
+                .build());
+
+        orderItemRepository.save(OrderItem.builder()
+                .order(order)
+                .variant(variant)
+                .productName(variant.getProduct().getName())
+                .variantLabel(variant.getSize() + " / " + variant.getColor())
+                .sku(variant.getSku())
+                .unitPrice(unit)
+                .quantity(qty)
+                .lineTotal(unit.multiply(BigDecimal.valueOf(qty)).setScale(4, RoundingMode.HALF_UP))
+                .build());
+
+        paymentRepository.save(Payment.builder()
+                .order(order)
+                .provider(provider)
+                .providerTxnId(provider.name().toLowerCase() + "-pend-" + n)
+                .amount(grand)
+                .currency("VND")
+                .status(paymentStatus)
+                .build());
+
+        return order;
+    }
+
+    @Transactional
     public Coupon saveCoupon(Coupon coupon) {
         return couponRepository.save(coupon);
     }

@@ -121,6 +121,12 @@ app:
   notifications:
     retention-days: ${NOTIF_RETENTION_DAYS:90}
     cleanup-cron: ${NOTIF_CLEANUP_CRON:0 0 3 * * *}
+  orders:
+    pending-timeout-minutes: ${ORDER_PENDING_TIMEOUT_MINUTES:30}
+    auto-cancel:
+      enabled: ${ORDER_AUTO_CANCEL_ENABLED:true}
+      interval-ms: ${ORDER_AUTO_CANCEL_INTERVAL_MS:300000}
+      initial-delay-ms: ${ORDER_AUTO_CANCEL_INITIAL_DELAY_MS:60000}
   fx:
     vnd-usd-rate: 0.0000385
     provider: HARDCODED

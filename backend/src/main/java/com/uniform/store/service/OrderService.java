@@ -8,6 +8,8 @@ import com.uniform.store.dto.response.PageResponse;
 import com.uniform.store.dto.response.PlaceOrderResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface OrderService {
 
     PlaceOrderResponse placeOrder(String email, PlaceOrderRequest req, String clientIp);
@@ -19,4 +21,8 @@ public interface OrderService {
     OrderDetailDto getOrder(String email, String orderNumber, String locale);
 
     OrderDetailDto cancelOrder(String email, String orderNumber);
+
+    List<Long> findStalePendingOrderIds();
+
+    boolean autoCancelStaleOrder(Long orderId);
 }
