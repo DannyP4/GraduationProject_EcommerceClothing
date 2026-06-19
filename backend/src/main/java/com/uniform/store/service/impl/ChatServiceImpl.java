@@ -11,6 +11,7 @@ import com.uniform.store.service.EmbeddingService;
 import com.uniform.store.service.ProductService;
 import com.uniform.store.service.RetrievalService;
 import com.uniform.store.service.RetrievalService.ScoredProduct;
+import com.uniform.store.service.SizeAdvisor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ public class ChatServiceImpl implements ChatService {
 
     private static final String TOOL_SIMILAR = "find_similar_products";
     private static final String TOOL_FBT = "find_frequently_bought_together";
+    private static final String TOOL_SIZE = "recommend_clothing_size";
     private static final int MAX_TOOL_ROUNDS = 3;
     private static final int REC_LIMIT = 6;
 
@@ -58,7 +60,7 @@ public class ChatServiceImpl implements ChatService {
 
         String systemInstruction = buildSystemInstruction(ragProducts, hasMatch);
         List<GeminiChatClient.Content> contents = buildContents(request.getHistory(), message);
-        List<GeminiChatClient.FunctionDecl> tools = recommendationTools();
+        List<GeminiChatClient.FunctionDecl> tools = chatTools();
 
         // Products surfaced by a tool call are the recommendations to show; they take precedence over RAG hits.
         LinkedHashMap<Long, ProductSummaryDto> toolProducts = new LinkedHashMap<>();
@@ -92,6 +94,9 @@ public class ChatServiceImpl implements ChatService {
     }
 
     private ToolOutcome dispatchTool(GeminiChatClient.FunctionCall call, String locale) {
+        if (TOOL_SIZE.equals(call.name())) {
+            return adviseSize(call);
+        }
         String productName = call.args() == null ? null : call.args().path("product_name").asText(null);
         if (productName == null || productName.isBlank()) {
             return new ToolOutcome(List.of(), Map.of("error", "Missing product_name."));
@@ -119,6 +124,21 @@ public class ChatServiceImpl implements ChatService {
         return new ToolOutcome(recs, response);
     }
 
+    private ToolOutcome adviseSize(GeminiChatClient.FunctionCall call) {
+        int height = call.args() == null ? 0 : call.args().path("height_cm").asInt(0);
+        int weight = call.args() == null ? 0 : call.args().path("weight_kg").asInt(0);
+        if (height <= 0 || weight <= 0) {
+            return new ToolOutcome(List.of(), Map.of("error", "Need positive height_cm and weight_kg."));
+        }
+        SizeAdvisor.SizeAdvice advice = SizeAdvisor.recommend(height, weight);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("recommended_size", advice.recommended());
+        response.put("comfortable_size", advice.comfortable());
+        response.put("height_cm", height);
+        response.put("weight_kg", weight);
+        return new ToolOutcome(List.of(), response);
+    }
+
     private Long resolveProductId(String productName) {
         float[] vector = embeddingService.embedQuery(productName);
         List<ScoredProduct> hits = retrievalService.search(vector, 1);
@@ -127,20 +147,29 @@ public class ChatServiceImpl implements ChatService {
         return best.score() >= props.getScoreThreshold() ? best.productId() : null;
     }
 
-    private List<GeminiChatClient.FunctionDecl> recommendationTools() {
-        Map<String, Object> params = Map.of(
+    private List<GeminiChatClient.FunctionDecl> chatTools() {
+        Map<String, Object> productParams = Map.of(
                 "type", "object",
                 "properties", Map.of("product_name", Map.of(
                         "type", "string",
                         "description", "Name of the product the user referred to.")),
                 "required", List.of("product_name"));
+        Map<String, Object> sizeParams = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "height_cm", Map.of("type", "integer", "description", "Height in centimeters; convert '1m70' to 170."),
+                        "weight_kg", Map.of("type", "integer", "description", "Weight in kilograms.")),
+                "required", List.of("height_cm", "weight_kg"));
         return List.of(
                 new GeminiChatClient.FunctionDecl(TOOL_SIMILAR,
                         "Find products similar to a specific product the user named. Use when the user asks for items similar to, like, or alternatives to a named product.",
-                        params),
+                        productParams),
                 new GeminiChatClient.FunctionDecl(TOOL_FBT,
                         "Find products frequently bought together with a specific product the user named. Use when the user asks what pairs with or goes with a named product.",
-                        params));
+                        productParams),
+                new GeminiChatClient.FunctionDecl(TOOL_SIZE,
+                        "Recommend a clothing size from the user's height and weight. Use whenever the user mentions their height and/or weight. Returns a snug size and a one-size-up comfortable size.",
+                        sizeParams));
     }
 
     private List<GeminiChatClient.Content> buildContents(List<ChatTurn> history, String message) {
@@ -173,6 +202,7 @@ public class ChatServiceImpl implements ChatService {
                 .append("- If the question is unrelated to shopping at Vesta, politely decline and steer back to fashion.\n")
                 .append("- Refer to products by their exact name. Be concise, friendly, and helpful.\n")
                 .append("- When the user asks for items similar to, or frequently bought with, a SPECIFIC named product, call the matching tool to fetch real recommendations instead of guessing.\n")
+                .append("- If the user shares their height and/or weight, call recommend_clothing_size and state the suggested size before listing products.\n")
                 .append("- If the user states a price limit (e.g. \"under 500k\"), only present products within it. ")
                 .append("If none of the products below qualify, say so honestly instead of suggesting pricier ones.\n")
                 .append("- Reply in the SAME language as the user's latest message.\n")

@@ -180,5 +180,25 @@ class ChatServiceImplTest {
         verify(productService, never()).getSimilarProducts(anyLong(), anyInt(), anyString());
     }
 
+    @Test
+    void chat_heightWeight_advisesSize_keepsRagProducts() {
+        when(retrievalService.search(any(), anyInt())).thenReturn(List.of(new ScoredProduct(7L, 0.8)));
+        when(productService.getSummariesByIds(anyList(), anyString())).thenReturn(List.of(summary(7L, "Red Tee")));
+        GeminiChatClient.FunctionCall sizeCall = new GeminiChatClient.FunctionCall(
+                "recommend_clothing_size",
+                MAPPER.createObjectNode().put("height_cm", 170).put("weight_kg", 65), "fc-size");
+        when(chatClient.generateWithTools(anyString(), anyList(), anyList()))
+                .thenReturn(new GeminiChatClient.Reply(null, sizeCall))
+                .thenReturn(text("Size L for a snug fit, XL for comfort. Here are red tees under 500k:"));
+
+        ChatRequest req = new ChatRequest();
+        req.setMessage("cao 1m70 nang 65kg, ao do duoi 500k?");
+        ChatResponse resp = service.chat(req, "vi");
+
+        assertThat(resp.getReply()).contains("Size L");
+        assertThat(resp.getProducts()).extracting(ProductSummaryDto::getName).containsExactly("Red Tee");
+        verify(productService, never()).getSimilarProducts(anyLong(), anyInt(), anyString());
+    }
+
     private static final String TOOL_SIMILAR = "find_similar_products";
 }
