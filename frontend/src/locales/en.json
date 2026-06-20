@@ -333,7 +333,12 @@
     "failedGeneric": "Something went wrong. Please try again.",
     "timeout": "This is taking longer than usual. Please try again.",
     "tryAgain": "Try again",
-    "uploadFailed": "Photo upload failed"
+    "uploadFailed": "Photo upload failed",
+    "error": {
+      "invalidInput": "We couldn't detect a person in your photo. Please upload a clear, front-facing photo of a person.",
+      "noResult": "We couldn't generate a try-on for this photo. Please try a different one.",
+      "unavailable": "Virtual try-on is temporarily unavailable. Please try again in a moment."
+    }
   },
   "product": {
     "notAvailable": "Product not available",

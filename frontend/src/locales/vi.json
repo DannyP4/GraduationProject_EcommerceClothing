@@ -330,7 +330,12 @@
     "failedGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại.",
     "timeout": "Quá trình này lâu hơn bình thường. Vui lòng thử lại.",
     "tryAgain": "Thử lại",
-    "uploadFailed": "Tải ảnh lên thất bại"
+    "uploadFailed": "Tải ảnh lên thất bại",
+    "error": {
+      "invalidInput": "Không nhận diện được người trong ảnh. Vui lòng tải lên ảnh chân dung rõ nét, chính diện.",
+      "noResult": "Không tạo được ảnh mặc thử cho ảnh này. Vui lòng thử ảnh khác.",
+      "unavailable": "Tính năng mặc thử ảo tạm thời không khả dụng. Vui lòng thử lại sau giây lát."
+    }
   },
   "product": {
     "notAvailable": "Sản phẩm không khả dụng",

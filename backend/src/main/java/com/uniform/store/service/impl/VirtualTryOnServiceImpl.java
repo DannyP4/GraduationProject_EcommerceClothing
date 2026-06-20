@@ -42,7 +42,7 @@ public class VirtualTryOnServiceImpl implements VirtualTryOnService {
     @Override
     public TryOnJobDto createJob(String userEmail, TryOnCreateRequest req) {
         if (!provider.isEnabled()) {
-            throw new TryOnException("Virtual try-on is not available right now");
+            throw new TryOnException("UNAVAILABLE");
         }
 
         User user = userRepository.findByEmail(userEmail)

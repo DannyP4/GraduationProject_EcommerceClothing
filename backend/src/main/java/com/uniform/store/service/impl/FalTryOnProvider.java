@@ -23,6 +23,8 @@ import java.util.Map;
 public class FalTryOnProvider implements VirtualTryOnProvider {
 
     private static final String PROVIDER_NAME = "FAL_FASHN";
+    private static final String ERR_INVALID_INPUT = "INVALID_INPUT";
+    private static final String ERR_NO_RESULT = "NO_RESULT";
 
     private final RestClient falRestClient;
     private final FalProperties props;
@@ -66,7 +68,8 @@ public class FalTryOnProvider implements VirtualTryOnProvider {
                 last = e;
                 int status = e.getStatusCode().value();
                 if (status != 429 && status < 500) {
-                    throw new BadRequestException("Try-on request rejected (" + status + "): " + e.getResponseBodyAsString());
+                    log.warn("fal.ai submit rejected ({}): {}", status, e.getResponseBodyAsString());
+                    throw new BadRequestException(ERR_INVALID_INPUT);
                 }
                 if (attempt < 3) sleep(attempt * 1000L);
             } catch (RestClientException e) {
@@ -80,7 +83,7 @@ public class FalTryOnProvider implements VirtualTryOnProvider {
     @Override
     public PollResult poll(String responseUrl) {
         if (responseUrl == null || responseUrl.isBlank()) {
-            return new PollResult(TryOnStatus.FAILED, null, "Missing response url");
+            return new PollResult(TryOnStatus.FAILED, null, ERR_NO_RESULT);
         }
 
         String statusText;
@@ -93,7 +96,8 @@ public class FalTryOnProvider implements VirtualTryOnProvider {
         } catch (RestClientResponseException e) {
             int code = e.getStatusCode().value();
             if (code != 429 && code < 500) {
-                return new PollResult(TryOnStatus.FAILED, null, "Status check rejected (" + code + ")");
+                log.warn("fal.ai status check rejected ({}): {}", code, e.getResponseBodyAsString());
+                return new PollResult(TryOnStatus.FAILED, null, ERR_INVALID_INPUT);
             }
             throw new TryOnException("fal.ai status check failed (" + code + ")");
         } catch (RestClientException e) {
@@ -111,17 +115,18 @@ public class FalTryOnProvider implements VirtualTryOnProvider {
                     .body(JsonNode.class);
             JsonNode images = result == null ? null : result.path("images");
             if (images == null || !images.isArray() || images.isEmpty()) {
-                return new PollResult(TryOnStatus.FAILED, null, "fal.ai returned no images");
+                return new PollResult(TryOnStatus.FAILED, null, ERR_NO_RESULT);
             }
             String url = images.get(0).path("url").asText("");
             if (url.isBlank()) {
-                return new PollResult(TryOnStatus.FAILED, null, "fal.ai result missing image url");
+                return new PollResult(TryOnStatus.FAILED, null, ERR_NO_RESULT);
             }
             return new PollResult(TryOnStatus.SUCCEEDED, url, null);
         } catch (RestClientResponseException e) {
             int code = e.getStatusCode().value();
             if (code != 429 && code < 500) {
-                return new PollResult(TryOnStatus.FAILED, null, "Result fetch rejected (" + code + ")");
+                log.warn("fal.ai result fetch rejected ({}): {}", code, e.getResponseBodyAsString());
+                return new PollResult(TryOnStatus.FAILED, null, ERR_INVALID_INPUT);
             }
             throw new TryOnException("fal.ai result fetch failed (" + code + ")");
         } catch (RestClientException e) {

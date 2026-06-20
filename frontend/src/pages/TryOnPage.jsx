@@ -10,6 +10,16 @@ import { formatPrice } from '../lib/format';
 const POLL_INTERVAL_MS = 2500;
 const MAX_POLLS = 60; // ~150s before giving up
 
+function tryOnErrorText(t, code) {
+  switch (code) {
+    case 'INVALID_INPUT': return t('tryOn.error.invalidInput');
+    case 'NO_RESULT': return t('tryOn.error.noResult');
+    case 'UNAVAILABLE': return t('tryOn.error.unavailable');
+    case 'TIMEOUT': return t('tryOn.timeout');
+    default: return t('tryOn.failedGeneric');
+  }
+}
+
 export default function TryOnPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -83,8 +93,8 @@ export default function TryOnPage() {
       const { url } = await uploadTryOnPhoto(file);
       setUserImageUrl(url);
       setJob(null);
-    } catch (err) {
-      toast.error(err.message || t('tryOn.uploadFailed'));
+    } catch {
+      toast.error(t('tryOn.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -105,7 +115,7 @@ export default function TryOnPage() {
       }
       if (attempts >= MAX_POLLS) {
         setBusy(false);
-        setError(t('tryOn.timeout'));
+        setError('TIMEOUT');
         return;
       }
       poll.current.timer = setTimeout(tick, POLL_INTERVAL_MS);
@@ -127,8 +137,8 @@ export default function TryOnPage() {
       startPolling(j.id);
     } catch (err) {
       setBusy(false);
-      setError(err.message || t('tryOn.failedGeneric'));
-      toast.error(err.message || t('tryOn.failedGeneric'));
+      setError(err.message || 'FAILED');
+      toast.error(tryOnErrorText(t, err.message));
     }
   };
 
@@ -274,7 +284,7 @@ export default function TryOnPage() {
           {phase === 'error' && (
             <div className="bg-[#E83354]/10 border border-[#E83354]/40 py-12 px-6 text-center">
               <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-[#E83354] mb-2">{t('tryOn.failedTitle')}</p>
-              <p className="text-[12px] text-white/60 mb-6">{error || job?.errorMessage || t('tryOn.failedGeneric')}</p>
+              <p className="text-[12px] text-white/60 mb-6">{tryOnErrorText(t, job?.errorMessage || error)}</p>
               <button
                 onClick={tryAgain}
                 className="text-[11px] font-bold tracking-[0.15em] uppercase border border-white/40 px-5 py-3 hover:bg-white hover:text-black transition-all"

@@ -65,7 +65,8 @@ class FalTryOnProviderTest {
                 .andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY).body("bad image"));
 
         assertThatThrownBy(() -> provider.submit("u", "g", "auto", null))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("INVALID_INPUT");
         server.verify();
     }
 
@@ -108,6 +109,21 @@ class FalTryOnProviderTest {
         VirtualTryOnProvider.PollResult r = provider.poll(RESPONSE_URL);
 
         assertThat(r.status()).isEqualTo(TryOnStatus.FAILED);
+        assertThat(r.error()).isEqualTo("NO_RESULT");
+        server.verify();
+    }
+
+    @Test
+    void poll_resultRejected_returnsInvalidInput() {
+        server.expect(requestTo(RESPONSE_URL + "/status"))
+                .andRespond(withSuccess("{\"status\":\"COMPLETED\"}", APPLICATION_JSON));
+        server.expect(requestTo(RESPONSE_URL))
+                .andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY).body("{\"detail\":\"no person detected\"}"));
+
+        VirtualTryOnProvider.PollResult r = provider.poll(RESPONSE_URL);
+
+        assertThat(r.status()).isEqualTo(TryOnStatus.FAILED);
+        assertThat(r.error()).isEqualTo("INVALID_INPUT");
         server.verify();
     }
 }
