@@ -7,7 +7,7 @@ export const captchaEnabled = Boolean(SITE_KEY);
 export default function CaptchaWidget({ onToken }) {
   if (!SITE_KEY) return null;
   return (
-    <div className="my-1">
+    <div className="my-1 vesta-turnstile-widget">
       <Turnstile
         sitekey={SITE_KEY}
         theme="light"

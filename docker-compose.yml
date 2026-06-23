@@ -46,6 +46,7 @@ services:
       args:
         # Baked into the JS bundle at build time
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY}
     container_name: uniform_frontend
     depends_on:
       - backend
@@ -61,3 +62,4 @@ volumes:
 # docker compose ps
 # docker compose up -d --build backend -> sua backend
 # docker compose up -d --force-recreate backend -> sua env 
+# docker compose logs -f --tail=100 backend
