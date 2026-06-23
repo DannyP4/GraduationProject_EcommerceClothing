@@ -1,151 +1,274 @@
-# Vesta — Fashion E-Commerce with AI Virtual Try-On
+# VESTA - Fashion E-Commerce Platform
 
-Vesta is a full-stack fashion e-commerce platform with an integrated **AI virtual try-on** studio,
-a **RAG chatbot**, in-house **recommendations**, real-time **GHN shipping**, and multi-language
-storefront (English / Vietnamese / Japanese). Built as a graduation thesis project.
+VESTA is a full-stack fashion e-commerce platform built as a graduation thesis project. It combines a modern storefront, an admin back office, online payments, shipping integration, multilingual catalog support, AI-assisted shopping, and virtual try-on.
 
-> **Stack:** React 18 + Vite · Spring Boot 3.3 (Java 21) · MySQL 8 + Flyway · Docker
+> Stack: React 18 + Vite, Spring Boot 3.3 + Java 21, MySQL 8, Docker Compose
 
----
+## Highlights
 
-## Features
+### Storefront
 
-**Storefront**
-- Catalog with categories, brands, variants (size/color), sale pricing and coupons
-- Locale-aware search, product reviews (verified purchase), wishlist
-- Cart & checkout — **COD, VNPAY, Stripe**; order lifecycle with status timeline
-- **GHN shipping**: real-time fee at checkout, auto-create waybill on ship, auto status sync (→ delivered)
-- **AI virtual try-on** (fal.ai FASHN): preview garments on your own photo
-- **RAG chatbot** + **recommendations** (similar items + frequently-bought-together), powered by Gemini
-- Accounts: register/login, email verification, password reset, Google OAuth, address book, notifications
+- Product catalog with categories, brands, variants, sale pricing, coupons, wishlist, reviews, cart, checkout, and order tracking.
+- Payment options: COD, VNPay sandbox, and Stripe sandbox.
+- GHN shipping integration for shipping fee calculation and waybill-related order flow.
+- Account features: register, login, JWT authentication, Google OAuth, password reset, address book, and notifications.
+- Cloudflare Turnstile support for login, registration, and password recovery flows.
+- Multilingual storefront with English, Vietnamese, and Japanese resources.
 
-**Admin**
-- Dashboard & statistics, product / variant / image management, categories & brands
-- Orders (transition, cancel, refund), users, reviews moderation, coupons
-- DeepL-assisted catalog translation tooling
+### AI Features
 
-**Platform**
-- i18n EN / VI / JA (react-i18next + full DeepL catalog translation)
-- Cloudinary image CDN, Sentry monitoring, Cloudflare Turnstile captcha
+- Virtual try-on through fal.ai FASHN.
+- Gemini-based shopping assistant with retrieval-augmented generation.
+- Product recommendations, including similar products and frequently bought together suggestions.
+- DeepL-assisted catalog translation workflow.
 
----
+### Admin
+
+- Dashboard and statistics.
+- Product, variant, image, category, and brand management.
+- Order management with status transitions, cancellation, refund-related flow, and timeline.
+- User, review, coupon, and notification management.
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Frontend | React 18, Vite 5, React Router, Tailwind CSS, react-i18next, axios |
-| Backend | Java 21, Spring Boot 3.3, Spring Security (JWT), Spring Data JPA / Hibernate, Flyway, Lombok |
-| Database | MySQL 8 (schema via Flyway, `ddl-auto=none`) |
-| AI / Integrations | Google Gemini (embeddings, chatbot, recommendations), fal.ai (virtual try-on), GHN (shipping), VNPAY & Stripe (payments), DeepL (translation), Cloudinary (images), Google OAuth, Cloudflare Turnstile, Sentry |
-| Tooling | Docker & Docker Compose, Maven |
+| Backend | Java 21, Spring Boot 3.3, Spring Security, JWT, Spring Data JPA, Hibernate, Flyway, Lombok |
+| Database | MySQL 8 |
+| AI and integrations | Gemini, fal.ai, DeepL, GHN, VNPay, Stripe, Cloudinary, Google OAuth, Cloudflare Turnstile, Sentry |
+| DevOps | Docker, Docker Compose, Caddy, GitHub Actions |
 
----
+## Architecture
 
-## Prerequisites
+The application is organized as a client-server system:
 
-- **Docker Desktop** (runs MySQL)
-- **JDK 21** + **Maven 3.9+**
-- **Node.js 20 LTS** (npm)
-- **Git Bash** (Windows) for the `source .env` step below
+- `frontend`: React SPA built by Vite and served by Nginx in Docker.
+- `backend`: Spring Boot REST API served under `/api`.
+- `mysql`: MySQL 8 database with persistent Docker volume.
+- `caddy`: reverse proxy on the production server, responsible for HTTPS and access logging.
 
-Free ports: `3307` (MySQL), `8080` (backend), `5173` (frontend dev).
-
----
-
-## Getting Started (development)
-
-```bash
-# 1. Clone
-git clone <repo-url> vesta && cd vesta
-
-# 2. Environment — copy the template and fill in values
-cp .env.example .env
-#    A minimal local run only needs DB_*, JWT_SECRET and VITE_API_BASE_URL.
-#    External integrations (VNPAY/Stripe/FAL/Gemini/GHN/Mail/OAuth) are feature-gated
-#    and degrade gracefully when their keys are blank.
-
-# 3. Start MySQL (Docker)
-docker compose up -d mysql
-docker compose ps                 # wait until "healthy" (~60s)
-
-# 4. Backend  (Git Bash — loads every var from .env into the environment)
-cd backend
-set -a; source ../.env; set +a
-export CAPTCHA_ENABLED=false MAIL_ENABLED=false      # smooth local demo
-mvn spring-boot:run               # http://localhost:8080/api
-
-# 5. Frontend
-cd ../frontend
-npm install
-npm run dev                       # http://localhost:5173
-```
-
-On first start against an empty database the backend **bootstraps itself**:
-Flyway builds the schema → `CatalogSeedRunner` loads ~2,000 products from
-`backend/src/main/resources/db/seed/catalog_seed.sql` → `AdminBootstrap` creates the admin →
-demo orders are seeded. No database dump is required.
-
-**Default admin:** `longpd1911@gmail.com` / `longan47`
-
-> The single root `.env` configures **both** backend and frontend — Vite reads it via `envDir: '../'`.
-> There is no separate `frontend/.env`.
-
-### Full Docker stack (alternative)
-
-```bash
-docker compose up -d --build      # mysql + backend + frontend
-```
-Frontend on `http://localhost:5173`, backend on `:8080`. (Slower first build; the dev flow above
-is recommended for day-to-day work.)
-
----
-
-## Testing
-
-```bash
-cd backend
-set -a; source ../.env; set +a
-mvn test                          # runs against a separate `uniform_store_test` DB
-```
-Integration tests use a dedicated test database and never touch dev data.
-
----
+For production deployment, Caddy receives public HTTPS traffic and forwards requests to the frontend container. The frontend container serves static assets and proxies API calls to the backend container. MySQL is only exposed inside the Docker network and should not be public.
 
 ## Project Structure
 
-```
+```text
 .
-├── backend/                  # Spring Boot API
-│   └── src/main/
-│       ├── java/com/uniform/store/   # controllers, services, entities, bootstrap, events
-│       └── resources/
-│           ├── db/migration/         # Flyway migrations (V1…Vn)
-│           └── db/seed/catalog_seed.sql   # catalog seed (auto-loaded when empty)
-├── frontend/                 # React + Vite SPA
-│   └── src/{pages,components,services,locales}
-├── docker/mysql-init/        # MySQL container init scripts
-├── docker-compose.yml
-└── .env.example
+|-- backend/                  # Spring Boot API
+|   `-- src/main/
+|       |-- java/com/uniform/store/
+|       `-- resources/
+|           |-- db/migration/ # Flyway migrations
+|           `-- db/seed/      # Seed resources
+|-- frontend/                 # React + Vite SPA
+|   `-- src/
+|       |-- components/
+|       |-- context/
+|       |-- hooks/
+|       |-- lib/
+|       |-- locales/
+|       |-- pages/
+|       `-- services/
+|-- docker/mysql-init/        # Optional MySQL init scripts for Docker
+|-- .github/workflows/        # GitHub Actions deployment workflow
+|-- docker-compose.yml
+|-- .env.example
+`-- README.md
 ```
 
----
+## Prerequisites
 
-## Configuration
+- Docker Desktop or Docker Engine with Docker Compose
+- JDK 21 and Maven 3.9+
+- Node.js 20 LTS and npm
+- Git
 
-All configuration lives in the root `.env` (see `.env.example` for the full list). Notable groups:
+Default local ports:
 
-- **Core (required):** `DB_*`, `JWT_SECRET`, `VITE_API_BASE_URL`
-- **Payments:** `VNPAY_*`, `STRIPE_*`
-- **AI:** `GEMINI_API_KEY` (chatbot/recommendations), `FAL_KEY` (virtual try-on)
-- **Shipping:** `GHN_API_KEY`, `GHN_SHOP_ID`, `GHN_FROM_DISTRICT_ID`
-- **Media / i18n / auth:** `CLOUDINARY_*`, `DEEPL_API_KEY`, `GOOGLE_OAUTH_*`, `TURNSTILE_*`, `MAIL_*`
-- **Feature flags:** `CATALOG_SEED_ENABLED`, `CAPTCHA_ENABLED`, `MAIL_ENABLED`, `GHN_STATUS_SYNC_ENABLED`
+| Service | Port |
+| --- | --- |
+| Frontend dev server | `5173` |
+| Frontend Docker/Nginx | `FRONTEND_PORT` |
+| Backend | `8080` |
+| MySQL host mapping | `3307` |
 
----
+## Environment Configuration
+
+Copy the sample environment file and fill in local values:
+
+```bash
+cp .env.example .env
+```
+
+Important groups:
+
+- Core: `SPRING_PROFILES_ACTIVE`, `DB_*`, `SERVER_PORT`, `BACKEND_PORT`, `JWT_SECRET`
+- Frontend: `FRONTEND_PORT`, `VITE_API_BASE_URL`, `VITE_TURNSTILE_SITE_KEY`
+- URL and CORS: `APP_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ALLOWED_ORIGINS`
+- Payments: `VNPAY_*`, `STRIPE_*`
+- AI: `GEMINI_API_KEY`, `FAL_KEY`
+- Shipping: `GHN_API_KEY`, `GHN_SHOP_ID`, `GHN_FROM_DISTRICT_ID`
+- Media and auth: `CLOUDINARY_*`, `GOOGLE_OAUTH_*`, `DEEPL_API_KEY`, `TURNSTILE_SECRET_KEY`, `MAIL_*`
+- Feature flags: `CAPTCHA_ENABLED`, `MAIL_ENABLED`, `GHN_STATUS_SYNC_ENABLED`, `TRYON_ENABLED`
+
+Notes:
+
+- Never commit `.env`, API keys, private keys, or production database dumps.
+- `VITE_*` variables are baked into the frontend bundle at build time. Rebuild the frontend after changing them.
+- `VITE_TURNSTILE_SITE_KEY` is public and belongs to the frontend. `TURNSTILE_SECRET_KEY` must stay server-side.
+
+## Local Development
+
+Start MySQL:
+
+```bash
+docker compose up -d mysql
+docker compose ps
+```
+
+Run the backend:
+
+```bash
+cd backend
+set -a; source ../.env; set +a
+mvn spring-boot:run
+```
+
+Run the frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs at `http://localhost:5173`, and the backend API runs at `http://localhost:8080/api`.
+
+For a smoother local demo, external verification can be disabled in `.env`:
+
+```env
+CAPTCHA_ENABLED=false
+MAIL_ENABLED=false
+```
+
+## Docker Workflow
+
+Build and run the full stack:
+
+```bash
+docker compose up -d --build
+```
+
+Rebuild only the backend:
+
+```bash
+docker compose up -d --build backend
+```
+
+Rebuild only the frontend:
+
+```bash
+docker compose up -d --build frontend
+```
+
+Recreate backend after changing backend-only environment variables:
+
+```bash
+docker compose up -d --force-recreate backend
+```
+
+View logs:
+
+```bash
+docker compose logs -f --tail=100 backend
+docker compose logs -f --tail=100 frontend
+docker compose logs -f --tail=100 mysql
+```
+
+## Testing
+
+Run backend tests:
+
+```bash
+cd backend
+set -a; source ../.env; set +a
+mvn test
+```
+
+The automated test suite covers service-level business logic and integration paths for core flows such as authentication, orders, pricing, coupons, payments, and external-provider boundaries.
+
+## Deployment
+
+The project supports deployment to an Ubuntu-based virtual machine using Docker Compose and Caddy.
+
+Production-like deployment includes:
+
+- Docker Compose services: `mysql`, `backend`, `frontend`
+- Caddy reverse proxy for HTTPS and access logs
+- Environment variables stored in `.env` on the server
+- GitHub Actions workflow for automated deployment
+
+The GitHub Actions workflow is defined in:
+
+```text
+.github/workflows/deploy-ec2.yml
+```
+
+Required GitHub Actions secrets:
+
+```text
+EC2_HOST
+EC2_USER
+EC2_SSH_KEY
+```
+
+Deployment flow:
+
+```text
+git push origin main
+-> GitHub Actions starts
+-> SSH into the server
+-> git pull --ff-only origin main
+-> docker compose up -d --build backend frontend
+-> docker compose ps
+```
+
+The public website URL is intentionally omitted from this README.
+
+## Operations
+
+Useful production commands:
+
+```bash
+cd ~/GraduationProject_EcommerceClothing
+docker compose ps
+docker compose logs -f --tail=100 backend
+docker compose logs -f --tail=100 frontend
+```
+
+Create a database backup:
+
+```bash
+mkdir -p ~/backups
+docker compose exec mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > ~/backups/vesta_$(date +%Y%m%d_%H%M%S).sql
+```
+
+Avoid deleting Docker volumes unless a database reset is intentional:
+
+```bash
+# Dangerous: removes the MySQL data volume
+docker compose down -v
+```
+
+## Security Notes
+
+- Keep production secrets only in `.env` on the server or in GitHub Actions secrets.
+- Do not expose MySQL to the public Internet in production.
+- Keep SSH restricted where possible. If GitHub-hosted runners need SSH access, use a dedicated deploy key and monitor access.
+- Rotate leaked or accidentally shared API keys immediately.
+- Frontend variables starting with `VITE_` are visible in the browser and must not contain secrets.
 
 ## Author
 
-**Phạm Đức Long** — **20225737**
+Pham Duc Long - 20225737  
 HEDSPI, Hanoi University of Science and Technology
-✉️ longpd1911@gmail.com
