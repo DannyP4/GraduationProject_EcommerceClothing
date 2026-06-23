@@ -1,0 +1,62 @@
+name: Deploy VESTA to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: vesta-ec2-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          echo "Checking required secrets..."
+          : "${EC2_HOST:?Missing EC2_HOST secret}"
+          : "${EC2_USER:?Missing EC2_USER secret}"
+          : "${EC2_SSH_KEY:?Missing EC2_SSH_KEY secret}"
+
+          if [[ "$EC2_SSH_KEY" != *"BEGIN OPENSSH PRIVATE KEY"* ]]; then
+            echo "::error::EC2_SSH_KEY must contain the private OpenSSH key, not the fingerprint or public key."
+            exit 1
+          fi
+
+          echo "Preparing SSH key..."
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/vesta_ec2_deploy_key
+          chmod 600 ~/.ssh/vesta_ec2_deploy_key
+
+          echo "Scanning EC2 host key..."
+          ssh-keyscan -T 20 -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+          echo "Testing SSH connection..."
+          ssh -o BatchMode=yes -o ConnectTimeout=20 -i ~/.ssh/vesta_ec2_deploy_key "$EC2_USER@$EC2_HOST" "echo ssh-ok"
+
+          echo "Deploying application..."
+          ssh -i ~/.ssh/vesta_ec2_deploy_key "$EC2_USER@$EC2_HOST" 'bash -se' << 'EOF'
+            set -euo pipefail
+
+            cd "$HOME/GraduationProject_EcommerceClothing"
+            echo "Pulling latest code..."
+            git fetch origin main
+            git pull --ff-only origin main
+
+            echo "Rebuilding and restarting Docker services..."
+            docker compose up -d --build backend frontend
+            docker image prune -f
+
+            echo "Current service status:"
+            docker compose ps
+          EOF
