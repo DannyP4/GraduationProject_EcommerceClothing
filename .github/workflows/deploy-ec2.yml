@@ -49,9 +49,10 @@ jobs:
             set -euo pipefail
 
             cd "$HOME/GraduationProject_EcommerceClothing"
-            echo "Pulling latest code..."
+            echo "Syncing source code with origin/main..."
             git fetch origin main
-            git pull --ff-only origin main
+            git reset --hard origin/main
+            git clean -fd
 
             echo "Rebuilding and restarting Docker services..."
             docker compose up -d --build backend frontend
