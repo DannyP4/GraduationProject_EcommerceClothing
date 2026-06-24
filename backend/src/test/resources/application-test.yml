@@ -2,6 +2,8 @@ db:
   name: uniform_store_test
 
 spring:
+  cache:
+    type: simple
   jpa:
     show-sql: false
   flyway:

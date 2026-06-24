@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.EvictCatalogCaches;
 import com.uniform.store.dto.request.CreateProductImageRequest;
 import com.uniform.store.dto.request.UpdateProductImageRequest;
 import com.uniform.store.dto.response.AdminProductImageDto;
@@ -47,6 +48,7 @@ public class AdminProductImageServiceImpl implements AdminProductImageService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminProductImageDto create(Long productId, CreateProductImageRequest req) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
@@ -86,6 +88,7 @@ public class AdminProductImageServiceImpl implements AdminProductImageService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminProductImageDto update(Long imageId, UpdateProductImageRequest req) {
         ProductImage image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductImage", imageId));
@@ -116,6 +119,7 @@ public class AdminProductImageServiceImpl implements AdminProductImageService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public void delete(Long imageId) {
         ProductImage image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductImage", imageId));

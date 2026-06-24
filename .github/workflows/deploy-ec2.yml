@@ -55,7 +55,7 @@ jobs:
             git clean -fd
 
             echo "Rebuilding and restarting Docker services..."
-            docker compose up -d --build backend frontend
+            docker compose up -d --build --remove-orphans backend frontend
             docker image prune -f
 
             echo "Current service status:"

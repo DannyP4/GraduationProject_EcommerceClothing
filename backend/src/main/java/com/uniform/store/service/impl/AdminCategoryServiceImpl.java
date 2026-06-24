@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.EvictCatalogCaches;
 import com.uniform.store.dto.request.CreateCategoryRequest;
 import com.uniform.store.dto.request.UpdateCategoryRequest;
 import com.uniform.store.dto.response.AdminCategoryDto;
@@ -139,6 +140,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminCategoryDto create(CreateCategoryRequest req) {
         if (categoryRepository.existsBySlug(req.getSlug())) {
             throw new BadRequestException("Category slug already exists: " + req.getSlug());
@@ -162,6 +164,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminCategoryDto update(Long id, UpdateCategoryRequest req) {
         Category c = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", id));
@@ -196,6 +199,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public void delete(Long id) {
         Category c = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", id));

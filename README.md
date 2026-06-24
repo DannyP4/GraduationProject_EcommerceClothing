@@ -2,7 +2,7 @@
 
 VESTA is a full-stack fashion e-commerce platform built as a graduation thesis project. It combines a modern storefront, an admin back office, online payments, shipping integration, multilingual catalog support, AI-assisted shopping, and virtual try-on.
 
-> Stack: React 18 + Vite, Spring Boot 3.3 + Java 21, MySQL 8, Docker Compose
+> Stack: React 18 + Vite, Spring Boot 3.3 + Java 21, MySQL 8, Redis, Docker Compose
 
 ## Highlights
 
@@ -35,7 +35,7 @@ VESTA is a full-stack fashion e-commerce platform built as a graduation thesis p
 | --- | --- |
 | Frontend | React 18, Vite 5, React Router, Tailwind CSS, react-i18next, axios |
 | Backend | Java 21, Spring Boot 3.3, Spring Security, JWT, Spring Data JPA, Hibernate, Flyway, Lombok |
-| Database | MySQL 8 |
+| Database and cache | MySQL 8, Redis 7 |
 | AI and integrations | Gemini, fal.ai, DeepL, GHN, VNPay, Stripe, Cloudinary, Google OAuth, Cloudflare Turnstile, Sentry |
 | DevOps | Docker, Docker Compose, Caddy, GitHub Actions |
 
@@ -46,9 +46,10 @@ The application is organized as a client-server system:
 - `frontend`: React SPA built by Vite and served by Nginx in Docker.
 - `backend`: Spring Boot REST API served under `/api`.
 - `mysql`: MySQL 8 database with persistent Docker volume.
+- `redis`: internal Redis cache for catalog and recommendation queries.
 - `caddy`: reverse proxy on the production server, responsible for HTTPS and access logging.
 
-For production deployment, Caddy receives public HTTPS traffic and forwards requests to the frontend container. The frontend container serves static assets and proxies API calls to the backend container. MySQL is only exposed inside the Docker network and should not be public.
+For production deployment, Caddy receives public HTTPS traffic and forwards requests to the frontend container. The frontend container serves static assets and proxies API calls to the backend container. MySQL and Redis are internal Docker services and should not be public.
 
 ## Project Structure
 
@@ -91,6 +92,7 @@ Default local ports:
 | Frontend Docker/Nginx | `FRONTEND_PORT` |
 | Backend | `8080` |
 | MySQL host mapping | `3307` |
+| Redis | `6379` |
 
 ## Environment Configuration
 
@@ -103,6 +105,7 @@ cp .env.example .env
 Important groups:
 
 - Core: `SPRING_PROFILES_ACTIVE`, `DB_*`, `SERVER_PORT`, `BACKEND_PORT`, `JWT_SECRET`
+- Cache: `SPRING_CACHE_TYPE`, `REDIS_HOST`, `REDIS_PORT`
 - Frontend: `FRONTEND_PORT`, `VITE_API_BASE_URL`, `VITE_TURNSTILE_SITE_KEY`
 - URL and CORS: `APP_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ALLOWED_ORIGINS`
 - Payments: `VNPAY_*`, `STRIPE_*`
@@ -119,10 +122,10 @@ Notes:
 
 ## Local Development
 
-Start MySQL:
+Start MySQL and Redis:
 
 ```bash
-docker compose up -d mysql
+docker compose up -d mysql redis
 docker compose ps
 ```
 
@@ -183,6 +186,7 @@ View logs:
 docker compose logs -f --tail=100 backend
 docker compose logs -f --tail=100 frontend
 docker compose logs -f --tail=100 mysql
+docker compose logs -f --tail=100 redis
 ```
 
 ## Testing
@@ -203,7 +207,7 @@ The project supports deployment to an Ubuntu-based virtual machine using Docker 
 
 Production-like deployment includes:
 
-- Docker Compose services: `mysql`, `backend`, `frontend`
+- Docker Compose services: `mysql`, `redis`, `backend`, `frontend`
 - Caddy reverse proxy for HTTPS and access logs
 - Environment variables stored in `.env` on the server
 - GitHub Actions workflow for automated deployment
@@ -228,8 +232,8 @@ Deployment flow:
 git push origin main
 -> GitHub Actions starts
 -> SSH into the server
--> git pull --ff-only origin main
--> docker compose up -d --build backend frontend
+-> git reset --hard origin/main
+-> docker compose up -d --build --remove-orphans backend frontend
 -> docker compose ps
 ```
 
@@ -263,7 +267,7 @@ docker compose down -v
 ## Security Notes
 
 - Keep production secrets only in `.env` on the server or in GitHub Actions secrets.
-- Do not expose MySQL to the public Internet in production.
+- Do not expose MySQL or Redis to the public Internet in production.
 - Keep SSH restricted where possible. If GitHub-hosted runners need SSH access, use a dedicated deploy key and monitor access.
 - Rotate leaked or accidentally shared API keys immediately.
 - Frontend variables starting with `VITE_` are visible in the browser and must not contain secrets.

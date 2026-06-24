@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.CacheNames;
 import com.uniform.store.dto.response.CategoryDto;
 import com.uniform.store.entity.Category;
 import com.uniform.store.entity.CategoryTranslation;
@@ -7,6 +8,7 @@ import com.uniform.store.repository.CategoryRepository;
 import com.uniform.store.repository.CategoryTranslationRepository;
 import com.uniform.store.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryTranslationRepository categoryTranslationRepository;
 
     @Override
+    @Cacheable(cacheNames = CacheNames.CATEGORIES, key = "#locale")
     public List<CategoryDto> listCategories(String locale) {
         List<Category> categories = categoryRepository.findByIsActiveTrueOrderBySortOrderAscNameAsc();
         if (categories.isEmpty()) {

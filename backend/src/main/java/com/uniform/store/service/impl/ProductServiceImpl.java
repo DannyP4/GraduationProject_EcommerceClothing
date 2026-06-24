@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.CacheNames;
 import com.uniform.store.dto.request.ProductFilterRequest;
 import com.uniform.store.dto.response.PageResponse;
 import com.uniform.store.dto.response.ProductDetailDto;
@@ -28,6 +29,7 @@ import com.uniform.store.service.PricingService;
 import com.uniform.store.service.ProductService;
 import com.uniform.store.service.RetrievalService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -69,6 +71,8 @@ public class ProductServiceImpl implements ProductService {
     private final RetrievalService retrievalService;
 
     @Override
+    @Cacheable(cacheNames = CacheNames.PRODUCT_LISTS,
+            key = "T(com.uniform.store.config.CacheKeyUtils).productList(#filter, #pageable, #locale)")
     public PageResponse<ProductSummaryDto> listProducts(ProductFilterRequest filter, Pageable pageable, String locale) {
         ProductSort sort = filter.getSort() != null ? filter.getSort() : ProductSort.NEWEST;
         int safeSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
@@ -119,6 +123,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheNames.SIMILAR_PRODUCTS,
+            key = "T(com.uniform.store.config.CacheKeyUtils).recommendation(#productId, #limit, #locale)")
     public List<ProductSummaryDto> getSimilarProducts(Long productId, int limit, String locale) {
         int k = clampRecommendationLimit(limit);
         if (k == 0) {
@@ -131,6 +137,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheNames.FREQUENTLY_BOUGHT_TOGETHER,
+            key = "T(com.uniform.store.config.CacheKeyUtils).recommendation(#productId, #limit, #locale)")
     public List<ProductSummaryDto> getFrequentlyBoughtTogether(Long productId, int limit, String locale) {
         int k = clampRecommendationLimit(limit);
         if (k == 0) {
@@ -141,6 +149,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheNames.SIMILAR_TO_SET,
+            key = "T(com.uniform.store.config.CacheKeyUtils).similarSet(#seedIds, #limit, #locale)")
     public List<ProductSummaryDto> getSimilarToProducts(List<Long> seedIds, int limit, String locale) {
         int k = clampRecommendationLimit(limit);
         if (k == 0 || seedIds == null || seedIds.isEmpty()) {

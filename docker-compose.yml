@@ -1,8 +1,20 @@
-# docker compose up -d mysql
+# docker compose up -d mysql redis
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: vesta_redis
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+  # docker exec vesta_redis redis-cli ping
+
   mysql:
     image: mysql:8.0
-    container_name: uniform_mysql
+    container_name: vesta_mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
@@ -26,15 +38,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: uniform_backend
+    container_name: vesta_backend
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     # Config from .env; DB URL overridden for compose network
     env_file:
       - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "${BACKEND_PORT}:${SERVER_PORT}"
     restart: unless-stopped
@@ -47,7 +63,7 @@ services:
         # Baked into the JS bundle at build time
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY}
-    container_name: uniform_frontend
+    container_name: vesta_frontend
     depends_on:
       - backend
     ports:

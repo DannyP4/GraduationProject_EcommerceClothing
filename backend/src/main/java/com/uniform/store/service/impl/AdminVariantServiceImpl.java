@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.EvictCatalogCaches;
 import com.uniform.store.dto.request.CreateVariantRequest;
 import com.uniform.store.dto.request.UpdateVariantRequest;
 import com.uniform.store.dto.response.AdminVariantDto;
@@ -39,6 +40,7 @@ public class AdminVariantServiceImpl implements AdminVariantService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminVariantDto create(Long productId, CreateVariantRequest req) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
@@ -66,6 +68,7 @@ public class AdminVariantServiceImpl implements AdminVariantService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminVariantDto update(Long variantId, UpdateVariantRequest req) {
         ProductVariant variant = variantRepository.findById(variantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Variant", variantId));
@@ -91,6 +94,7 @@ public class AdminVariantServiceImpl implements AdminVariantService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public void delete(Long variantId) {
         ProductVariant variant = variantRepository.findById(variantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Variant", variantId));

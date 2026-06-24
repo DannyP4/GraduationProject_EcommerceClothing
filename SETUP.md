@@ -1,6 +1,6 @@
 # VESTA Setup Guide
 
-This document explains how to run the VESTA project locally from source code. The recommended setup for grading or quick evaluation is Docker Compose, because it starts MySQL, the Spring Boot backend, and the React frontend in one consistent environment.
+This document explains how to run the VESTA project locally from source code. The recommended setup for grading or quick evaluation is Docker Compose, because it starts MySQL, Redis, the Spring Boot backend, and the React frontend in one consistent environment.
 
 ## 1. Prerequisites
 
@@ -22,6 +22,7 @@ Default local ports:
 | Frontend Vite dev server | `5173` |
 | Backend API | `8080` |
 | MySQL host mapping | `3307` |
+| Redis | `6379` |
 
 ## 2. Get The Source Code
 
@@ -69,6 +70,10 @@ DB_ROOT_PASSWORD=rootpassword
 
 SERVER_PORT=8080
 BACKEND_PORT=8080
+
+SPRING_CACHE_TYPE=redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
 JWT_SECRET=please_change_this_to_a_random_secret_with_at_least_32_characters
 JWT_ACCESS_TOKEN_EXPIRY=900000
@@ -136,6 +141,7 @@ View logs if needed:
 docker compose logs -f --tail=100 backend
 docker compose logs -f --tail=100 frontend
 docker compose logs -f --tail=100 mysql
+docker compose logs -f --tail=100 redis
 ```
 
 Stop the application:
@@ -174,14 +180,14 @@ If the submission includes a separate SQL dump under `docker/mysql-init/`, MySQL
 
 Use this mode when modifying backend or frontend code directly.
 
-### 6.1. Start MySQL With Docker
+### 6.1. Start MySQL And Redis With Docker
 
 ```bash
-docker compose up -d mysql
+docker compose up -d mysql redis
 docker compose ps
 ```
 
-Wait until `uniform_mysql` becomes `healthy`.
+Wait until `vesta_mysql` and `vesta_redis` become `healthy`.
 
 ### 6.2. Run Backend
 
@@ -235,10 +241,10 @@ VITE_API_BASE_URL=/api
 
 ## 7. Run Tests
 
-Start MySQL first:
+Start MySQL and Redis first:
 
 ```bash
-docker compose up -d mysql
+docker compose up -d mysql redis
 ```
 
 Run all backend tests:

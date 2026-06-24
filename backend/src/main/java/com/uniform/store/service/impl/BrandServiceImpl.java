@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.CacheNames;
 import com.uniform.store.dto.response.BrandDto;
 import com.uniform.store.dto.response.BrandSummaryDto;
 import com.uniform.store.entity.Brand;
@@ -14,6 +15,7 @@ import com.uniform.store.repository.ProductRepository;
 import com.uniform.store.repository.ReviewRepository;
 import com.uniform.store.service.BrandService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class BrandServiceImpl implements BrandService {
     private final ReviewRepository reviewRepository;
 
     @Override
+    @Cacheable(cacheNames = CacheNames.BRANDS, key = "#locale")
     public List<BrandDto> listBrands(String locale) {
         List<Brand> brands = brandRepository.findByIsActiveTrueOrderByNameAsc();
         if (brands.isEmpty()) {
@@ -65,6 +68,7 @@ public class BrandServiceImpl implements BrandService {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheNames.BRAND_SUMMARIES, key = "#locale + ':' + #id")
     public BrandSummaryDto getBrandSummary(Long id, String locale) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", String.valueOf(id)));

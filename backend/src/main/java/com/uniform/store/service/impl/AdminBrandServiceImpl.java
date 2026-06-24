@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.EvictCatalogCaches;
 import com.uniform.store.dto.request.CreateBrandRequest;
 import com.uniform.store.dto.request.UpdateBrandRequest;
 import com.uniform.store.dto.response.AdminBrandDto;
@@ -73,6 +74,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminBrandDto create(CreateBrandRequest req) {
         if (brandRepository.existsBySlug(req.getSlug())) {
             throw new BadRequestException("Brand slug already exists: " + req.getSlug());
@@ -92,6 +94,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminBrandDto update(Long id, UpdateBrandRequest req) {
         Brand b = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", id));
@@ -110,6 +113,7 @@ public class AdminBrandServiceImpl implements AdminBrandService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public void delete(Long id) {
         Brand b = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", id));

@@ -1,5 +1,6 @@
 package com.uniform.store.service.impl;
 
+import com.uniform.store.config.EvictCatalogCaches;
 import com.uniform.store.dto.request.AdminProductFilterRequest;
 import com.uniform.store.dto.request.CreateProductRequest;
 import com.uniform.store.dto.request.UpdateProductRequest;
@@ -117,6 +118,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminProductDetailDto create(CreateProductRequest req) {
         if (productRepository.existsBySlug(req.getSlug())) {
             throw new BadRequestException("Product slug already exists: " + req.getSlug());
@@ -155,6 +157,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminProductDetailDto update(Long id, UpdateProductRequest req) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
@@ -218,6 +221,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public void softDelete(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
@@ -230,6 +234,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public AdminProductDetailDto restore(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
@@ -242,6 +247,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     @Override
     @Transactional
+    @EvictCatalogCaches
     public void hardDelete(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
