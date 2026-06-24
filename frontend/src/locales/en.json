@@ -937,6 +937,52 @@
       "lead": "Hold tight while we finish signing you in with Google."
     }
   },
+  "paymentReturn": {
+    "common": {
+      "order": "Order",
+      "pending": "pending",
+      "viewOrder": "View order",
+      "continueShopping": "Continue shopping",
+      "backToCart": "Back to cart"
+    },
+    "stripe": {
+      "eyebrow": "Stripe - Test Mode",
+      "title": {
+        "polling": "Confirming...",
+        "success": "Payment successful",
+        "pending": "Still processing",
+        "failed": "Verification failed",
+        "cancelled": "Payment cancelled"
+      },
+      "messages": {
+        "confirming": "Confirming payment with Stripe...",
+        "missingOrder": "Missing order reference in redirect URL.",
+        "confirmed": "Payment confirmed.",
+        "cancelledOrder": "Order was cancelled.",
+        "checkFailed": "Could not check order status.",
+        "stillProcessing": "Stripe is still processing. Refresh your order in a minute.",
+        "cancelDescription": "You cancelled the Stripe payment. Your order is still saved as pending. You can retry payment or cancel it from your account. Stock has been temporarily reserved."
+      }
+    },
+    "vnpay": {
+      "eyebrow": "VNPAY - Sandbox",
+      "title": {
+        "verifying": "Verifying...",
+        "success": "Payment confirmed",
+        "failed": "Payment not completed"
+      },
+      "messages": {
+        "verifying": "Verifying your payment...",
+        "waiting": "Please wait while we confirm with VNPAY.",
+        "missingParams": "Missing payment parameters.",
+        "confirmed": "Payment confirmed.",
+        "failed": "Payment failed.",
+        "verificationFailed": "Verification failed."
+      },
+      "orderPaid": "Order {{orderNumber}} is now paid.",
+      "orderPending": "Order {{orderNumber}} is still pending. You can retry payment or cancel from your account."
+    }
+  },
   "shared": {
     "close": "Close",
     "confirm": {

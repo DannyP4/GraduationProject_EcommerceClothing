@@ -925,6 +925,52 @@
       "lead": "Googleでのログインを完了しています。少々お待ちください。"
     }
   },
+  "paymentReturn": {
+    "common": {
+      "order": "注文",
+      "pending": "保留中",
+      "viewOrder": "注文を見る",
+      "continueShopping": "買い物を続ける",
+      "backToCart": "カートに戻る"
+    },
+    "stripe": {
+      "eyebrow": "Stripe - テストモード",
+      "title": {
+        "polling": "確認中...",
+        "success": "支払いが完了しました",
+        "pending": "処理中です",
+        "failed": "確認に失敗しました",
+        "cancelled": "支払いをキャンセルしました"
+      },
+      "messages": {
+        "confirming": "Stripeで支払いを確認しています...",
+        "missingOrder": "戻り先URLに注文番号がありません。",
+        "confirmed": "支払いを確認しました。",
+        "cancelledOrder": "注文はキャンセルされました。",
+        "checkFailed": "注文状況を確認できませんでした。",
+        "stillProcessing": "Stripeで処理中です。1分ほど待ってから注文を更新してください。",
+        "cancelDescription": "Stripeでの支払いをキャンセルしました。注文はまだ保留中です。アカウントから再支払いまたはキャンセルできます。在庫は一時的に確保されています。"
+      }
+    },
+    "vnpay": {
+      "eyebrow": "VNPAY - サンドボックス",
+      "title": {
+        "verifying": "確認中...",
+        "success": "支払いを確認しました",
+        "failed": "支払いが完了していません"
+      },
+      "messages": {
+        "verifying": "支払いを確認しています...",
+        "waiting": "VNPAYで確認しています。少々お待ちください。",
+        "missingParams": "支払いパラメータが不足しています。",
+        "confirmed": "支払いを確認しました。",
+        "failed": "支払いに失敗しました。",
+        "verificationFailed": "支払い確認に失敗しました。"
+      },
+      "orderPaid": "注文{{orderNumber}}は支払い済みです。",
+      "orderPending": "注文{{orderNumber}}はまだ保留中です。アカウントから再支払いまたはキャンセルできます。"
+    }
+  },
   "shared": {
     "close": "閉じる",
     "confirm": {

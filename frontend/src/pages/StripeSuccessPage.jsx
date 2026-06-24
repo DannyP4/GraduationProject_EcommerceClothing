@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementBar from '../components/AnnouncementBar';
 import NavbarGlass from '../components/NavbarGlass';
@@ -9,9 +10,14 @@ const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 20000;
 
 export default function StripeSuccessPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [state, setState] = useState({ status: 'polling', message: 'Confirming payment with Stripe…', order: null });
+  const [state, setState] = useState({
+    status: 'polling',
+    messageKey: 'paymentReturn.stripe.messages.confirming',
+    order: null,
+  });
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -21,7 +27,7 @@ export default function StripeSuccessPage() {
     // poll until webhook flips order to PAID, or timeout.
     const orderNumber = searchParams.get('order') || searchParams.get('orderNumber');
     if (!orderNumber) {
-      setState({ status: 'failed', message: 'Missing order reference in redirect URL.', order: null });
+      setState({ status: 'failed', messageKey: 'paymentReturn.stripe.messages.missingOrder', order: null });
       return;
     }
 
@@ -34,16 +40,16 @@ export default function StripeSuccessPage() {
           const order = await orderService.getOrder(orderNumber);
           if (cancelled) return;
           if (order?.status === 'PAID') {
-            setState({ status: 'success', message: 'Payment confirmed.', order });
+            setState({ status: 'success', messageKey: 'paymentReturn.stripe.messages.confirmed', order });
             return;
           }
           if (order?.status === 'CANCELLED') {
-            setState({ status: 'failed', message: 'Order was cancelled.', order });
+            setState({ status: 'failed', messageKey: 'paymentReturn.stripe.messages.cancelledOrder', order });
             return;
           }
-        } catch (err) {
+        } catch {
           if (cancelled) return;
-          setState({ status: 'failed', message: err?.message || 'Could not check order status.', order: null });
+          setState({ status: 'failed', messageKey: 'paymentReturn.stripe.messages.checkFailed', order: null });
           return;
         }
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
@@ -51,7 +57,7 @@ export default function StripeSuccessPage() {
       if (cancelled) return;
       setState((s) => ({
         status: 'pending',
-        message: 'Stripe is still processing. Refresh your order in a minute.',
+        messageKey: 'paymentReturn.stripe.messages.stillProcessing',
         order: s.order,
       }));
     };
@@ -61,6 +67,12 @@ export default function StripeSuccessPage() {
   }, [searchParams]);
 
   const orderNumber = state.order?.orderNumber ?? searchParams.get('order');
+  const titleKeyByStatus = {
+    polling: 'paymentReturn.stripe.title.polling',
+    success: 'paymentReturn.stripe.title.success',
+    pending: 'paymentReturn.stripe.title.pending',
+    failed: 'paymentReturn.stripe.title.failed',
+  };
 
   return (
     <div className="min-h-screen bg-[#E8E8E8]">
@@ -68,18 +80,17 @@ export default function StripeSuccessPage() {
       <NavbarGlass />
       <div className="max-w-[720px] mx-auto px-6 py-20">
         <div className="bg-white p-10 text-center">
-          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-3">Stripe · Test Mode</p>
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-black/40 mb-3">
+            {t('paymentReturn.stripe.eyebrow')}
+          </p>
           <h1 className="font-['Anton'] text-4xl md:text-5xl uppercase tracking-tight mb-6">
-            {state.status === 'polling' && 'Confirming…'}
-            {state.status === 'success' && 'Payment Successful'}
-            {state.status === 'pending' && 'Still Processing'}
-            {state.status === 'failed' && 'Verification Failed'}
+            {t(titleKeyByStatus[state.status])}
           </h1>
 
-          <p className="text-sm text-black/70 mb-2">{state.message}</p>
+          <p className="text-sm text-black/70 mb-2">{t(state.messageKey)}</p>
           {orderNumber && (
             <p className="text-xs text-black/50 mb-8">
-              Order <span className="font-bold">{orderNumber}</span>
+              {t('paymentReturn.common.order')} <span className="font-bold">{orderNumber}</span>
             </p>
           )}
 
@@ -89,14 +100,14 @@ export default function StripeSuccessPage() {
                 onClick={() => navigate(`/account/orders/${orderNumber}`, { replace: true })}
                 className="bg-[#E83354] text-white text-[12px] font-bold tracking-[0.15em] uppercase px-8 py-3 hover:bg-[#c82244] transition-colors"
               >
-                View Order
+                {t('paymentReturn.common.viewOrder')}
               </button>
             )}
             <Link
               to="/shop"
               className="border border-black text-black text-[12px] font-bold tracking-[0.15em] uppercase px-8 py-3 hover:bg-black hover:text-white transition-colors"
             >
-              Continue Shopping
+              {t('paymentReturn.common.continueShopping')}
             </Link>
           </div>
         </div>

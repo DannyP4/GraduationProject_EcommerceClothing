@@ -925,6 +925,52 @@
       "lead": "Chờ một chút trong khi chúng tôi hoàn tất đăng nhập bằng Google."
     }
   },
+  "paymentReturn": {
+    "common": {
+      "order": "Đơn hàng",
+      "pending": "đang chờ",
+      "viewOrder": "Xem đơn hàng",
+      "continueShopping": "Tiếp tục mua sắm",
+      "backToCart": "Quay lại giỏ hàng"
+    },
+    "stripe": {
+      "eyebrow": "Stripe - Chế độ thử nghiệm",
+      "title": {
+        "polling": "Đang xác nhận...",
+        "success": "Thanh toán thành công",
+        "pending": "Vẫn đang xử lý",
+        "failed": "Xác minh thất bại",
+        "cancelled": "Đã hủy thanh toán"
+      },
+      "messages": {
+        "confirming": "Đang xác nhận thanh toán với Stripe...",
+        "missingOrder": "Thiếu mã đơn hàng trong đường dẫn trả về.",
+        "confirmed": "Thanh toán đã được xác nhận.",
+        "cancelledOrder": "Đơn hàng đã bị hủy.",
+        "checkFailed": "Không thể kiểm tra trạng thái đơn hàng.",
+        "stillProcessing": "Stripe vẫn đang xử lý. Hãy làm mới đơn hàng sau khoảng một phút.",
+        "cancelDescription": "Bạn đã hủy thanh toán Stripe. Đơn hàng của bạn vẫn được lưu ở trạng thái đang chờ. Bạn có thể thanh toán lại hoặc hủy đơn trong tài khoản. Số lượng sản phẩm đã được giữ tạm thời."
+      }
+    },
+    "vnpay": {
+      "eyebrow": "VNPAY - Sandbox",
+      "title": {
+        "verifying": "Đang xác minh...",
+        "success": "Thanh toán đã xác nhận",
+        "failed": "Thanh toán chưa hoàn tất"
+      },
+      "messages": {
+        "verifying": "Đang xác minh thanh toán của bạn...",
+        "waiting": "Vui lòng chờ trong khi chúng tôi xác nhận với VNPAY.",
+        "missingParams": "Thiếu tham số thanh toán.",
+        "confirmed": "Thanh toán đã được xác nhận.",
+        "failed": "Thanh toán thất bại.",
+        "verificationFailed": "Xác minh thanh toán thất bại."
+      },
+      "orderPaid": "Đơn hàng {{orderNumber}} đã được thanh toán.",
+      "orderPending": "Đơn hàng {{orderNumber}} vẫn đang chờ thanh toán. Bạn có thể thanh toán lại hoặc hủy đơn trong tài khoản."
+    }
+  },
   "shared": {
     "close": "Đóng",
     "confirm": {

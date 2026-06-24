@@ -23,8 +23,9 @@ function tryOnErrorText(t, code) {
 export default function TryOnPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
+  const locale = i18n.resolvedLanguage || i18n.language;
 
   const [product, setProduct] = useState(null);
   const [loadingProduct, setLoadingProduct] = useState(Boolean(productId));
@@ -38,13 +39,18 @@ export default function TryOnPage() {
   const [error, setError] = useState(null);
 
   const poll = useRef({ cancelled: false, timer: null });
+  const previousProductId = useRef(null);
 
   useEffect(() => {
-    poll.current.cancelled = true;
-    clearTimeout(poll.current.timer);
-    setJob(null);
-    setError(null);
-    setBusy(false);
+    const productChanged = previousProductId.current !== productId;
+    previousProductId.current = productId;
+    if (productChanged) {
+      poll.current.cancelled = true;
+      clearTimeout(poll.current.timer);
+      setJob(null);
+      setError(null);
+      setBusy(false);
+    }
 
     if (!productId) {
       setProduct(null);
@@ -59,7 +65,7 @@ export default function TryOnPage() {
       .finally(() => { if (!cancelled) setLoadingProduct(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productId]);
+  }, [productId, locale]);
 
   useEffect(() => {
     if (productId) return undefined;
@@ -68,7 +74,7 @@ export default function TryOnPage() {
       .then((res) => { if (!cancelled) setPickList(res?.content ?? []); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [productId]);
+  }, [productId, locale]);
 
   useEffect(() => () => {
     poll.current.cancelled = true;
